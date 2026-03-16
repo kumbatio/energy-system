@@ -1,8 +1,10 @@
-import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyPersistence, EnergySource, EnergyState } from './types';
+import type { AdaptationStrategy, EnergyClock, EnergyChangeListener, EnergyLevel, EnergyPersistence, EnergySource, EnergyState } from './types';
 export interface EnergyEngineOptions {
     initialLevel?: EnergyLevel;
     persistence?: EnergyPersistence;
     onChange?: EnergyChangeListener;
+    /** Deterministic time source for tests/simulations */
+    clock?: EnergyClock | (() => number);
 }
 export interface EnergyEngine {
     /** Get current energy state */

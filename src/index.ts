@@ -3,9 +3,11 @@ export type {
   AdaptationStrategy,
   CognitiveProfile,
   DecisionCapacity,
+  EnergyClock,
   EnergyChangeListener,
   EnergyLevel,
   EnergyLevelDefinition,
+  EnergyMetrics,
   EnergyPersistence,
   EnergySource,
   EnergyState,
@@ -24,6 +26,21 @@ export {
   isEnergyLevel,
   isHigherEnergy,
 } from './levels'
+
+// Compatibility helpers for non-native external level models
+export type {
+  ExternalLevelCompatibility,
+  ExternalLevelCompatibilityOptions,
+} from './compat'
+export {
+  createExternalLevelCompatibility,
+  cycleDiscreteLevel,
+  mapToNearestDiscreteLevel,
+  mapToNearestEnergyLevel,
+} from './compat'
+
+// Derived metrics
+export { getEnergyMetrics } from './metrics'
 
 // Engine
 export type { EnergyEngine, EnergyEngineOptions } from './engine'

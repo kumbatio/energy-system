@@ -62,5 +62,7 @@ export function observeEnergyLevel(
     attributeFilter: ['data-energy-level'],
   })
 
-  return () =>{  observer.disconnect(); }
+  return () => {
+    observer.disconnect()
+  }
 }

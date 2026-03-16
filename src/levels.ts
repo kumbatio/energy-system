@@ -101,6 +101,7 @@ export function isHigherEnergy(a: EnergyLevel, b: EnergyLevel): boolean {
 export function createEnergyState(
   level: EnergyLevel,
   source: 'manual' | 'scheduled' | 'inferred' = 'manual',
+  timestamp = Date.now(),
 ): EnergyState {
-  return { level, timestamp: Date.now(), source }
+  return { level, timestamp, source }
 }

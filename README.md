@@ -1,4 +1,4 @@
-# @entro314-labs/energy-system
+# @kumbatio/neurodivergent-adhd-energy-system
 
 Framework-agnostic TypeScript library for building **energy-aware applications**.
 
@@ -20,9 +20,6 @@ And the constraint is always `ph ≤ wh`.
 In other words: extending time does not linearly increase productive output.
 This library gives applications a structured way to adapt to energy state instead of raw time.
 
-For the longer personal background and motivation (including ADHD/depression context), see
-`ENERGY_SYSTEM.md`.
-
 ## Features
 
 - 5-level energy model: `100 | 75 | 50 | 25 | 0`
@@ -36,14 +33,18 @@ For the longer personal background and motivation (including ADHD/depression con
 - DOM adapter (`data-energy-level` + CSS variables)
 - React provider, hooks, and headless render component
 - Persistence adapters (`localStorage`, in-memory)
+- Deterministic clock support for testing/simulation
+- Optional external persistence observation (`observe`)
+- Derived metrics helper (`getEnergyMetrics`)
+- Compatibility helpers for non-native external level models
 
 ## Installation
 
 ```bash
-pnpm add @entro314-labs/energy-system
+pnpm add @kumbatio/neurodivergent-adhd-energy-system
 ```
 
-React integration is optional and provided via `@entro314-labs/energy-system/react`.
+React integration is optional and provided via `@kumbatio/neurodivergent-adhd-energy-system/react`.
 
 ## Quick start (core)
 
@@ -52,8 +53,8 @@ import {
   createEnergyEngine,
   uiVisibilityStrategy,
   notificationStrategy,
-} from '@entro314-labs/energy-system'
-import { localStoragePersistence } from '@entro314-labs/energy-system/persistence'
+} from '@kumbatio/neurodivergent-adhd-energy-system'
+import { localStoragePersistence } from '@kumbatio/neurodivergent-adhd-energy-system/persistence'
 
 const engine = createEnergyEngine({
   initialLevel: 75,
@@ -74,8 +75,8 @@ import {
   useEnergyLevel,
   useEnergyState,
   useStrategy,
-} from '@entro314-labs/energy-system/react'
-import { uiVisibilityStrategy } from '@entro314-labs/energy-system'
+} from '@kumbatio/neurodivergent-adhd-energy-system/react'
+import { uiVisibilityStrategy } from '@kumbatio/neurodivergent-adhd-energy-system'
 
 function Screen() {
   const [level, setLevel] = useEnergyLevel()
@@ -104,7 +105,10 @@ export function App() {
 ## Quick start (DOM)
 
 ```ts
-import { applyEnergyLevel, observeEnergyLevel } from '@entro314-labs/energy-system/dom'
+import {
+  applyEnergyLevel,
+  observeEnergyLevel,
+} from '@kumbatio/neurodivergent-adhd-energy-system/dom'
 
 applyEnergyLevel(50)
 
@@ -118,7 +122,7 @@ const cleanup = observeEnergyLevel((state, prev) => {
 Import the reference stylesheet:
 
 ```ts
-import '@entro314-labs/energy-system/css'
+import '@kumbatio/neurodivergent-adhd-energy-system/css'
 ```
 
 Then use classes like:
@@ -137,10 +141,14 @@ Then use classes like:
 - `createEnergyEngine(options?)`
 - `getEnergyLevels()`, `getEnergyLevel(level)`
 - `cycleEnergyLevel(level)`, `isEnergyLevel(value)`
+- `createExternalLevelCompatibility(options)`
+- `cycleDiscreteLevel(current, levels, fallback)`
+- `mapToNearestDiscreteLevel(value, levels, fallback)`
+- `mapToNearestEnergyLevel(value)`
 - Strategies: `uiVisibilityStrategy`, `notificationStrategy`, `taskComplexityStrategy`
 - Types: `EnergyLevel`, `EnergyState`, `AdaptationStrategy`, etc.
 
-### `@entro314-labs/energy-system/react`
+### `@kumbatio/neurodivergent-adhd-energy-system/react`
 
 - `EnergyProvider`
 - `useEnergyState()`
@@ -150,28 +158,62 @@ Then use classes like:
 - `useEnergyGate(minLevel)`
 - `EnergyIndicator`
 
-### `@entro314-labs/energy-system/persistence`
+### `@kumbatio/neurodivergent-adhd-energy-system/persistence`
 
 - `localStoragePersistence(key?)`
 - `memoryPersistence(initial?)`
 
-### `@entro314-labs/energy-system/dom`
+### `@kumbatio/neurodivergent-adhd-energy-system/dom`
 
 - `applyEnergyLevel(level, root?)`
 - `readEnergyLevel(root?)`
 - `observeEnergyLevel(listener, root?)`
 
-## Using this with a 4-level UI model
+### Additional APIs
 
-Some apps use a legacy scale (`100 | 66 | 33 | 0`) for controls like battery widgets.
-A practical migration is:
+- `createEnergyEngine({ clock })` — inject a deterministic time source
+- `EnergyPersistence.observe(onState)` — subscribe to external state changes
+- `getEnergyMetrics(state, now?)` — derive productivity/break/task guidance metrics
 
-- `100 -> 100`
-- `66 -> 75`
-- `33 -> 25` or `50` (based on whether your “deep work” mode should be stricter)
-- `0 -> 0`
+## Migrating from legacy scales to native package levels
 
-See `ENERGY_SYSTEM.md` for a product-style usage guide and integration framing.
+The package model is fixed to `100 | 75 | 50 | 25 | 0`.
+If your existing app uses a different discrete scale (for example `100 | 66 | 33 | 0`),
+use compatibility helpers during migration.
+
+```ts
+import {
+  createExternalLevelCompatibility,
+  cycleEnergyLevel,
+} from '@kumbatio/neurodivergent-adhd-energy-system'
+
+const legacy = createExternalLevelCompatibility({
+  levels: [100, 66, 33, 0] as const,
+  toEnergyLevel: {
+    100: 100,
+    66: 50,
+    33: 25,
+    0: 0,
+  },
+  fallbackLevel: 100,
+})
+
+// Read legacy persisted values -> native package level
+const nativeLevel = legacy.toEnergyLevel(66) // 50
+
+// Keep old control cycle order while internally applying native levels
+const nextNativeLevel = legacy.cycleMappedEnergyLevel(33) // maps next legacy level to native
+
+// Once migration is complete, use native cycling directly
+const next = cycleEnergyLevel(nativeLevel)
+```
+
+Recommended migration sequence:
+
+1. **Read** legacy values through `createExternalLevelCompatibility(...).toEnergyLevel(...)`.
+2. **Write** and persist native package levels (`100 | 75 | 50 | 25 | 0`).
+3. **Switch UI controls** to native `cycleEnergyLevel`.
+4. **Remove compatibility mapping** after persisted data is fully normalized.
 
 ## Development
 
@@ -181,6 +223,7 @@ pnpm run build
 pnpm run pack:dry-run
 ```
 
-## Specification
+## Notes
 
-Detailed architecture and rationale live in `SPEC.md`.
+This package is framework-agnostic at its core. Platform-specific persistence
+adapters (e.g., SQLite-backed desktop stores) should live in consuming apps.

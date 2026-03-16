@@ -50,6 +50,8 @@ export function observeEnergyLevel(callback, root = document.body) {
         attributes: true,
         attributeFilter: ['data-energy-level'],
     });
-    return () => { observer.disconnect(); };
+    return () => {
+        observer.disconnect();
+    };
 }
 //# sourceMappingURL=dom.js.map

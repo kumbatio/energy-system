@@ -1,6 +1,30 @@
 import { isEnergyLevel } from './levels'
 import type { EnergyLevel, EnergyPersistence, EnergyState } from './types'
 
+function parsePersistedState(raw: string | null): EnergyState | null {
+  if (!raw) return null
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'level' in parsed &&
+      isEnergyLevel((parsed as { level: unknown }).level)
+    ) {
+      const obj = parsed as { level: EnergyLevel; timestamp?: number; source?: string }
+      return {
+        level: obj.level,
+        timestamp: typeof obj.timestamp === 'number' ? obj.timestamp : Date.now(),
+        source: obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual',
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 /**
  * localStorage-based persistence adapter.
  * Stores the full EnergyState as JSON.
@@ -8,33 +32,36 @@ import type { EnergyLevel, EnergyPersistence, EnergyState } from './types'
 export function localStoragePersistence(key = 'energy-state'): EnergyPersistence {
   return {
     async load(): Promise<EnergyState | null> {
-      try {
-        const raw = localStorage.getItem(key)
-        if (!raw) return null
-        const parsed: unknown = JSON.parse(raw)
-        if (
-          typeof parsed === 'object' &&
-          parsed !== null &&
-          'level' in parsed &&
-          isEnergyLevel((parsed as { level: unknown }).level)
-        ) {
-          const obj = parsed as { level: EnergyLevel; timestamp?: number; source?: string }
-          return {
-            level: obj.level,
-            timestamp: typeof obj.timestamp === 'number' ? obj.timestamp : Date.now(),
-            source: obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual',
-          }
-        }
-        return null
-      } catch {
+      if (typeof localStorage === 'undefined') {
         return null
       }
+
+      const raw = localStorage.getItem(key)
+      return parsePersistedState(raw)
     },
     async save(state: EnergyState): Promise<void> {
       try {
         localStorage.setItem(key, JSON.stringify(state))
-      } catch {
-        // Storage full or unavailable — non-critical
+      } catch (err: unknown) {
+        console.error(`[energy-system] Failed to save localStorage state for key '${key}'`, err)
+      }
+    },
+    observe(onState) {
+      if (typeof globalThis.addEventListener !== 'function') return () => {}
+
+      const handleStorage = (event: StorageEvent) => {
+        if (event.storageArea !== localStorage) return
+        if (event.key !== key) return
+
+        const parsed = parsePersistedState(event.newValue)
+        if (parsed) {
+          onState(parsed)
+        }
+      }
+
+      globalThis.addEventListener('storage', handleStorage)
+      return () => {
+        globalThis.removeEventListener('storage', handleStorage)
       }
     },
   }
@@ -46,12 +73,23 @@ export function localStoragePersistence(key = 'energy-state'): EnergyPersistence
  */
 export function memoryPersistence(initial?: EnergyState): EnergyPersistence {
   let stored = initial ?? null
+  const listeners = new Set<(state: EnergyState) => void>()
+
   return {
     async load(): Promise<EnergyState | null> {
       return stored
     },
     async save(state: EnergyState): Promise<void> {
       stored = state
+      for (const listener of listeners) {
+        listener(state)
+      }
+    },
+    observe(onState) {
+      listeners.add(onState)
+      return () => {
+        listeners.delete(onState)
+      }
     },
   }
 }

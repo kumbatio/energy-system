@@ -13,6 +13,10 @@ export interface EnergyState {
     /** How this state was determined */
     source: EnergySource;
 }
+/** Time source contract for deterministic environments (tests, simulations) */
+export interface EnergyClock {
+    now(): number;
+}
 export type DecisionCapacity = 'high' | 'moderate' | 'low' | 'minimal' | 'none';
 export type FocusDuration = 'extended' | 'moderate' | 'short' | 'minimal' | 'none';
 export type TaskComplexity = 'complex' | 'moderate' | 'routine' | 'simple' | 'consumption';
@@ -48,7 +52,30 @@ export interface AdaptationStrategy<TConfig> {
 export interface EnergyPersistence {
     load(): Promise<EnergyState | null>;
     save(state: EnergyState): Promise<void>;
+    /**
+     * Optional observer for externally persisted state updates (cross-tab, worker, etc.)
+     */
+    observe?(onState: (state: EnergyState) => void): () => void;
 }
 /** Callback for energy state changes */
 export type EnergyChangeListener = (state: EnergyState, prev: EnergyState) => void;
+/**
+ * Computed, app-agnostic metrics from an energy state snapshot.
+ */
+export interface EnergyMetrics {
+    /** Milliseconds since this state was set */
+    stateAgeMs: number;
+    /** Rounded minutes since this state was set */
+    stateAgeMinutes: number;
+    /** Suggested focused-work window length */
+    expectedProductivityWindowMinutes: number;
+    /** Suggested break cadence for the current level */
+    suggestedBreakIntervalMinutes: number;
+    /** Recommended task complexity based on cognitive profile */
+    recommendedTaskComplexity: TaskComplexity;
+    /** Heuristic signal for maintainability of this state */
+    sustainable: boolean;
+    /** Optional guidance for recovery horizon */
+    recoveryHintMinutes?: number;
+}
 //# sourceMappingURL=types.d.ts.map

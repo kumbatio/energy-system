@@ -1,6 +1,7 @@
-import { createEnergyState, cycleEnergyLevel } from './levels'
+import { createEnergyState, cycleEnergyLevel, isEnergyLevel } from './levels'
 import type {
   AdaptationStrategy,
+  EnergyClock,
   EnergyChangeListener,
   EnergyLevel,
   EnergyPersistence,
@@ -12,6 +13,8 @@ export interface EnergyEngineOptions {
   initialLevel?: EnergyLevel
   persistence?: EnergyPersistence
   onChange?: EnergyChangeListener
+  /** Deterministic time source for tests/simulations */
+  clock?: EnergyClock | (() => number)
 }
 
 export interface EnergyEngine {
@@ -29,11 +32,39 @@ export interface EnergyEngine {
   hydrate(): Promise<void>
 }
 
-export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEngine {
-  const { initialLevel = 100, persistence, onChange } = options
-  const listeners = new Set<EnergyChangeListener>()
+function resolveNow(clock?: EnergyEngineOptions['clock']): () => number {
+  if (typeof clock === 'function') return clock
+  if (clock?.now) return () => clock.now()
+  return () => Date.now()
+}
 
-  let state: EnergyState = createEnergyState(initialLevel, 'manual')
+function isSameState(a: EnergyState, b: EnergyState): boolean {
+  return a.level === b.level && a.timestamp === b.timestamp && a.source === b.source
+}
+
+function normalizeState(candidate: EnergyState, now: () => number): EnergyState {
+  if (!isEnergyLevel(candidate.level)) {
+    throw new Error(`Invalid energy level from persistence: ${String(candidate.level)}`)
+  }
+
+  const timestamp = Number.isFinite(candidate.timestamp) ? candidate.timestamp : now()
+  const source: EnergySource =
+    candidate.source === 'scheduled' || candidate.source === 'inferred' ? candidate.source : 'manual'
+
+  return {
+    level: candidate.level,
+    timestamp,
+    source,
+  }
+}
+
+export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEngine {
+  const { initialLevel = 100, persistence, onChange, clock } = options
+  const now = resolveNow(clock)
+  const listeners = new Set<EnergyChangeListener>()
+  let isSaving = false
+
+  let state: EnergyState = createEnergyState(initialLevel, 'manual', now())
 
   function notify(prev: EnergyState): void {
     onChange?.(state, prev)
@@ -48,9 +79,24 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     },
 
     setLevel(level, source = 'manual') {
+      const next = createEnergyState(level, source, now())
+      if (isSameState(next, state)) return
+
       const prev = state
-      state = createEnergyState(level, source)
-      void persistence?.save(state)
+      state = next
+
+      if (persistence) {
+        isSaving = true
+        void persistence
+          .save(state)
+          .catch((err: unknown) => {
+            console.error('[energy-system] Failed to persist energy state', err)
+          })
+          .finally(() => {
+            isSaving = false
+          })
+      }
+
       notify(prev)
     },
 
@@ -73,8 +119,11 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       if (!persistence) return
       const stored = await persistence.load()
       if (stored) {
+        const normalized = normalizeState(stored, now)
+        if (isSameState(normalized, state)) return
+
         const prev = state
-        state = stored
+        state = normalized
         notify(prev)
       }
     },
@@ -83,6 +132,19 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
   // Auto-hydrate from persistence
   if (persistence) {
     void engine.hydrate()
+  }
+
+  if (persistence?.observe) {
+    persistence.observe((externalState) => {
+      if (isSaving) return
+
+      const normalized = normalizeState(externalState, now)
+      if (isSameState(normalized, state)) return
+
+      const prev = state
+      state = normalized
+      notify(prev)
+    })
   }
 
   return engine

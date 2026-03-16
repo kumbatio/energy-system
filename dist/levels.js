@@ -91,7 +91,7 @@ export function isHigherEnergy(a, b) {
     return a > b;
 }
 /** Create an EnergyState for the current moment */
-export function createEnergyState(level, source = 'manual') {
-    return { level, timestamp: Date.now(), source };
+export function createEnergyState(level, source = 'manual', timestamp = Date.now()) {
+    return { level, timestamp, source };
 }
 //# sourceMappingURL=levels.js.map

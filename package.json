@@ -1,15 +1,13 @@
 {
   "name": "@kumbatio/neurodivergent-adhd-energy-system",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
   "files": [
     "dist",
     "src/energy.css",
-    "README.md",
-    "SPEC.md",
-    "ENERGY_SYSTEM.md"
+    "README.md"
   ],
   "type": "module",
   "sideEffects": [

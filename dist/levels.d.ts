@@ -10,5 +10,5 @@ export declare function isEnergyLevel(value: unknown): value is EnergyLevel;
 /** Returns true if level `a` represents higher energy than level `b` */
 export declare function isHigherEnergy(a: EnergyLevel, b: EnergyLevel): boolean;
 /** Create an EnergyState for the current moment */
-export declare function createEnergyState(level: EnergyLevel, source?: 'manual' | 'scheduled' | 'inferred'): EnergyState;
+export declare function createEnergyState(level: EnergyLevel, source?: 'manual' | 'scheduled' | 'inferred', timestamp?: number): EnergyState;
 //# sourceMappingURL=levels.d.ts.map
