@@ -31,12 +31,15 @@ export function observeEnergyLevel(callback, root = document.body) {
     let prevLevel = readEnergyLevel(root);
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
-            if (mutation.type === 'attributes' &&
-                mutation.attributeName === 'data-energy-level') {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-energy-level') {
                 const currentLevel = readEnergyLevel(root);
                 if (currentLevel !== prevLevel) {
                     const prev = { level: prevLevel, timestamp: Date.now(), source: 'inferred' };
-                    const current = { level: currentLevel, timestamp: Date.now(), source: 'inferred' };
+                    const current = {
+                        level: currentLevel,
+                        timestamp: Date.now(),
+                        source: 'inferred',
+                    };
                     prevLevel = currentLevel;
                     callback(current, prev);
                 }
@@ -47,6 +50,6 @@ export function observeEnergyLevel(callback, root = document.body) {
         attributes: true,
         attributeFilter: ['data-energy-level'],
     });
-    return () =>{  observer.disconnect(); };
+    return () => { observer.disconnect(); };
 }
 //# sourceMappingURL=dom.js.map

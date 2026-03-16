@@ -37,7 +37,9 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
 // ── Hooks ──
 function useEnergyStoreState() {
     const engine = useEngine();
-    return useSyncExternalStore((onStoreChange) => engine.subscribe(() => { onStoreChange(); }), engine.getState, engine.getState);
+    return useSyncExternalStore((onStoreChange) => engine.subscribe(() => {
+        onStoreChange();
+    }), engine.getState, engine.getState);
 }
 /** Get the full energy state (level + timestamp + source) */
 export function useEnergyState() {

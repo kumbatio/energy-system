@@ -1,4 +1,4 @@
-import type { EnergyLevel, EnergyLevelDefinition } from './types';
+import type { EnergyLevel, EnergyLevelDefinition, EnergyState } from './types';
 /** Get all energy level definitions, ordered highest to lowest */
 export declare function getEnergyLevels(): readonly EnergyLevelDefinition[];
 /** Get definition for a specific energy level */
@@ -10,5 +10,5 @@ export declare function isEnergyLevel(value: unknown): value is EnergyLevel;
 /** Returns true if level `a` represents higher energy than level `b` */
 export declare function isHigherEnergy(a: EnergyLevel, b: EnergyLevel): boolean;
 /** Create an EnergyState for the current moment */
-export declare function createEnergyState(level: EnergyLevel, source?: 'manual' | 'scheduled' | 'inferred'): import('./types').EnergyState;
+export declare function createEnergyState(level: EnergyLevel, source?: 'manual' | 'scheduled' | 'inferred'): EnergyState;
 //# sourceMappingURL=levels.d.ts.map

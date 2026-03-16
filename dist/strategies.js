@@ -68,7 +68,7 @@ export const uiVisibilityStrategy = {
             !config.toolbar && 'toolbar',
         ].filter(Boolean);
         if (hidden.length === 0) {
-            return `${def.label}: All UI elements visible` + (config.chromeOpacity < 1 ? `, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity` : '');
+            return `${def.label}: All UI elements visible${config.chromeOpacity < 1 ? `, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity` : ''}`;
         }
         return `${def.label}: ${hidden.join(', ')} hidden, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity`;
     },

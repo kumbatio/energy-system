@@ -1,5 +1,5 @@
-import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyPersistence, EnergyState } from './types';
 import type { EnergyEngine } from './engine';
+import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyPersistence, EnergyState } from './types';
 export interface EnergyProviderProps {
     /** Pre-created engine. If provided, other options are ignored. */
     engine?: EnergyEngine;

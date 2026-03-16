@@ -11,8 +11,10 @@ export function localStoragePersistence(key = 'energy-state') {
                 if (!raw)
                     return null;
                 const parsed = JSON.parse(raw);
-                if (typeof parsed === 'object' && parsed !== null &&
-                    'level' in parsed && isEnergyLevel(parsed.level)) {
+                if (typeof parsed === 'object' &&
+                    parsed !== null &&
+                    'level' in parsed &&
+                    isEnergyLevel(parsed.level)) {
                     const obj = parsed;
                     return {
                         level: obj.level,

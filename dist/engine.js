@@ -16,7 +16,7 @@ export function createEnergyEngine(options = {}) {
         setLevel(level, source = 'manual') {
             const prev = state;
             state = createEnergyState(level, source);
-            persistence?.save(state);
+            void persistence?.save(state);
             notify(prev);
         },
         cycleLevel() {
@@ -24,7 +24,9 @@ export function createEnergyEngine(options = {}) {
         },
         subscribe(listener) {
             listeners.add(listener);
-            return () => { listeners.delete(listener); };
+            return () => {
+                listeners.delete(listener);
+            };
         },
         resolve(strategy) {
             return strategy.resolve(state.level);
