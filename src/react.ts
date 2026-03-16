@@ -9,6 +9,10 @@ import {
   useSyncExternalStore,
 } from 'react'
 
+import { applyEnergyLevel } from './dom'
+import type { EnergyEngine } from './engine'
+import { createEnergyEngine } from './engine'
+import { getEnergyLevel, getEnergyLevels } from './levels'
 import type {
   AdaptationStrategy,
   EnergyChangeListener,
@@ -17,10 +21,6 @@ import type {
   EnergyPersistence,
   EnergyState,
 } from './types'
-import type { EnergyEngine } from './engine'
-import { applyEnergyLevel } from './dom'
-import { createEnergyEngine } from './engine'
-import { getEnergyLevel, getEnergyLevels } from './levels'
 
 // ── Context ──
 
@@ -89,7 +89,10 @@ export function EnergyProvider({
 function useEnergyStoreState(): EnergyState {
   const engine = useEngine()
   return useSyncExternalStore(
-    (onStoreChange) => engine.subscribe(() => { onStoreChange() }),
+    (onStoreChange) =>
+      engine.subscribe(() => {
+        onStoreChange()
+      }),
     engine.getState,
     engine.getState,
   )
@@ -104,9 +107,12 @@ export function useEnergyState(): EnergyState {
 export function useEnergyLevel(): [EnergyLevel, (level: EnergyLevel) => void] {
   const engine = useEngine()
   const state = useEnergyStoreState()
-  const setLevel = useCallback((level: EnergyLevel) => {
-    engine.setLevel(level)
-  }, [engine])
+  const setLevel = useCallback(
+    (level: EnergyLevel) => {
+      engine.setLevel(level)
+    },
+    [engine],
+  )
   return [state.level, setLevel]
 }
 

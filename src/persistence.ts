@@ -1,5 +1,5 @@
-import type { EnergyLevel, EnergyPersistence, EnergyState } from './types'
 import { isEnergyLevel } from './levels'
+import type { EnergyLevel, EnergyPersistence, EnergyState } from './types'
 
 /**
  * localStorage-based persistence adapter.
@@ -13,8 +13,10 @@ export function localStoragePersistence(key = 'energy-state'): EnergyPersistence
         if (!raw) return null
         const parsed: unknown = JSON.parse(raw)
         if (
-          typeof parsed === 'object' && parsed !== null &&
-          'level' in parsed && isEnergyLevel((parsed as { level: unknown }).level)
+          typeof parsed === 'object' &&
+          parsed !== null &&
+          'level' in parsed &&
+          isEnergyLevel((parsed as { level: unknown }).level)
         ) {
           const obj = parsed as { level: EnergyLevel; timestamp?: number; source?: string }
           return {

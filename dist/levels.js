@@ -78,7 +78,7 @@ export function getEnergyLevel(level) {
 export function cycleEnergyLevel(current) {
     const fallback = 100;
     const idx = CYCLE_ORDER.indexOf(current);
-    if (idx < 0)
+    if (idx === -1)
         return fallback;
     return CYCLE_ORDER[(idx + 1) % CYCLE_ORDER.length] ?? fallback;
 }

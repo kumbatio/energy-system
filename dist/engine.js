@@ -42,7 +42,7 @@ export function createEnergyEngine(options = {}) {
     };
     // Auto-hydrate from persistence
     if (persistence) {
-        engine.hydrate();
+        void engine.hydrate();
     }
     return engine;
 }

@@ -1,4 +1,4 @@
-import type { EnergyLevel, EnergyLevelDefinition } from './types'
+import type { EnergyLevel, EnergyLevelDefinition, EnergyState } from './types'
 import { ENERGY_LEVEL_VALUES } from './types'
 
 const LEVELS: readonly EnergyLevelDefinition[] = [
@@ -83,7 +83,7 @@ export function getEnergyLevel(level: EnergyLevel): EnergyLevelDefinition {
 export function cycleEnergyLevel(current: EnergyLevel): EnergyLevel {
   const fallback: EnergyLevel = 100
   const idx = CYCLE_ORDER.indexOf(current)
-  if (idx < 0) return fallback
+  if (idx === -1) return fallback
   return CYCLE_ORDER[(idx + 1) % CYCLE_ORDER.length] ?? fallback
 }
 
@@ -101,6 +101,6 @@ export function isHigherEnergy(a: EnergyLevel, b: EnergyLevel): boolean {
 export function createEnergyState(
   level: EnergyLevel,
   source: 'manual' | 'scheduled' | 'inferred' = 'manual',
-): import('./types').EnergyState {
+): EnergyState {
   return { level, timestamp: Date.now(), source }
 }

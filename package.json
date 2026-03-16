@@ -1,18 +1,9 @@
 {
   "name": "@kumbatio/energy-system",
-  "version": "0.0.1",
-  "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
+  "version": "0.0.2",
   "private": false,
+  "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
-  "type": "module",
-  "engines": {
-    "node": ">=18"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "sideEffects": [
-    "./src/energy.css"
-  ],
   "files": [
     "dist",
     "src/energy.css",
@@ -20,6 +11,12 @@
     "SPEC.md",
     "ENERGY_SYSTEM.md"
   ],
+  "type": "module",
+  "sideEffects": [
+    "./src/energy.css"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -40,15 +37,25 @@
     "./css": "./src/energy.css",
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "prepack": "pnpm run check-types && pnpm run build",
     "prepublishOnly": "pnpm run prepack",
-    "pack:dry-run": "npm pack --dry-run"
+    "pack:dry-run": "npm pack --dry-run",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "lint:fix-unsafe": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions --fix-dangerously src/",
+    "check:fix-suggestions": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions . && oxfmt --write ."
   },
-  "publishConfig": {
-    "access": "public"
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "react": ">=19"
@@ -58,8 +65,7 @@
       "optional": true
     }
   },
-  "devDependencies": {
-    "@types/react": "^19.2.14",
-    "typescript": "^5.9.3"
+  "engines": {
+    "node": ">=18"
   }
 }

@@ -121,7 +121,7 @@ export const notificationStrategy = {
             return 'Rest: All notifications silenced';
         if (config.priorityThreshold === 'all')
             return `${getEnergyLevel(level).label}: All notifications enabled`;
-        return `${getEnergyLevel(level).label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60000}min`;
+        return `${getEnergyLevel(level).label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`;
     },
     resolve(level) {
         return NOTIFICATION_CONFIGS[level];

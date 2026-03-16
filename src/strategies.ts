@@ -1,5 +1,5 @@
-import type { AdaptationStrategy, EnergyLevel } from './types'
 import { getEnergyLevel } from './levels'
+import type { AdaptationStrategy, EnergyLevel } from './types'
 
 // ── UI Visibility Strategy ──
 
@@ -86,7 +86,7 @@ export const uiVisibilityStrategy: AdaptationStrategy<UIVisibilityConfig> = {
     ].filter(Boolean)
 
     if (hidden.length === 0) {
-      return `${def.label}: All UI elements visible` + (config.chromeOpacity < 1 ? `, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity` : '')
+      return `${def.label}: All UI elements visible${config.chromeOpacity < 1 ? `, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity` : ''}`
     }
     return `${def.label}: ${hidden.join(', ')} hidden, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity`
   },
@@ -153,8 +153,9 @@ export const notificationStrategy: AdaptationStrategy<NotificationConfig> = {
   describe(level) {
     const config = NOTIFICATION_CONFIGS[level]
     if (config.priorityThreshold === 'none') return 'Rest: All notifications silenced'
-    if (config.priorityThreshold === 'all') return `${getEnergyLevel(level).label}: All notifications enabled`
-    return `${getEnergyLevel(level).label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60000}min`
+    if (config.priorityThreshold === 'all')
+      return `${getEnergyLevel(level).label}: All notifications enabled`
+    return `${getEnergyLevel(level).label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`
   },
   resolve(level) {
     return NOTIFICATION_CONFIGS[level]

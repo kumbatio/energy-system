@@ -1,3 +1,4 @@
+import { createEnergyState, cycleEnergyLevel } from './levels'
 import type {
   AdaptationStrategy,
   EnergyChangeListener,
@@ -6,7 +7,6 @@ import type {
   EnergySource,
   EnergyState,
 } from './types'
-import { createEnergyState, cycleEnergyLevel } from './levels'
 
 export interface EnergyEngineOptions {
   initialLevel?: EnergyLevel
@@ -50,7 +50,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     setLevel(level, source = 'manual') {
       const prev = state
       state = createEnergyState(level, source)
-      persistence?.save(state)
+      void persistence?.save(state)
       notify(prev)
     },
 
@@ -60,7 +60,9 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
 
     subscribe(listener) {
       listeners.add(listener)
-      return () => { listeners.delete(listener) }
+      return () => {
+        listeners.delete(listener)
+      }
     },
 
     resolve<T>(strategy: AdaptationStrategy<T>): T {
@@ -80,7 +82,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
 
   // Auto-hydrate from persistence
   if (persistence) {
-    engine.hydrate()
+    void engine.hydrate()
   }
 
   return engine

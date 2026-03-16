@@ -1,6 +1,6 @@
-import type { EnergyChangeListener, EnergyLevel, EnergyState } from './types'
 import { isEnergyLevel } from './levels'
 import { uiVisibilityStrategy } from './strategies'
+import type { EnergyChangeListener, EnergyLevel, EnergyState } from './types'
 
 const ATTR = 'energyLevel'
 
@@ -41,14 +41,15 @@ export function observeEnergyLevel(
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (
-        mutation.type === 'attributes' &&
-        mutation.attributeName === 'data-energy-level'
-      ) {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'data-energy-level') {
         const currentLevel = readEnergyLevel(root)
         if (currentLevel !== prevLevel) {
           const prev: EnergyState = { level: prevLevel, timestamp: Date.now(), source: 'inferred' }
-          const current: EnergyState = { level: currentLevel, timestamp: Date.now(), source: 'inferred' }
+          const current: EnergyState = {
+            level: currentLevel,
+            timestamp: Date.now(),
+            source: 'inferred',
+          }
           prevLevel = currentLevel
           callback(current, prev)
         }
@@ -61,5 +62,5 @@ export function observeEnergyLevel(
     attributeFilter: ['data-energy-level'],
   })
 
-  return () => observer.disconnect()
+  return () =>{  observer.disconnect(); }
 }
