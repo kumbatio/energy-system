@@ -1,0 +1,110 @@
+/*
+ * energy-system — Reference CSS for the UI visibility strategy
+ *
+ * This is ONE way to consume energy state. Apps can also use
+ * the JS strategy API directly and apply styles however they want.
+ *
+ * Apply these classes to your components:
+ *   .energy-chrome     — any chrome element (titlebar, toolbar, status bar)
+ *   .energy-sidebar    — sidebar container
+ *   .energy-tab-bar    — tab bar container
+ *   .energy-status-bar — status bar
+ *   .energy-toolbar    — editor/app toolbar
+ *   .energy-content    — main content area
+ *
+ * Set data-energy-level on your root element (body or container).
+ */
+
+/* ── Base custom properties ── */
+[data-energy-level] {
+  --energy-chrome-opacity: 1;
+  --energy-chrome-opacity-hover: 1;
+  --energy-content-max-width: none;
+  --energy-content-font-scale: 1;
+}
+
+/* ── Level 75 — Active ── */
+
+[data-energy-level='75'] .energy-chrome {
+  opacity: var(--energy-chrome-opacity, 0.7);
+  transition: opacity 0.3s ease;
+}
+
+[data-energy-level='75'] .energy-chrome:hover {
+  opacity: var(--energy-chrome-opacity-hover, 1);
+}
+
+/* ── Level 50 — Steady ── */
+
+[data-energy-level='50'] .energy-chrome {
+  opacity: var(--energy-chrome-opacity, 0.4);
+  transition: opacity 0.3s ease;
+}
+
+[data-energy-level='50'] .energy-chrome:hover {
+  opacity: var(--energy-chrome-opacity-hover, 1);
+}
+
+[data-energy-level='50'] .energy-content {
+  max-width: var(--energy-content-max-width, 90ch);
+  margin-inline: auto;
+}
+
+/* ── Level 25 — Low ── */
+
+[data-energy-level='25'] .energy-sidebar,
+[data-energy-level='25'] .energy-tab-bar,
+[data-energy-level='25'] .energy-status-bar {
+  display: none;
+}
+
+[data-energy-level='25'] .energy-chrome {
+  opacity: var(--energy-chrome-opacity, 0.1);
+  transition: opacity 0.3s ease;
+}
+
+[data-energy-level='25'] .energy-chrome:hover {
+  opacity: var(--energy-chrome-opacity-hover, 1);
+}
+
+[data-energy-level='25'] .energy-content {
+  max-width: var(--energy-content-max-width, 80ch);
+  margin-inline: auto;
+  padding: 2rem;
+  font-size: calc(1em * var(--energy-content-font-scale, 1.05));
+}
+
+/* ── Level 0 — Rest ── */
+
+[data-energy-level='0'] .energy-sidebar,
+[data-energy-level='0'] .energy-tab-bar,
+[data-energy-level='0'] .energy-status-bar,
+[data-energy-level='0'] .energy-toolbar {
+  display: none !important;
+}
+
+[data-energy-level='0'] .energy-chrome {
+  opacity: var(--energy-chrome-opacity, 0.05);
+  transition: opacity 0.3s ease;
+}
+
+[data-energy-level='0'] .energy-chrome:hover {
+  opacity: var(--energy-chrome-opacity-hover, 0.8);
+}
+
+[data-energy-level='0'] .energy-content {
+  max-width: var(--energy-content-max-width, 75ch);
+  margin-inline: auto;
+  padding: 2rem;
+  line-height: 1.4;
+  font-size: calc(1em * var(--energy-content-font-scale, 1.1));
+  cursor: default !important;
+}
+
+[data-energy-level='0'] .energy-content * {
+  cursor: default !important;
+}
+
+[data-energy-level='0'] .energy-content:focus {
+  outline: none;
+}
