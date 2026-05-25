@@ -1,79 +1,83 @@
-import type { EnergyLevel, EnergyLevelDefinition, EnergyState } from './types'
-import { ENERGY_LEVEL_VALUES } from './types'
+import type { EnergyLevel, EnergyLevelDefinition, EnergySource, EnergyState } from './types.js'
+import { ENERGY_LEVEL_VALUES, ENERGY_SOURCE_VALUES } from './types.js'
 
-const LEVELS: readonly EnergyLevelDefinition[] = [
-  {
+function freezeObject<T extends object>(value: T): Readonly<T> {
+  return Object.freeze(value)
+}
+
+const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
+  freezeObject<EnergyLevelDefinition>({
     value: 100,
     key: 'peak',
     label: 'Peak',
     description: 'High capacity. Planning, complex decisions, creative work.',
-    cognitiveProfile: {
+    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'high',
       focusDuration: 'extended',
       taskComplexity: 'complex',
       interruptionTolerance: 'high',
-    },
-  },
-  {
+    }),
+  }),
+  freezeObject<EnergyLevelDefinition>({
     value: 75,
     key: 'active',
     label: 'Active',
     description: 'Good capacity. Focused execution, problem-solving.',
-    cognitiveProfile: {
+    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'moderate',
       focusDuration: 'moderate',
       taskComplexity: 'moderate',
       interruptionTolerance: 'moderate',
-    },
-  },
-  {
+    }),
+  }),
+  freezeObject<EnergyLevelDefinition>({
     value: 50,
     key: 'steady',
     label: 'Steady',
     description: 'Moderate capacity. Routine tasks, familiar work.',
-    cognitiveProfile: {
+    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'low',
       focusDuration: 'short',
       taskComplexity: 'routine',
       interruptionTolerance: 'low',
-    },
-  },
-  {
+    }),
+  }),
+  freezeObject<EnergyLevelDefinition>({
     value: 25,
     key: 'low',
     label: 'Low',
     description: 'Limited capacity. Simple tasks, review, light work.',
-    cognitiveProfile: {
+    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'minimal',
       focusDuration: 'minimal',
       taskComplexity: 'simple',
       interruptionTolerance: 'minimal',
-    },
-  },
-  {
+    }),
+  }),
+  freezeObject<EnergyLevelDefinition>({
     value: 0,
     key: 'rest',
     label: 'Rest',
     description: 'Depleted. Consumption only \u2014 reading, reflecting.',
-    cognitiveProfile: {
+    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'none',
       focusDuration: 'none',
       taskComplexity: 'consumption',
       interruptionTolerance: 'none',
-    },
-  },
-] as const
+    }),
+  }),
+])
 
 /** Cycle order: 100 -> 75 -> 50 -> 25 -> 0 -> 100 */
 const CYCLE_ORDER: readonly EnergyLevel[] = [100, 75, 50, 25, 0]
 
 /** Get all energy level definitions, ordered highest to lowest */
-export function getEnergyLevels(): readonly EnergyLevelDefinition[] {
+export function getEnergyLevels(): ReadonlyArray<Readonly<EnergyLevelDefinition>> {
   return LEVELS
 }
 
 /** Get definition for a specific energy level */
-export function getEnergyLevel(level: EnergyLevel): EnergyLevelDefinition {
+export function getEnergyLevel(level: EnergyLevel): Readonly<EnergyLevelDefinition> {
   const def = LEVELS.find((l) => l.value === level)
   if (!def) throw new Error(`Invalid energy level: ${level}`)
   return def
@@ -92,6 +96,11 @@ export function isEnergyLevel(value: unknown): value is EnergyLevel {
   return typeof value === 'number' && ENERGY_LEVEL_VALUES.has(value)
 }
 
+/** Validate that an unknown value is a valid EnergySource */
+export function isEnergySource(value: unknown): value is EnergySource {
+  return typeof value === 'string' && ENERGY_SOURCE_VALUES.has(value as EnergySource)
+}
+
 /** Returns true if level `a` represents higher energy than level `b` */
 export function isHigherEnergy(a: EnergyLevel, b: EnergyLevel): boolean {
   return a > b
@@ -100,8 +109,20 @@ export function isHigherEnergy(a: EnergyLevel, b: EnergyLevel): boolean {
 /** Create an EnergyState for the current moment */
 export function createEnergyState(
   level: EnergyLevel,
-  source: 'manual' | 'scheduled' | 'inferred' = 'manual',
+  source: EnergySource = 'manual',
   timestamp = Date.now(),
 ): EnergyState {
-  return { level, timestamp, source }
+  if (!isEnergyLevel(level)) {
+    throw new Error(`Invalid energy level: ${String(level)}`)
+  }
+
+  if (!isEnergySource(source)) {
+    throw new Error(`Invalid energy source: ${String(source)}`)
+  }
+
+  return freezeObject({
+    level,
+    timestamp: Number.isFinite(timestamp) ? timestamp : Date.now(),
+    source,
+  })
 }

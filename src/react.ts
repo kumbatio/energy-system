@@ -9,10 +9,10 @@ import {
   useSyncExternalStore,
 } from 'react'
 
-import { applyEnergyLevel } from './dom'
-import type { EnergyEngine } from './engine'
-import { createEnergyEngine } from './engine'
-import { getEnergyLevel, getEnergyLevels } from './levels'
+import { applyEnergyLevel } from './dom.js'
+import type { EnergyEngine } from './engine.js'
+import { createEnergyEngine } from './engine.js'
+import { getEnergyLevel, getEnergyLevels } from './levels.js'
 import type {
   AdaptationStrategy,
   EnergyChangeListener,
@@ -20,7 +20,7 @@ import type {
   EnergyLevelDefinition,
   EnergyPersistence,
   EnergyState,
-} from './types'
+} from './types.js'
 
 // ── Context ──
 
@@ -35,13 +35,13 @@ function useEngine(): EnergyEngine {
 // ── Provider ──
 
 export interface EnergyProviderProps {
-  /** Pre-created engine. If provided, other options are ignored. */
+  /** Pre-created engine. When provided, this engine is used directly. */
   engine?: EnergyEngine
-  /** Initial energy level (ignored if engine provided) */
+  /** Initial energy level when the provider creates its own engine. */
   defaultLevel?: EnergyLevel
-  /** Persistence adapter (ignored if engine provided) */
+  /** Persistence adapter when the provider creates its own engine. */
   persistence?: EnergyPersistence
-  /** Called on every level change (ignored if engine provided — use engine.subscribe) */
+  /** Called on every level change. */
   onLevelChange?: EnergyChangeListener
   /** Whether to apply energy level to DOM via data attributes */
   applyToDOM?: boolean
@@ -56,19 +56,35 @@ export function EnergyProvider({
   applyToDOM = true,
   children,
 }: EnergyProviderProps) {
-  const engineRef = useRef<EnergyEngine | null>(null)
+  const internalEngineRef = useRef<EnergyEngine | null>(null)
+  const previousExternalEngineRef = useRef<EnergyEngine | undefined>(externalEngine)
 
-  if (!engineRef.current) {
+  if (!externalEngine && !internalEngineRef.current) {
     const options = {
       initialLevel: defaultLevel,
       ...(persistence ? { persistence } : {}),
-      ...(onLevelChange ? { onChange: onLevelChange } : {}),
     }
 
-    engineRef.current = externalEngine ?? createEnergyEngine(options)
+    internalEngineRef.current = createEnergyEngine(options)
   }
 
-  const engine = engineRef.current
+  const engine = externalEngine ?? internalEngineRef.current
+
+  if (!engine) {
+    throw new Error('EnergyProvider could not initialize an engine instance')
+  }
+
+  useEffect(() => {
+    const previousExternalEngine = previousExternalEngineRef.current
+    previousExternalEngineRef.current = externalEngine
+
+    if (!externalEngine) return
+    if (previousExternalEngine === externalEngine) return
+    if (!internalEngineRef.current) return
+
+    internalEngineRef.current.dispose()
+    internalEngineRef.current = null
+  }, [externalEngine])
 
   // Sync to DOM when state changes
   useEffect(() => {
@@ -80,6 +96,19 @@ export function EnergyProvider({
       applyEnergyLevel(state.level)
     })
   }, [engine, applyToDOM])
+
+  useEffect(() => {
+    if (!onLevelChange) return
+
+    return engine.subscribe(onLevelChange)
+  }, [engine, onLevelChange])
+
+  useEffect(() => {
+    return () => {
+      internalEngineRef.current?.dispose()
+      internalEngineRef.current = null
+    }
+  }, [])
 
   return createElement(EnergyEngineContext.Provider, { value: engine }, children)
 }
@@ -159,7 +188,7 @@ export interface EnergyIndicatorProps {
   children: (props: EnergyIndicatorRenderProps) => React.ReactNode
 }
 
-/** Headless energy indicator — bring your own UI */
+/** Headless energy indicator - bring your own UI */
 export function EnergyIndicator({ children }: EnergyIndicatorProps) {
   const [level, setLevel] = useEnergyLevel()
   const state = useEnergyStoreState()

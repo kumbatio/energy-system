@@ -1,7 +1,7 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, } from 'react';
-import { applyEnergyLevel } from './dom';
-import { createEnergyEngine } from './engine';
-import { getEnergyLevel, getEnergyLevels } from './levels';
+import { applyEnergyLevel } from './dom.js';
+import { createEnergyEngine } from './engine.js';
+import { getEnergyLevel, getEnergyLevels } from './levels.js';
 // ── Context ──
 const EnergyEngineContext = createContext(null);
 function useEngine() {
@@ -11,16 +11,31 @@ function useEngine() {
     return engine;
 }
 export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, persistence, onLevelChange, applyToDOM = true, children, }) {
-    const engineRef = useRef(null);
-    if (!engineRef.current) {
+    const internalEngineRef = useRef(null);
+    const previousExternalEngineRef = useRef(externalEngine);
+    if (!externalEngine && !internalEngineRef.current) {
         const options = {
             initialLevel: defaultLevel,
             ...(persistence ? { persistence } : {}),
-            ...(onLevelChange ? { onChange: onLevelChange } : {}),
         };
-        engineRef.current = externalEngine ?? createEnergyEngine(options);
+        internalEngineRef.current = createEnergyEngine(options);
     }
-    const engine = engineRef.current;
+    const engine = externalEngine ?? internalEngineRef.current;
+    if (!engine) {
+        throw new Error('EnergyProvider could not initialize an engine instance');
+    }
+    useEffect(() => {
+        const previousExternalEngine = previousExternalEngineRef.current;
+        previousExternalEngineRef.current = externalEngine;
+        if (!externalEngine)
+            return;
+        if (previousExternalEngine === externalEngine)
+            return;
+        if (!internalEngineRef.current)
+            return;
+        internalEngineRef.current.dispose();
+        internalEngineRef.current = null;
+    }, [externalEngine]);
     // Sync to DOM when state changes
     useEffect(() => {
         if (!applyToDOM)
@@ -32,6 +47,17 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
             applyEnergyLevel(state.level);
         });
     }, [engine, applyToDOM]);
+    useEffect(() => {
+        if (!onLevelChange)
+            return;
+        return engine.subscribe(onLevelChange);
+    }, [engine, onLevelChange]);
+    useEffect(() => {
+        return () => {
+            internalEngineRef.current?.dispose();
+            internalEngineRef.current = null;
+        };
+    }, []);
     return createElement(EnergyEngineContext.Provider, { value: engine }, children);
 }
 // ── Hooks ──
@@ -75,7 +101,7 @@ export function useEnergyGate(minLevel) {
     const state = useEnergyStoreState();
     return state.level >= minLevel;
 }
-/** Headless energy indicator — bring your own UI */
+/** Headless energy indicator - bring your own UI */
 export function EnergyIndicator({ children }) {
     const [level, setLevel] = useEnergyLevel();
     const state = useEnergyStoreState();

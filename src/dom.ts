@@ -1,30 +1,53 @@
-import { isEnergyLevel } from './levels'
-import { uiVisibilityStrategy } from './strategies'
-import type { EnergyChangeListener, EnergyLevel, EnergyState } from './types'
+import { createEnergyState, isEnergyLevel } from './levels.js'
+import { uiVisibilityStrategy } from './strategies.js'
+import type { EnergyChangeListener, EnergyLevel } from './types.js'
 
 const ATTR = 'energyLevel'
+
+function resolveRoot(root?: HTMLElement): HTMLElement {
+  if (root) {
+    return root
+  }
+
+  if (typeof document === 'undefined' || !document.body) {
+    throw new Error('Energy DOM APIs require a browser document or an explicit root element')
+  }
+
+  return document.body
+}
+
+function normalizeEnergyLevel(level: EnergyLevel): EnergyLevel {
+  if (!isEnergyLevel(level)) {
+    throw new Error(`Invalid energy level: ${String(level)}`)
+  }
+
+  return level
+}
 
 /**
  * Apply energy level to a root element.
  * Sets `data-energy-level` attribute and CSS custom properties
  * derived from the UI visibility strategy.
  */
-export function applyEnergyLevel(level: EnergyLevel, root: HTMLElement = document.body): void {
-  const config = uiVisibilityStrategy.resolve(level)
+export function applyEnergyLevel(level: EnergyLevel, root?: HTMLElement): void {
+  const target = resolveRoot(root)
+  const normalizedLevel = normalizeEnergyLevel(level)
+  const config = uiVisibilityStrategy.resolve(normalizedLevel)
 
-  root.dataset[ATTR] = level.toString()
-  root.style.setProperty('--energy-chrome-opacity', config.chromeOpacity.toString())
-  root.style.setProperty('--energy-chrome-opacity-hover', config.chromeOpacityHover.toString())
-  root.style.setProperty('--energy-content-max-width', config.contentMaxWidth)
-  root.style.setProperty('--energy-content-font-scale', config.contentFontScale.toString())
+  target.dataset[ATTR] = normalizedLevel.toString()
+  target.style.setProperty('--energy-chrome-opacity', config.chromeOpacity.toString())
+  target.style.setProperty('--energy-chrome-opacity-hover', config.chromeOpacityHover.toString())
+  target.style.setProperty('--energy-content-max-width', config.contentMaxWidth)
+  target.style.setProperty('--energy-content-font-scale', config.contentFontScale.toString())
 }
 
 /**
  * Read the current energy level from a root element's data attribute.
  * Returns 100 if no valid level is set.
  */
-export function readEnergyLevel(root: HTMLElement = document.body): EnergyLevel {
-  const raw = Number(root.dataset[ATTR])
+export function readEnergyLevel(root?: HTMLElement): EnergyLevel {
+  const target = resolveRoot(root)
+  const raw = Number(target.dataset[ATTR])
   return isEnergyLevel(raw) ? raw : 100
 }
 
@@ -33,23 +56,17 @@ export function readEnergyLevel(root: HTMLElement = document.body): EnergyLevel 
  * Calls back with EnergyState (timestamp will be observation time, source 'inferred').
  * Returns a cleanup function to disconnect the observer.
  */
-export function observeEnergyLevel(
-  callback: EnergyChangeListener,
-  root: HTMLElement = document.body,
-): () => void {
-  let prevLevel = readEnergyLevel(root)
+export function observeEnergyLevel(callback: EnergyChangeListener, root?: HTMLElement): () => void {
+  const target = resolveRoot(root)
+  let prevLevel = readEnergyLevel(target)
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'attributes' && mutation.attributeName === 'data-energy-level') {
-        const currentLevel = readEnergyLevel(root)
+        const currentLevel = readEnergyLevel(target)
         if (currentLevel !== prevLevel) {
-          const prev: EnergyState = { level: prevLevel, timestamp: Date.now(), source: 'inferred' }
-          const current: EnergyState = {
-            level: currentLevel,
-            timestamp: Date.now(),
-            source: 'inferred',
-          }
+          const prev = createEnergyState(prevLevel, 'inferred', Date.now())
+          const current = createEnergyState(currentLevel, 'inferred', Date.now())
           prevLevel = currentLevel
           callback(current, prev)
         }
@@ -57,7 +74,7 @@ export function observeEnergyLevel(
     }
   })
 
-  observer.observe(root, {
+  observer.observe(target, {
     attributes: true,
     attributeFilter: ['data-energy-level'],
   })

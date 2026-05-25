@@ -4,14 +4,16 @@ export type EnergyLevel = 0 | 25 | 50 | 75 | 100;
 export type EnergySource = 'manual' | 'scheduled' | 'inferred';
 /** Valid energy level values for runtime validation */
 export declare const ENERGY_LEVEL_VALUES: ReadonlySet<number>;
+/** Valid energy source values for runtime validation */
+export declare const ENERGY_SOURCE_VALUES: ReadonlySet<EnergySource>;
 /** A point-in-time snapshot of cognitive capacity */
 export interface EnergyState {
     /** Current cognitive capacity */
-    level: EnergyLevel;
+    readonly level: EnergyLevel;
     /** When this state was set (epoch ms) */
-    timestamp: number;
+    readonly timestamp: number;
     /** How this state was determined */
-    source: EnergySource;
+    readonly source: EnergySource;
 }
 /** Time source contract for deterministic environments (tests, simulations) */
 export interface EnergyClock {
@@ -23,22 +25,22 @@ export type TaskComplexity = 'complex' | 'moderate' | 'routine' | 'simple' | 'co
 export type InterruptionTolerance = 'high' | 'moderate' | 'low' | 'minimal' | 'none';
 /** What the brain can handle at a given energy level */
 export interface CognitiveProfile {
-    decisionCapacity: DecisionCapacity;
-    focusDuration: FocusDuration;
-    taskComplexity: TaskComplexity;
-    interruptionTolerance: InterruptionTolerance;
+    readonly decisionCapacity: DecisionCapacity;
+    readonly focusDuration: FocusDuration;
+    readonly taskComplexity: TaskComplexity;
+    readonly interruptionTolerance: InterruptionTolerance;
 }
 /** Complete metadata for a single energy level */
 export interface EnergyLevelDefinition {
-    value: EnergyLevel;
-    key: string;
-    label: string;
-    description: string;
-    cognitiveProfile: CognitiveProfile;
+    readonly value: EnergyLevel;
+    readonly key: string;
+    readonly label: string;
+    readonly description: string;
+    readonly cognitiveProfile: CognitiveProfile;
 }
 /**
  * Maps energy levels to application behavior.
- * Pure function — given a level, produce a configuration.
+ * Pure function - given a level, produce a configuration.
  */
 export interface AdaptationStrategy<TConfig> {
     /** Unique name for this strategy */
@@ -48,7 +50,7 @@ export interface AdaptationStrategy<TConfig> {
     /** Compute the configuration for a given energy level */
     resolve(level: EnergyLevel): TConfig;
 }
-/** Storage contract — implement per platform */
+/** Storage contract - implement per platform */
 export interface EnergyPersistence {
     load(): Promise<EnergyState | null>;
     save(state: EnergyState): Promise<void>;
@@ -64,18 +66,18 @@ export type EnergyChangeListener = (state: EnergyState, prev: EnergyState) => vo
  */
 export interface EnergyMetrics {
     /** Milliseconds since this state was set */
-    stateAgeMs: number;
+    readonly stateAgeMs: number;
     /** Rounded minutes since this state was set */
-    stateAgeMinutes: number;
+    readonly stateAgeMinutes: number;
     /** Suggested focused-work window length */
-    expectedProductivityWindowMinutes: number;
+    readonly expectedProductivityWindowMinutes: number;
     /** Suggested break cadence for the current level */
-    suggestedBreakIntervalMinutes: number;
+    readonly suggestedBreakIntervalMinutes: number;
     /** Recommended task complexity based on cognitive profile */
-    recommendedTaskComplexity: TaskComplexity;
+    readonly recommendedTaskComplexity: TaskComplexity;
     /** Heuristic signal for maintainability of this state */
-    sustainable: boolean;
+    readonly sustainable: boolean;
     /** Optional guidance for recovery horizon */
-    recoveryHintMinutes?: number;
+    readonly recoveryHintMinutes?: number;
 }
 //# sourceMappingURL=types.d.ts.map

@@ -1,25 +1,43 @@
-import { isEnergyLevel } from './levels';
-import { uiVisibilityStrategy } from './strategies';
+import { createEnergyState, isEnergyLevel } from './levels.js';
+import { uiVisibilityStrategy } from './strategies.js';
 const ATTR = 'energyLevel';
+function resolveRoot(root) {
+    if (root) {
+        return root;
+    }
+    if (typeof document === 'undefined' || !document.body) {
+        throw new Error('Energy DOM APIs require a browser document or an explicit root element');
+    }
+    return document.body;
+}
+function normalizeEnergyLevel(level) {
+    if (!isEnergyLevel(level)) {
+        throw new Error(`Invalid energy level: ${String(level)}`);
+    }
+    return level;
+}
 /**
  * Apply energy level to a root element.
  * Sets `data-energy-level` attribute and CSS custom properties
  * derived from the UI visibility strategy.
  */
-export function applyEnergyLevel(level, root = document.body) {
-    const config = uiVisibilityStrategy.resolve(level);
-    root.dataset[ATTR] = level.toString();
-    root.style.setProperty('--energy-chrome-opacity', config.chromeOpacity.toString());
-    root.style.setProperty('--energy-chrome-opacity-hover', config.chromeOpacityHover.toString());
-    root.style.setProperty('--energy-content-max-width', config.contentMaxWidth);
-    root.style.setProperty('--energy-content-font-scale', config.contentFontScale.toString());
+export function applyEnergyLevel(level, root) {
+    const target = resolveRoot(root);
+    const normalizedLevel = normalizeEnergyLevel(level);
+    const config = uiVisibilityStrategy.resolve(normalizedLevel);
+    target.dataset[ATTR] = normalizedLevel.toString();
+    target.style.setProperty('--energy-chrome-opacity', config.chromeOpacity.toString());
+    target.style.setProperty('--energy-chrome-opacity-hover', config.chromeOpacityHover.toString());
+    target.style.setProperty('--energy-content-max-width', config.contentMaxWidth);
+    target.style.setProperty('--energy-content-font-scale', config.contentFontScale.toString());
 }
 /**
  * Read the current energy level from a root element's data attribute.
  * Returns 100 if no valid level is set.
  */
-export function readEnergyLevel(root = document.body) {
-    const raw = Number(root.dataset[ATTR]);
+export function readEnergyLevel(root) {
+    const target = resolveRoot(root);
+    const raw = Number(target.dataset[ATTR]);
     return isEnergyLevel(raw) ? raw : 100;
 }
 /**
@@ -27,26 +45,23 @@ export function readEnergyLevel(root = document.body) {
  * Calls back with EnergyState (timestamp will be observation time, source 'inferred').
  * Returns a cleanup function to disconnect the observer.
  */
-export function observeEnergyLevel(callback, root = document.body) {
-    let prevLevel = readEnergyLevel(root);
+export function observeEnergyLevel(callback, root) {
+    const target = resolveRoot(root);
+    let prevLevel = readEnergyLevel(target);
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'data-energy-level') {
-                const currentLevel = readEnergyLevel(root);
+                const currentLevel = readEnergyLevel(target);
                 if (currentLevel !== prevLevel) {
-                    const prev = { level: prevLevel, timestamp: Date.now(), source: 'inferred' };
-                    const current = {
-                        level: currentLevel,
-                        timestamp: Date.now(),
-                        source: 'inferred',
-                    };
+                    const prev = createEnergyState(prevLevel, 'inferred', Date.now());
+                    const current = createEnergyState(currentLevel, 'inferred', Date.now());
                     prevLevel = currentLevel;
                     callback(current, prev);
                 }
             }
         }
     });
-    observer.observe(root, {
+    observer.observe(target, {
         attributes: true,
         attributeFilter: ['data-energy-level'],
     });

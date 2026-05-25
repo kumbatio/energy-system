@@ -1,13 +1,13 @@
-import type { EnergyEngine } from './engine';
-import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyPersistence, EnergyState } from './types';
+import type { EnergyEngine } from './engine.js';
+import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyPersistence, EnergyState } from './types.js';
 export interface EnergyProviderProps {
-    /** Pre-created engine. If provided, other options are ignored. */
+    /** Pre-created engine. When provided, this engine is used directly. */
     engine?: EnergyEngine;
-    /** Initial energy level (ignored if engine provided) */
+    /** Initial energy level when the provider creates its own engine. */
     defaultLevel?: EnergyLevel;
-    /** Persistence adapter (ignored if engine provided) */
+    /** Persistence adapter when the provider creates its own engine. */
     persistence?: EnergyPersistence;
-    /** Called on every level change (ignored if engine provided — use engine.subscribe) */
+    /** Called on every level change. */
     onLevelChange?: EnergyChangeListener;
     /** Whether to apply energy level to DOM via data attributes */
     applyToDOM?: boolean;
@@ -40,6 +40,6 @@ export interface EnergyIndicatorRenderProps {
 export interface EnergyIndicatorProps {
     children: (props: EnergyIndicatorRenderProps) => React.ReactNode;
 }
-/** Headless energy indicator — bring your own UI */
+/** Headless energy indicator - bring your own UI */
 export declare function EnergyIndicator({ children }: EnergyIndicatorProps): React.ReactElement;
 //# sourceMappingURL=react.d.ts.map

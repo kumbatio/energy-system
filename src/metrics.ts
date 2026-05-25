@@ -1,5 +1,9 @@
-import { getEnergyLevel } from './levels'
-import type { EnergyLevel, EnergyMetrics, EnergyState } from './types'
+import { getEnergyLevel } from './levels.js'
+import type { EnergyLevel, EnergyMetrics, EnergyState } from './types.js'
+
+function freezeObject<T extends object>(value: T): Readonly<T> {
+  return Object.freeze(value)
+}
 
 const PRODUCTIVITY_WINDOW_MINUTES: Record<EnergyLevel, number> = {
   100: 120,
@@ -42,9 +46,9 @@ export function getEnergyMetrics(state: EnergyState, now = Date.now()): EnergyMe
   }
 
   return recoveryHintMinutes === undefined
-    ? base
-    : {
+    ? freezeObject(base)
+    : freezeObject({
         ...base,
         recoveryHintMinutes,
-      }
+      })
 }

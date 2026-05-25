@@ -1,4 +1,4 @@
-import type { AdaptationStrategy, EnergyClock, EnergyChangeListener, EnergyLevel, EnergyPersistence, EnergySource, EnergyState } from './types';
+import type { AdaptationStrategy, EnergyClock, EnergyChangeListener, EnergyLevel, EnergyPersistence, EnergySource, EnergyState } from './types.js';
 export interface EnergyEngineOptions {
     initialLevel?: EnergyLevel;
     persistence?: EnergyPersistence;
@@ -19,6 +19,8 @@ export interface EnergyEngine {
     resolve<T>(strategy: AdaptationStrategy<T>): T;
     /** Load persisted state (called automatically, but can be called manually) */
     hydrate(): Promise<void>;
+    /** Release engine-owned subscriptions/resources */
+    dispose(): void;
 }
 export declare function createEnergyEngine(options?: EnergyEngineOptions): EnergyEngine;
 //# sourceMappingURL=engine.d.ts.map

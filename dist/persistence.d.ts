@@ -1,4 +1,4 @@
-import type { EnergyPersistence, EnergyState } from './types';
+import type { EnergyPersistence, EnergyState } from './types.js';
 /**
  * localStorage-based persistence adapter.
  * Stores the full EnergyState as JSON.

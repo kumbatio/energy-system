@@ -1,6 +1,9 @@
-import { getEnergyLevel } from './levels';
-const UI_CONFIGS = {
-    100: {
+import { getEnergyLevel } from './levels.js';
+function freezeObject(value) {
+    return Object.freeze(value);
+}
+const UI_CONFIGS = freezeObject({
+    100: freezeObject({
         sidebar: true,
         tabBar: true,
         statusBar: true,
@@ -10,8 +13,8 @@ const UI_CONFIGS = {
         contentMaxWidth: 'none',
         contentFontScale: 1,
         readOnlyCursor: false,
-    },
-    75: {
+    }),
+    75: freezeObject({
         sidebar: true,
         tabBar: true,
         statusBar: true,
@@ -21,8 +24,8 @@ const UI_CONFIGS = {
         contentMaxWidth: 'none',
         contentFontScale: 1,
         readOnlyCursor: false,
-    },
-    50: {
+    }),
+    50: freezeObject({
         sidebar: true,
         tabBar: true,
         statusBar: true,
@@ -32,8 +35,8 @@ const UI_CONFIGS = {
         contentMaxWidth: '90ch',
         contentFontScale: 1,
         readOnlyCursor: false,
-    },
-    25: {
+    }),
+    25: freezeObject({
         sidebar: false,
         tabBar: false,
         statusBar: false,
@@ -43,8 +46,8 @@ const UI_CONFIGS = {
         contentMaxWidth: '80ch',
         contentFontScale: 1.05,
         readOnlyCursor: false,
-    },
-    0: {
+    }),
+    0: freezeObject({
         sidebar: false,
         tabBar: false,
         statusBar: false,
@@ -54,13 +57,13 @@ const UI_CONFIGS = {
         contentMaxWidth: '75ch',
         contentFontScale: 1.1,
         readOnlyCursor: true,
-    },
-};
+    }),
+});
 export const uiVisibilityStrategy = {
     name: 'ui-visibility',
     describe(level) {
         const def = getEnergyLevel(level);
-        const config = UI_CONFIGS[level];
+        const config = UI_CONFIGS[def.value];
         const hidden = [
             !config.sidebar && 'sidebar',
             !config.tabBar && 'tabs',
@@ -73,99 +76,100 @@ export const uiVisibilityStrategy = {
         return `${def.label}: ${hidden.join(', ')} hidden, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity`;
     },
     resolve(level) {
-        return UI_CONFIGS[level];
+        return UI_CONFIGS[getEnergyLevel(level).value];
     },
 };
-const NOTIFICATION_CONFIGS = {
-    100: {
+const NOTIFICATION_CONFIGS = freezeObject({
+    100: freezeObject({
         allowVisual: true,
         allowSound: true,
         allowVibration: true,
         batchInterval: 0,
         priorityThreshold: 'all',
-    },
-    75: {
+    }),
+    75: freezeObject({
         allowVisual: true,
         allowSound: true,
         allowVibration: false,
         batchInterval: 0,
         priorityThreshold: 'all',
-    },
-    50: {
+    }),
+    50: freezeObject({
         allowVisual: true,
         allowSound: false,
         allowVibration: false,
         batchInterval: 5 * 60 * 1000, // 5 minutes
         priorityThreshold: 'high',
-    },
-    25: {
+    }),
+    25: freezeObject({
         allowVisual: true,
         allowSound: false,
         allowVibration: false,
         batchInterval: 15 * 60 * 1000, // 15 minutes
         priorityThreshold: 'critical',
-    },
-    0: {
+    }),
+    0: freezeObject({
         allowVisual: false,
         allowSound: false,
         allowVibration: false,
         batchInterval: 0,
         priorityThreshold: 'none',
-    },
-};
+    }),
+});
 export const notificationStrategy = {
     name: 'notifications',
     describe(level) {
-        const config = NOTIFICATION_CONFIGS[level];
+        const def = getEnergyLevel(level);
+        const config = NOTIFICATION_CONFIGS[def.value];
         if (config.priorityThreshold === 'none')
             return 'Rest: All notifications silenced';
         if (config.priorityThreshold === 'all')
-            return `${getEnergyLevel(level).label}: All notifications enabled`;
-        return `${getEnergyLevel(level).label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`;
+            return `${def.label}: All notifications enabled`;
+        return `${def.label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`;
     },
     resolve(level) {
-        return NOTIFICATION_CONFIGS[level];
+        return NOTIFICATION_CONFIGS[getEnergyLevel(level).value];
     },
 };
-const TASK_CONFIGS = {
-    100: {
-        maxComplexity: 'any',
+const TASK_CONFIGS = freezeObject({
+    100: freezeObject({
+        maxComplexity: 'complex',
         suggestBreaks: false,
         breakIntervalMinutes: 0,
-    },
-    75: {
-        maxComplexity: 'any',
-        suggestBreaks: false,
-        breakIntervalMinutes: 0,
-    },
-    50: {
+    }),
+    75: freezeObject({
         maxComplexity: 'moderate',
+        suggestBreaks: false,
+        breakIntervalMinutes: 0,
+    }),
+    50: freezeObject({
+        maxComplexity: 'routine',
         suggestBreaks: true,
         breakIntervalMinutes: 45,
-    },
-    25: {
+    }),
+    25: freezeObject({
         maxComplexity: 'simple',
         suggestBreaks: true,
         breakIntervalMinutes: 25,
-    },
-    0: {
-        maxComplexity: 'simple',
+    }),
+    0: freezeObject({
+        maxComplexity: 'consumption',
         suggestBreaks: true,
         breakIntervalMinutes: 15,
-    },
-};
+    }),
+});
 export const taskComplexityStrategy = {
     name: 'task-complexity',
     describe(level) {
-        const config = TASK_CONFIGS[level];
         const def = getEnergyLevel(level);
+        const config = TASK_CONFIGS[def.value];
         const parts = [`${def.label}: Max complexity: ${config.maxComplexity}`];
         if (config.suggestBreaks)
             parts.push(`breaks every ${config.breakIntervalMinutes}min`);
         return parts.join(', ');
     },
     resolve(level) {
-        return TASK_CONFIGS[level];
+        return TASK_CONFIGS[getEnergyLevel(level).value];
     },
 };
 //# sourceMappingURL=strategies.js.map

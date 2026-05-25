@@ -1,22 +1,26 @@
-import { getEnergyLevel } from './levels'
-import type { AdaptationStrategy, EnergyLevel } from './types'
+import { getEnergyLevel } from './levels.js'
+import type { AdaptationStrategy, EnergyLevel, TaskComplexity } from './types.js'
+
+function freezeObject<T extends object>(value: T): Readonly<T> {
+  return Object.freeze(value)
+}
 
 // ── UI Visibility Strategy ──
 
 export interface UIVisibilityConfig {
-  sidebar: boolean
-  tabBar: boolean
-  statusBar: boolean
-  toolbar: boolean
-  chromeOpacity: number
-  chromeOpacityHover: number
-  contentMaxWidth: string
-  contentFontScale: number
-  readOnlyCursor: boolean
+  readonly sidebar: boolean
+  readonly tabBar: boolean
+  readonly statusBar: boolean
+  readonly toolbar: boolean
+  readonly chromeOpacity: number
+  readonly chromeOpacityHover: number
+  readonly contentMaxWidth: string
+  readonly contentFontScale: number
+  readonly readOnlyCursor: boolean
 }
 
-const UI_CONFIGS: Record<EnergyLevel, UIVisibilityConfig> = {
-  100: {
+const UI_CONFIGS = freezeObject({
+  100: freezeObject({
     sidebar: true,
     tabBar: true,
     statusBar: true,
@@ -26,8 +30,8 @@ const UI_CONFIGS: Record<EnergyLevel, UIVisibilityConfig> = {
     contentMaxWidth: 'none',
     contentFontScale: 1,
     readOnlyCursor: false,
-  },
-  75: {
+  }),
+  75: freezeObject({
     sidebar: true,
     tabBar: true,
     statusBar: true,
@@ -37,8 +41,8 @@ const UI_CONFIGS: Record<EnergyLevel, UIVisibilityConfig> = {
     contentMaxWidth: 'none',
     contentFontScale: 1,
     readOnlyCursor: false,
-  },
-  50: {
+  }),
+  50: freezeObject({
     sidebar: true,
     tabBar: true,
     statusBar: true,
@@ -48,8 +52,8 @@ const UI_CONFIGS: Record<EnergyLevel, UIVisibilityConfig> = {
     contentMaxWidth: '90ch',
     contentFontScale: 1,
     readOnlyCursor: false,
-  },
-  25: {
+  }),
+  25: freezeObject({
     sidebar: false,
     tabBar: false,
     statusBar: false,
@@ -59,8 +63,8 @@ const UI_CONFIGS: Record<EnergyLevel, UIVisibilityConfig> = {
     contentMaxWidth: '80ch',
     contentFontScale: 1.05,
     readOnlyCursor: false,
-  },
-  0: {
+  }),
+  0: freezeObject({
     sidebar: false,
     tabBar: false,
     statusBar: false,
@@ -70,14 +74,14 @@ const UI_CONFIGS: Record<EnergyLevel, UIVisibilityConfig> = {
     contentMaxWidth: '75ch',
     contentFontScale: 1.1,
     readOnlyCursor: true,
-  },
-}
+  }),
+}) satisfies Readonly<Record<EnergyLevel, Readonly<UIVisibilityConfig>>>
 
 export const uiVisibilityStrategy: AdaptationStrategy<UIVisibilityConfig> = {
   name: 'ui-visibility',
   describe(level) {
     const def = getEnergyLevel(level)
-    const config = UI_CONFIGS[level]
+    const config = UI_CONFIGS[def.value]
     const hidden = [
       !config.sidebar && 'sidebar',
       !config.tabBar && 'tabs',
@@ -91,7 +95,7 @@ export const uiVisibilityStrategy: AdaptationStrategy<UIVisibilityConfig> = {
     return `${def.label}: ${hidden.join(', ')} hidden, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity`
   },
   resolve(level) {
-    return UI_CONFIGS[level]
+    return UI_CONFIGS[getEnergyLevel(level).value]
   },
 }
 
@@ -99,66 +103,66 @@ export const uiVisibilityStrategy: AdaptationStrategy<UIVisibilityConfig> = {
 
 export interface NotificationConfig {
   /** Allow visual notifications (badges, toasts) */
-  allowVisual: boolean
+  readonly allowVisual: boolean
   /** Allow audio notifications */
-  allowSound: boolean
+  readonly allowSound: boolean
   /** Allow haptic feedback */
-  allowVibration: boolean
+  readonly allowVibration: boolean
   /** Minimum ms between batched notifications (0 = immediate) */
-  batchInterval: number
+  readonly batchInterval: number
   /** Minimum priority to show */
-  priorityThreshold: 'all' | 'high' | 'critical' | 'none'
+  readonly priorityThreshold: 'all' | 'high' | 'critical' | 'none'
 }
 
-const NOTIFICATION_CONFIGS: Record<EnergyLevel, NotificationConfig> = {
-  100: {
+const NOTIFICATION_CONFIGS = freezeObject({
+  100: freezeObject({
     allowVisual: true,
     allowSound: true,
     allowVibration: true,
     batchInterval: 0,
     priorityThreshold: 'all',
-  },
-  75: {
+  }),
+  75: freezeObject({
     allowVisual: true,
     allowSound: true,
     allowVibration: false,
     batchInterval: 0,
     priorityThreshold: 'all',
-  },
-  50: {
+  }),
+  50: freezeObject({
     allowVisual: true,
     allowSound: false,
     allowVibration: false,
     batchInterval: 5 * 60 * 1000, // 5 minutes
     priorityThreshold: 'high',
-  },
-  25: {
+  }),
+  25: freezeObject({
     allowVisual: true,
     allowSound: false,
     allowVibration: false,
     batchInterval: 15 * 60 * 1000, // 15 minutes
     priorityThreshold: 'critical',
-  },
-  0: {
+  }),
+  0: freezeObject({
     allowVisual: false,
     allowSound: false,
     allowVibration: false,
     batchInterval: 0,
     priorityThreshold: 'none',
-  },
-}
+  }),
+}) satisfies Readonly<Record<EnergyLevel, Readonly<NotificationConfig>>>
 
 export const notificationStrategy: AdaptationStrategy<NotificationConfig> = {
   name: 'notifications',
   describe(level) {
-    const config = NOTIFICATION_CONFIGS[level]
+    const def = getEnergyLevel(level)
+    const config = NOTIFICATION_CONFIGS[def.value]
     if (config.priorityThreshold === 'none') return 'Rest: All notifications silenced'
-    if (config.priorityThreshold === 'all')
-      return `${getEnergyLevel(level).label}: All notifications enabled`
-    return `${getEnergyLevel(level).label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`
+    if (config.priorityThreshold === 'all') return `${def.label}: All notifications enabled`
+    return `${def.label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`
   },
   resolve(level) {
-    return NOTIFICATION_CONFIGS[level]
+    return NOTIFICATION_CONFIGS[getEnergyLevel(level).value]
   },
 }
 
@@ -166,51 +170,51 @@ export const notificationStrategy: AdaptationStrategy<NotificationConfig> = {
 
 export interface TaskComplexityConfig {
   /** Maximum task complexity to surface */
-  maxComplexity: 'any' | 'moderate' | 'routine' | 'simple'
+  readonly maxComplexity: TaskComplexity
   /** Whether to proactively suggest breaks */
-  suggestBreaks: boolean
+  readonly suggestBreaks: boolean
   /** Minutes between break suggestions (when enabled) */
-  breakIntervalMinutes: number
+  readonly breakIntervalMinutes: number
 }
 
-const TASK_CONFIGS: Record<EnergyLevel, TaskComplexityConfig> = {
-  100: {
-    maxComplexity: 'any',
+const TASK_CONFIGS = freezeObject({
+  100: freezeObject({
+    maxComplexity: 'complex',
     suggestBreaks: false,
     breakIntervalMinutes: 0,
-  },
-  75: {
-    maxComplexity: 'any',
-    suggestBreaks: false,
-    breakIntervalMinutes: 0,
-  },
-  50: {
+  }),
+  75: freezeObject({
     maxComplexity: 'moderate',
+    suggestBreaks: false,
+    breakIntervalMinutes: 0,
+  }),
+  50: freezeObject({
+    maxComplexity: 'routine',
     suggestBreaks: true,
     breakIntervalMinutes: 45,
-  },
-  25: {
+  }),
+  25: freezeObject({
     maxComplexity: 'simple',
     suggestBreaks: true,
     breakIntervalMinutes: 25,
-  },
-  0: {
-    maxComplexity: 'simple',
+  }),
+  0: freezeObject({
+    maxComplexity: 'consumption',
     suggestBreaks: true,
     breakIntervalMinutes: 15,
-  },
-}
+  }),
+}) satisfies Readonly<Record<EnergyLevel, Readonly<TaskComplexityConfig>>>
 
 export const taskComplexityStrategy: AdaptationStrategy<TaskComplexityConfig> = {
   name: 'task-complexity',
   describe(level) {
-    const config = TASK_CONFIGS[level]
     const def = getEnergyLevel(level)
+    const config = TASK_CONFIGS[def.value]
     const parts = [`${def.label}: Max complexity: ${config.maxComplexity}`]
     if (config.suggestBreaks) parts.push(`breaks every ${config.breakIntervalMinutes}min`)
     return parts.join(', ')
   },
   resolve(level) {
-    return TASK_CONFIGS[level]
+    return TASK_CONFIGS[getEnergyLevel(level).value]
   },
 }

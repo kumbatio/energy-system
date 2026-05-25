@@ -1,4 +1,4 @@
-import type { EnergyChangeListener, EnergyLevel } from './types';
+import type { EnergyChangeListener, EnergyLevel } from './types.js';
 /**
  * Apply energy level to a root element.
  * Sets `data-energy-level` attribute and CSS custom properties

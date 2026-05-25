@@ -1,6 +1,6 @@
 {
   "name": "@kumbatio/neurodivergent-adhd-energy-system",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
@@ -41,6 +41,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check-types": "tsc --noEmit -p tsconfig.json",
+    "test": "pnpm run build && node --test --import tsx",
     "prepack": "pnpm run check-types && pnpm run build",
     "prepublishOnly": "pnpm run prepack",
     "pack:dry-run": "npm pack --dry-run",
@@ -52,8 +53,9 @@
     "check:fix-suggestions": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions . && oxfmt --write ."
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
-    "typescript": "^5.9.3"
+    "@types/react": "^19.2.15",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
   },
   "peerDependencies": {
     "react": ">=19"
@@ -64,6 +66,6 @@
     }
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

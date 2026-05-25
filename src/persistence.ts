@@ -1,5 +1,5 @@
-import { isEnergyLevel } from './levels'
-import type { EnergyLevel, EnergyPersistence, EnergyState } from './types'
+import { createEnergyState, isEnergyLevel } from './levels.js'
+import type { EnergyLevel, EnergyPersistence, EnergyState } from './types.js'
 
 function parsePersistedState(raw: string | null): EnergyState | null {
   if (!raw) return null
@@ -13,11 +13,11 @@ function parsePersistedState(raw: string | null): EnergyState | null {
       isEnergyLevel((parsed as { level: unknown }).level)
     ) {
       const obj = parsed as { level: EnergyLevel; timestamp?: number; source?: string }
-      return {
-        level: obj.level,
-        timestamp: typeof obj.timestamp === 'number' ? obj.timestamp : Date.now(),
-        source: obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual',
-      }
+      return createEnergyState(
+        obj.level,
+        obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual',
+        typeof obj.timestamp === 'number' ? obj.timestamp : Date.now(),
+      )
     }
     return null
   } catch {
@@ -47,7 +47,12 @@ export function localStoragePersistence(key = 'energy-state'): EnergyPersistence
       }
     },
     observe(onState) {
-      if (typeof globalThis.addEventListener !== 'function') return () => {}
+      if (
+        typeof globalThis.addEventListener !== 'function' ||
+        typeof localStorage === 'undefined'
+      ) {
+        return () => {}
+      }
 
       const handleStorage = (event: StorageEvent) => {
         if (event.storageArea !== localStorage) return
@@ -72,7 +77,10 @@ export function localStoragePersistence(key = 'energy-state'): EnergyPersistence
  * Useful for tests, SSR, or ephemeral sessions.
  */
 export function memoryPersistence(initial?: EnergyState): EnergyPersistence {
-  let stored = initial ?? null
+  let stored =
+    initial === undefined
+      ? null
+      : createEnergyState(initial.level, initial.source, initial.timestamp)
   const listeners = new Set<(state: EnergyState) => void>()
 
   return {
@@ -80,9 +88,9 @@ export function memoryPersistence(initial?: EnergyState): EnergyPersistence {
       return stored
     },
     async save(state: EnergyState): Promise<void> {
-      stored = state
+      stored = createEnergyState(state.level, state.source, state.timestamp)
       for (const listener of listeners) {
-        listener(state)
+        listener(stored)
       }
     },
     observe(onState) {

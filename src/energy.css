@@ -1,16 +1,16 @@
 /*
- * energy-system — Reference CSS for the UI visibility strategy
+ * energy-system - Reference CSS for the UI visibility strategy
  *
  * This is ONE way to consume energy state. Apps can also use
  * the JS strategy API directly and apply styles however they want.
  *
  * Apply these classes to your components:
- *   .energy-chrome     — any chrome element (titlebar, toolbar, status bar)
- *   .energy-sidebar    — sidebar container
- *   .energy-tab-bar    — tab bar container
- *   .energy-status-bar — status bar
- *   .energy-toolbar    — editor/app toolbar
- *   .energy-content    — main content area
+ *   .energy-chrome     - any chrome element (titlebar, toolbar, status bar)
+ *   .energy-sidebar    - sidebar container
+ *   .energy-tab-bar    - tab bar container
+ *   .energy-status-bar - status bar
+ *   .energy-toolbar    - editor/app toolbar
+ *   .energy-content    - main content area
  *
  * Set data-energy-level on your root element (body or container).
  */
@@ -23,7 +23,7 @@
   --energy-content-font-scale: 1;
 }
 
-/* ── Level 75 — Active ── */
+/* ── Level 75 - Active ── */
 
 [data-energy-level='75'] .energy-chrome {
   opacity: var(--energy-chrome-opacity, 0.7);
@@ -34,7 +34,7 @@
   opacity: var(--energy-chrome-opacity-hover, 1);
 }
 
-/* ── Level 50 — Steady ── */
+/* ── Level 50 - Steady ── */
 
 [data-energy-level='50'] .energy-chrome {
   opacity: var(--energy-chrome-opacity, 0.4);
@@ -50,7 +50,7 @@
   margin-inline: auto;
 }
 
-/* ── Level 25 — Low ── */
+/* ── Level 25 - Low ── */
 
 [data-energy-level='25'] .energy-sidebar,
 [data-energy-level='25'] .energy-tab-bar,
@@ -74,7 +74,7 @@
   font-size: calc(1em * var(--energy-content-font-scale, 1.05));
 }
 
-/* ── Level 0 — Rest ── */
+/* ── Level 0 - Rest ── */
 
 [data-energy-level='0'] .energy-sidebar,
 [data-energy-level='0'] .energy-tab-bar,

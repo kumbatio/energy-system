@@ -1,10 +1,9 @@
-import { isEnergyLevel } from './levels'
-import type { EnergyLevel } from './types'
+import { isEnergyLevel } from './levels.js'
+import type { EnergyLevel } from './types.js'
 
 const NATIVE_ENERGY_LEVELS: readonly EnergyLevel[] = [100, 75, 50, 25, 0]
 
-const hasOwn = (target: object, key: PropertyKey): boolean =>
-  Object.hasOwn(target, key)
+const hasOwn = (target: object, key: PropertyKey): boolean => Object.hasOwn(target, key)
 
 /**
  * Cycle through any discrete numeric level list.
@@ -92,18 +91,19 @@ export function createExternalLevelCompatibility<TExternal extends number>(
   options: ExternalLevelCompatibilityOptions<TExternal>,
 ): ExternalLevelCompatibility<TExternal> {
   const { levels, toEnergyLevel, fallbackLevel } = options
+  const normalizedLevels = Object.freeze([...levels])
 
-  if (levels.length === 0) {
+  if (normalizedLevels.length === 0) {
     throw new Error('External compatibility requires at least one level value')
   }
 
-  if (!levels.includes(fallbackLevel)) {
+  if (!normalizedLevels.includes(fallbackLevel)) {
     throw new Error('fallbackLevel must be present in levels')
   }
 
   const normalizedMap = new Map<TExternal, EnergyLevel>()
 
-  for (const externalLevel of levels) {
+  for (const externalLevel of normalizedLevels) {
     if (!hasOwn(toEnergyLevel, externalLevel)) {
       throw new Error(`Missing toEnergyLevel mapping for external level: ${externalLevel}`)
     }
@@ -118,11 +118,10 @@ export function createExternalLevelCompatibility<TExternal extends number>(
     normalizedMap.set(externalLevel, mapped)
   }
 
-  const fallbackEnergyLevel =
-    options.fallbackEnergyLevel ?? normalizedMap.get(fallbackLevel) ?? 100
+  const fallbackEnergyLevel = options.fallbackEnergyLevel ?? normalizedMap.get(fallbackLevel) ?? 100
 
   const reverseMap = new Map<EnergyLevel, TExternal>()
-  for (const externalLevel of levels) {
+  for (const externalLevel of normalizedLevels) {
     const mapped = normalizedMap.get(externalLevel)
     if (!mapped) continue
     if (!reverseMap.has(mapped)) {
@@ -136,7 +135,11 @@ export function createExternalLevelCompatibility<TExternal extends number>(
       return isEnergyLevel(mapped) ? mapped : fallbackEnergyLevel
     }
 
-    const nearestExternal = mapToNearestDiscreteLevel(externalLevel, levels, fallbackLevel)
+    const nearestExternal = mapToNearestDiscreteLevel(
+      externalLevel,
+      normalizedLevels,
+      fallbackLevel,
+    )
     return normalizedMap.get(nearestExternal) ?? fallbackEnergyLevel
   }
 
@@ -149,7 +152,7 @@ export function createExternalLevelCompatibility<TExternal extends number>(
     let nearest = fallbackLevel
     let nearestDistance = Number.POSITIVE_INFINITY
 
-    for (const externalLevel of levels) {
+    for (const externalLevel of normalizedLevels) {
       const mapped = normalizedMap.get(externalLevel) ?? fallbackEnergyLevel
       const distance = Math.abs(mapped - level)
       if (distance < nearestDistance) {
@@ -162,15 +165,15 @@ export function createExternalLevelCompatibility<TExternal extends number>(
   }
 
   const cycleExternal = (current: TExternal | number): TExternal =>
-    cycleDiscreteLevel(current, levels, fallbackLevel)
+    cycleDiscreteLevel(current, normalizedLevels, fallbackLevel)
 
-  return {
-    levels,
+  return Object.freeze({
+    levels: normalizedLevels,
     fallbackLevel,
     fallbackEnergyLevel,
     toEnergyLevel: toNativeLevel,
     fromEnergyLevel: fromNativeLevel,
     cycleExternalLevel: cycleExternal,
-    cycleMappedEnergyLevel: (current) => toNativeLevel(cycleExternal(current)),
-  }
+    cycleMappedEnergyLevel: (current: TExternal | number) => toNativeLevel(cycleExternal(current)),
+  })
 }

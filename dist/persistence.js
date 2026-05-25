@@ -1,4 +1,4 @@
-import { isEnergyLevel } from './levels';
+import { createEnergyState, isEnergyLevel } from './levels.js';
 function parsePersistedState(raw) {
     if (!raw)
         return null;
@@ -9,11 +9,7 @@ function parsePersistedState(raw) {
             'level' in parsed &&
             isEnergyLevel(parsed.level)) {
             const obj = parsed;
-            return {
-                level: obj.level,
-                timestamp: typeof obj.timestamp === 'number' ? obj.timestamp : Date.now(),
-                source: obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual',
-            };
+            return createEnergyState(obj.level, obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual', typeof obj.timestamp === 'number' ? obj.timestamp : Date.now());
         }
         return null;
     }
@@ -43,8 +39,10 @@ export function localStoragePersistence(key = 'energy-state') {
             }
         },
         observe(onState) {
-            if (typeof globalThis.addEventListener !== 'function')
+            if (typeof globalThis.addEventListener !== 'function' ||
+                typeof localStorage === 'undefined') {
                 return () => { };
+            }
             const handleStorage = (event) => {
                 if (event.storageArea !== localStorage)
                     return;
@@ -67,16 +65,18 @@ export function localStoragePersistence(key = 'energy-state') {
  * Useful for tests, SSR, or ephemeral sessions.
  */
 export function memoryPersistence(initial) {
-    let stored = initial ?? null;
+    let stored = initial === undefined
+        ? null
+        : createEnergyState(initial.level, initial.source, initial.timestamp);
     const listeners = new Set();
     return {
         async load() {
             return stored;
         },
         async save(state) {
-            stored = state;
+            stored = createEnergyState(state.level, state.source, state.timestamp);
             for (const listener of listeners) {
-                listener(state);
+                listener(stored);
             }
         },
         observe(onState) {

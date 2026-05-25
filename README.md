@@ -23,7 +23,7 @@ This library gives applications a structured way to adapt to energy state instea
 ## Features
 
 - 5-level energy model: `100 | 75 | 50 | 25 | 0`
-- Rich state object: `level`, `timestamp`, `source`
+- Rich immutable state object: `level`, `timestamp`, `source`
 - Framework-agnostic core engine
 - Strategy system for behavior adaptation
 - Built-in strategies:
@@ -140,7 +140,7 @@ Then use classes like:
 
 - `createEnergyEngine(options?)`
 - `getEnergyLevels()`, `getEnergyLevel(level)`
-- `cycleEnergyLevel(level)`, `isEnergyLevel(value)`
+- `cycleEnergyLevel(level)`, `isEnergyLevel(value)`, `isEnergySource(value)`
 - `createExternalLevelCompatibility(options)`
 - `cycleDiscreteLevel(current, levels, fallback)`
 - `mapToNearestDiscreteLevel(value, levels, fallback)`
@@ -171,9 +171,10 @@ Then use classes like:
 
 ### Additional APIs
 
-- `createEnergyEngine({ clock })` — inject a deterministic time source
-- `EnergyPersistence.observe(onState)` — subscribe to external state changes
-- `getEnergyMetrics(state, now?)` — derive productivity/break/task guidance metrics
+- `createEnergyEngine({ clock })` - inject a deterministic time source
+- `engine.dispose()` - release engine-owned observation/subscription resources
+- `EnergyPersistence.observe(onState)` - subscribe to external state changes
+- `getEnergyMetrics(state, now?)` - derive productivity/break/task guidance metrics
 
 ## Migrating from legacy scales to native package levels
 

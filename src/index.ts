@@ -14,8 +14,8 @@ export type {
   FocusDuration,
   InterruptionTolerance,
   TaskComplexity,
-} from './types'
-export { ENERGY_LEVEL_VALUES } from './types'
+} from './types.js'
+export { ENERGY_LEVEL_VALUES, ENERGY_SOURCE_VALUES } from './types.js'
 
 // Level definitions and pure functions
 export {
@@ -24,28 +24,25 @@ export {
   getEnergyLevel,
   getEnergyLevels,
   isEnergyLevel,
+  isEnergySource,
   isHigherEnergy,
-} from './levels'
-
+} from './levels.js'
 // Compatibility helpers for non-native external level models
-export type {
-  ExternalLevelCompatibility,
-  ExternalLevelCompatibilityOptions,
-} from './compat'
+export type { ExternalLevelCompatibility, ExternalLevelCompatibilityOptions } from './compat.js'
 export {
   createExternalLevelCompatibility,
   cycleDiscreteLevel,
   mapToNearestDiscreteLevel,
   mapToNearestEnergyLevel,
-} from './compat'
+} from './compat.js'
 
 // Derived metrics
-export { getEnergyMetrics } from './metrics'
+export { getEnergyMetrics } from './metrics.js'
 
 // Engine
-export type { EnergyEngine, EnergyEngineOptions } from './engine'
-export { createEnergyEngine } from './engine'
+export type { EnergyEngine, EnergyEngineOptions } from './engine.js'
+export { createEnergyEngine } from './engine.js'
 
 // Built-in strategies
-export type { NotificationConfig, TaskComplexityConfig, UIVisibilityConfig } from './strategies'
-export { notificationStrategy, taskComplexityStrategy, uiVisibilityStrategy } from './strategies'
+export type { NotificationConfig, TaskComplexityConfig, UIVisibilityConfig } from './strategies.js'
+export { notificationStrategy, taskComplexityStrategy, uiVisibilityStrategy } from './strategies.js'
