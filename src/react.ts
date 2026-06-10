@@ -117,14 +117,14 @@ export function EnergyProvider({
 
 function useEnergyStoreState(): EnergyState {
   const engine = useEngine()
-  return useSyncExternalStore(
-    (onStoreChange) =>
-      engine.subscribe(() => {
-        onStoreChange()
-      }),
-    engine.getState,
-    engine.getState,
+  // Stable subscribe identity so useSyncExternalStore doesn't unsubscribe +
+  // resubscribe on every render. `engine.getState` is closure-backed (doesn't
+  // use `this`), so it's safe to pass unbound as the snapshot getter.
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => engine.subscribe(() => onStoreChange()),
+    [engine],
   )
+  return useSyncExternalStore(subscribe, engine.getState, engine.getState)
 }
 
 /** Get the full energy state (level + timestamp + source) */
