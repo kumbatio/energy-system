@@ -1,4 +1,4 @@
-import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useSyncExternalStore, } from 'react';
 import { applyEnergyLevel } from './dom.js';
 import { createEnergyEngine } from './engine.js';
 import { getEnergyLevel, getEnergyLevels } from './levels.js';
@@ -12,33 +12,42 @@ function useEngine() {
 }
 export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, persistence, onLevelChange, applyToDOM = true, children, }) {
     const internalEngineRef = useRef(null);
-    const previousExternalEngineRef = useRef(externalEngine);
+    const [, refreshEngine] = useReducer((version) => version + 1, 0);
+    // `defaultLevel` and `persistence` are initial-only by contract: they
+    // configure the engine the provider creates, they do not reconfigure it.
+    const createInternalEngine = () => createEnergyEngine({
+        initialLevel: defaultLevel,
+        ...(persistence ? { persistence } : {}),
+    });
     if (!externalEngine && !internalEngineRef.current) {
-        const options = {
-            initialLevel: defaultLevel,
-            ...(persistence ? { persistence } : {}),
-        };
-        internalEngineRef.current = createEnergyEngine(options);
+        internalEngineRef.current = createInternalEngine();
     }
     const engine = externalEngine ?? internalEngineRef.current;
     if (!engine) {
         throw new Error('EnergyProvider could not initialize an engine instance');
     }
+    // Own the internal engine's lifecycle. The cleanup disposes it; the setup
+    // recreates it when the previous one was disposed (StrictMode re-runs
+    // effects without re-rendering, so render-time lazy init cannot recover).
     useEffect(() => {
-        const previousExternalEngine = previousExternalEngineRef.current;
-        previousExternalEngineRef.current = externalEngine;
-        if (!externalEngine)
+        if (externalEngine) {
+            // An external engine took over; release the provider-owned engine.
+            internalEngineRef.current?.dispose();
+            internalEngineRef.current = null;
             return;
-        if (previousExternalEngine === externalEngine)
-            return;
-        if (!internalEngineRef.current)
-            return;
-        internalEngineRef.current.dispose();
-        internalEngineRef.current = null;
+        }
+        if (!internalEngineRef.current) {
+            internalEngineRef.current = createInternalEngine();
+            refreshEngine();
+        }
+        return () => {
+            internalEngineRef.current?.dispose();
+            internalEngineRef.current = null;
+        };
     }, [externalEngine]);
     // Sync to DOM when state changes
     useEffect(() => {
-        if (!applyToDOM)
+        if (!applyToDOM || typeof document === 'undefined')
             return;
         // Apply initial
         applyEnergyLevel(engine.getState().level);
@@ -52,20 +61,16 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
             return;
         return engine.subscribe(onLevelChange);
     }, [engine, onLevelChange]);
-    useEffect(() => {
-        return () => {
-            internalEngineRef.current?.dispose();
-            internalEngineRef.current = null;
-        };
-    }, []);
     return createElement(EnergyEngineContext.Provider, { value: engine }, children);
 }
 // ── Hooks ──
 function useEnergyStoreState() {
     const engine = useEngine();
-    return useSyncExternalStore((onStoreChange) => engine.subscribe(() => {
-        onStoreChange();
-    }), engine.getState, engine.getState);
+    // Stable subscribe identity so useSyncExternalStore doesn't unsubscribe +
+    // resubscribe on every render. `engine.getState` is closure-backed (doesn't
+    // use `this`), so it's safe to pass unbound as the snapshot getter.
+    const subscribe = useCallback((onStoreChange) => engine.subscribe(() => onStoreChange()), [engine]);
+    return useSyncExternalStore(subscribe, engine.getState, engine.getState);
 }
 /** Get the full energy state (level + timestamp + source) */
 export function useEnergyState() {

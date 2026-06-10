@@ -35,7 +35,10 @@ export function localStoragePersistence(key = 'energy-state') {
                 localStorage.setItem(key, JSON.stringify(state));
             }
             catch (err) {
-                console.error(`[energy-system] Failed to save localStorage state for key '${key}'`, err);
+                // Rejecting (instead of swallowing) lets the engine's persistence
+                // queue observe the failure and retry with backoff. This also covers
+                // environments without localStorage (ReferenceError).
+                throw new Error(`Failed to save energy state to localStorage key '${key}'`, { cause: err });
             }
         },
         observe(onState) {

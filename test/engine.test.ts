@@ -5,11 +5,13 @@ import { applyEnergyLevel } from '../src/dom.ts'
 import {
   createEnergyEngine,
   createEnergyState,
+  cycleEnergyLevel,
   getEnergyLevel,
   getEnergyMetrics,
   taskComplexityStrategy,
   uiVisibilityStrategy,
 } from '../src/index.ts'
+import { localStoragePersistence } from '../src/persistence.ts'
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -237,6 +239,111 @@ test('dispose releases persistence observation and blocks later external updates
 
   assert.equal(cleanedUp, true)
   assert.equal(engine.getState().level, 100)
+})
+
+test('cycleEnergyLevel follows the documented order and recovers from invalid input', () => {
+  assert.equal(cycleEnergyLevel(100), 75)
+  assert.equal(cycleEnergyLevel(75), 50)
+  assert.equal(cycleEnergyLevel(50), 25)
+  assert.equal(cycleEnergyLevel(25), 0)
+  assert.equal(cycleEnergyLevel(0), 100)
+  assert.equal(cycleEnergyLevel(33 as never), 100)
+})
+
+test('state-changing operations after dispose are inert', () => {
+  const changes: Array<[number, number]> = []
+  const engine = createEnergyEngine({
+    initialLevel: 100,
+    onChange: (state, prev) => {
+      changes.push([prev.level, state.level])
+    },
+  })
+
+  engine.setLevel(75)
+  engine.dispose()
+  engine.setLevel(25)
+  engine.cycleLevel()
+
+  assert.equal(engine.getState().level, 75)
+  assert.deepEqual(changes, [[100, 75]])
+})
+
+test('failed saves are retried with backoff until the state is durably persisted', async () => {
+  let attempts = 0
+  let persisted: ReturnType<typeof createEnergyState> | null = null
+
+  const persistence = {
+    async load() {
+      return null
+    },
+    async save(state: ReturnType<typeof createEnergyState>) {
+      attempts += 1
+      if (attempts < 2) throw new Error('transient failure')
+      persisted = state
+    },
+  }
+
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  const engine = createEnergyEngine({ initialLevel: 100, persistence })
+
+  try {
+    engine.setLevel(50)
+    await sleep(400)
+
+    assert.equal(attempts, 2)
+    assert.equal(persisted?.level, 50)
+  } finally {
+    engine.dispose()
+    console.error = originalConsoleError
+  }
+})
+
+test('localStorage persistence save surfaces failures instead of swallowing them', async () => {
+  const globalWithStorage = globalThis as { localStorage?: unknown }
+  const originalStorage = globalWithStorage.localStorage
+
+  try {
+    delete globalWithStorage.localStorage
+    const unavailable = localStoragePersistence('energy-test')
+    await assert.rejects(
+      () => unavailable.save(createEnergyState(50, 'manual', 1)),
+      /Failed to save energy state to localStorage key 'energy-test'/,
+    )
+
+    globalWithStorage.localStorage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('quota exceeded')
+      },
+    }
+    const full = localStoragePersistence('energy-test')
+    await assert.rejects(
+      () => full.save(createEnergyState(50, 'manual', 1)),
+      /Failed to save energy state to localStorage key 'energy-test'/,
+    )
+  } finally {
+    if (originalStorage === undefined) {
+      delete globalWithStorage.localStorage
+    } else {
+      globalWithStorage.localStorage = originalStorage
+    }
+  }
+})
+
+test('break cadence agrees between task strategy and metrics wherever breaks are suggested', () => {
+  for (const level of [100, 75, 50, 25, 0] as const) {
+    const config = taskComplexityStrategy.resolve(level)
+    if (!config.suggestBreaks) continue
+
+    const metrics = getEnergyMetrics(createEnergyState(level, 'manual', 10), 10)
+    assert.equal(
+      config.breakIntervalMinutes,
+      metrics.suggestedBreakIntervalMinutes,
+      `break cadence diverges at level ${level}`,
+    )
+  }
 })
 
 test('task complexity guidance stays aligned across levels, metrics, and level definitions', () => {

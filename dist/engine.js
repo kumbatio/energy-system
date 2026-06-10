@@ -2,6 +2,8 @@ import { createEnergyState, cycleEnergyLevel, isEnergyLevel, isEnergySource } fr
 function logEngineError(message, err) {
     console.error(`[energy-system] ${message}`, err);
 }
+const PERSIST_RETRY_INITIAL_MS = 250;
+const PERSIST_RETRY_MAX_MS = 30_000;
 function resolveNow(clock) {
     if (typeof clock === 'function')
         return clock;
@@ -50,6 +52,7 @@ export function createEnergyEngine(options = {}) {
     let requestedPersistVersion = 0;
     let persistTask;
     let persistRetryTimer;
+    let persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS;
     function queuePersist() {
         if (!persistence || disposed)
             return;
@@ -63,15 +66,20 @@ export function createEnergyEngine(options = {}) {
                 try {
                     await persistence.save(snapshot);
                     persistedVersion = Math.max(persistedVersion, snapshotVersion);
+                    persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS;
                 }
                 catch (err) {
                     logEngineError('Failed to persist energy state', err);
                     persistTask = undefined;
                     if (!disposed && !persistRetryTimer && persistedVersion < requestedPersistVersion) {
+                        const retryDelayMs = persistRetryDelayMs;
+                        // Exponential backoff so a persistently failing store (e.g. quota
+                        // exceeded) is not hammered every 250ms forever.
+                        persistRetryDelayMs = Math.min(persistRetryDelayMs * 2, PERSIST_RETRY_MAX_MS);
                         persistRetryTimer = setTimeout(() => {
                             persistRetryTimer = undefined;
                             queuePersist();
-                        }, 250);
+                        }, retryDelayMs);
                     }
                     return;
                 }
@@ -101,7 +109,9 @@ export function createEnergyEngine(options = {}) {
         }
     }
     function applyState(next) {
-        if (isSameState(next, state))
+        // A disposed engine is inert: it must not mutate state, notify onChange,
+        // or schedule persistence after its resources were released.
+        if (disposed || isSameState(next, state))
             return false;
         const prev = state;
         state = next;
@@ -118,9 +128,7 @@ export function createEnergyEngine(options = {}) {
             return state;
         },
         setLevel(level, source = 'manual') {
-            const next = createEnergyState(level, source, now());
-            if (!applyState(next))
-                return;
+            applyState(createEnergyState(level, source, now()));
         },
         cycleLevel() {
             engine.setLevel(cycleEnergyLevel(state.level), 'manual');

@@ -13,14 +13,42 @@
  *   .energy-content    - main content area
  *
  * Set data-energy-level on your root element (body or container).
+ *
+ * The per-level custom property values below mirror uiVisibilityStrategy.
+ * applyEnergyLevel() sets the same properties as inline styles, which take
+ * precedence but resolve to identical values, so the JS and CSS-only paths
+ * always agree.
  */
 
-/* ── Base custom properties ── */
+/* ── Custom properties per level (mirror of uiVisibilityStrategy) ── */
+
 [data-energy-level] {
   --energy-chrome-opacity: 1;
   --energy-chrome-opacity-hover: 1;
   --energy-content-max-width: none;
   --energy-content-font-scale: 1;
+}
+
+[data-energy-level='75'] {
+  --energy-chrome-opacity: 0.7;
+}
+
+[data-energy-level='50'] {
+  --energy-chrome-opacity: 0.4;
+  --energy-content-max-width: 90ch;
+}
+
+[data-energy-level='25'] {
+  --energy-chrome-opacity: 0.1;
+  --energy-content-max-width: 80ch;
+  --energy-content-font-scale: 1.05;
+}
+
+[data-energy-level='0'] {
+  --energy-chrome-opacity: 0.05;
+  --energy-chrome-opacity-hover: 0.8;
+  --energy-content-max-width: 75ch;
+  --energy-content-font-scale: 1.1;
 }
 
 /* ── Level 75 - Active ── */
@@ -103,8 +131,4 @@
 
 [data-energy-level='0'] .energy-content * {
   cursor: default !important;
-}
-
-[data-energy-level='0'] .energy-content:focus {
-  outline: none;
 }

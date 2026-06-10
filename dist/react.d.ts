@@ -41,5 +41,5 @@ export interface EnergyIndicatorProps {
     children: (props: EnergyIndicatorRenderProps) => React.ReactNode;
 }
 /** Headless energy indicator - bring your own UI */
-export declare function EnergyIndicator({ children }: EnergyIndicatorProps): React.ReactElement;
+export declare function EnergyIndicator({ children }: EnergyIndicatorProps): React.ReactNode;
 //# sourceMappingURL=react.d.ts.map

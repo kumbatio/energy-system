@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useSyncExternalStore,
 } from 'react'
@@ -57,15 +58,18 @@ export function EnergyProvider({
   children,
 }: EnergyProviderProps) {
   const internalEngineRef = useRef<EnergyEngine | null>(null)
-  const previousExternalEngineRef = useRef<EnergyEngine | undefined>(externalEngine)
+  const [, refreshEngine] = useReducer((version: number) => version + 1, 0)
 
-  if (!externalEngine && !internalEngineRef.current) {
-    const options = {
+  // `defaultLevel` and `persistence` are initial-only by contract: they
+  // configure the engine the provider creates, they do not reconfigure it.
+  const createInternalEngine = () =>
+    createEnergyEngine({
       initialLevel: defaultLevel,
       ...(persistence ? { persistence } : {}),
-    }
+    })
 
-    internalEngineRef.current = createEnergyEngine(options)
+  if (!externalEngine && !internalEngineRef.current) {
+    internalEngineRef.current = createInternalEngine()
   }
 
   const engine = externalEngine ?? internalEngineRef.current
@@ -74,21 +78,31 @@ export function EnergyProvider({
     throw new Error('EnergyProvider could not initialize an engine instance')
   }
 
+  // Own the internal engine's lifecycle. The cleanup disposes it; the setup
+  // recreates it when the previous one was disposed (StrictMode re-runs
+  // effects without re-rendering, so render-time lazy init cannot recover).
   useEffect(() => {
-    const previousExternalEngine = previousExternalEngineRef.current
-    previousExternalEngineRef.current = externalEngine
+    if (externalEngine) {
+      // An external engine took over; release the provider-owned engine.
+      internalEngineRef.current?.dispose()
+      internalEngineRef.current = null
+      return
+    }
 
-    if (!externalEngine) return
-    if (previousExternalEngine === externalEngine) return
-    if (!internalEngineRef.current) return
+    if (!internalEngineRef.current) {
+      internalEngineRef.current = createInternalEngine()
+      refreshEngine()
+    }
 
-    internalEngineRef.current.dispose()
-    internalEngineRef.current = null
+    return () => {
+      internalEngineRef.current?.dispose()
+      internalEngineRef.current = null
+    }
   }, [externalEngine])
 
   // Sync to DOM when state changes
   useEffect(() => {
-    if (!applyToDOM) return
+    if (!applyToDOM || typeof document === 'undefined') return
     // Apply initial
     applyEnergyLevel(engine.getState().level)
     // Subscribe to changes
@@ -102,13 +116,6 @@ export function EnergyProvider({
 
     return engine.subscribe(onLevelChange)
   }, [engine, onLevelChange])
-
-  useEffect(() => {
-    return () => {
-      internalEngineRef.current?.dispose()
-      internalEngineRef.current = null
-    }
-  }, [])
 
   return createElement(EnergyEngineContext.Provider, { value: engine }, children)
 }
@@ -189,7 +196,7 @@ export interface EnergyIndicatorProps {
 }
 
 /** Headless energy indicator - bring your own UI */
-export function EnergyIndicator({ children }: EnergyIndicatorProps) {
+export function EnergyIndicator({ children }: EnergyIndicatorProps): React.ReactNode {
   const [level, setLevel] = useEnergyLevel()
   const state = useEnergyStoreState()
   const cycle = useEnergyLevelCycler()
@@ -207,5 +214,5 @@ export function EnergyIndicator({ children }: EnergyIndicatorProps) {
     levels,
     cycle,
     setLevel,
-  }) as React.ReactElement
+  })
 }
