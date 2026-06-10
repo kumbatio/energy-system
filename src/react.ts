@@ -128,7 +128,10 @@ function useEnergyStoreState(): EnergyState {
   // resubscribe on every render. `engine.getState` is closure-backed (doesn't
   // use `this`), so it's safe to pass unbound as the snapshot getter.
   const subscribe = useCallback(
-    (onStoreChange: () => void) => engine.subscribe(() => onStoreChange()),
+    (onStoreChange: () => void) =>
+      engine.subscribe(() => {
+        onStoreChange()
+      }),
     [engine],
   )
   return useSyncExternalStore(subscribe, engine.getState, engine.getState)
