@@ -108,7 +108,12 @@ export interface EnergyMetrics {
   readonly suggestedBreakIntervalMinutes: number
   /** Recommended task complexity based on cognitive profile */
   readonly recommendedTaskComplexity: TaskComplexity
-  /** Heuristic signal for maintainability of this state */
+  /**
+   * Heuristic signal for maintainability of this state.
+   * True only for mid-range levels (25/50/75): peak (100) is a burst state
+   * that depletes rather than holds, and rest (0) is recovery, not a working
+   * state to maintain. Both extremes report false.
+   */
   readonly sustainable: boolean
   /** Optional guidance for recovery horizon */
   readonly recoveryHintMinutes?: number
