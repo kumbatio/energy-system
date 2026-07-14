@@ -1,4 +1,4 @@
-# @kumbatio/neurodivergent-adhd-energy-system
+# @kumbatio/energy-system
 
 Framework-agnostic TypeScript library for building **energy-aware applications**.
 
@@ -41,10 +41,10 @@ This library gives applications a structured way to adapt to energy state instea
 ## Installation
 
 ```bash
-pnpm add @kumbatio/neurodivergent-adhd-energy-system
+pnpm add @kumbatio/energy-system
 ```
 
-React integration is optional and provided via `@kumbatio/neurodivergent-adhd-energy-system/react`.
+React integration is optional and provided via `@kumbatio/energy-system/react`.
 
 ## Quick start (core)
 
@@ -53,8 +53,8 @@ import {
   createEnergyEngine,
   uiVisibilityStrategy,
   notificationStrategy,
-} from '@kumbatio/neurodivergent-adhd-energy-system'
-import { localStoragePersistence } from '@kumbatio/neurodivergent-adhd-energy-system/persistence'
+} from '@kumbatio/energy-system'
+import { localStoragePersistence } from '@kumbatio/energy-system/persistence'
 
 const engine = createEnergyEngine({
   initialLevel: 75,
@@ -75,8 +75,8 @@ import {
   useEnergyLevel,
   useEnergyState,
   useStrategy,
-} from '@kumbatio/neurodivergent-adhd-energy-system/react'
-import { uiVisibilityStrategy } from '@kumbatio/neurodivergent-adhd-energy-system'
+} from '@kumbatio/energy-system/react'
+import { uiVisibilityStrategy } from '@kumbatio/energy-system'
 
 function Screen() {
   const [level, setLevel] = useEnergyLevel()
@@ -108,7 +108,7 @@ export function App() {
 import {
   applyEnergyLevel,
   observeEnergyLevel,
-} from '@kumbatio/neurodivergent-adhd-energy-system/dom'
+} from '@kumbatio/energy-system/dom'
 
 applyEnergyLevel(50)
 
@@ -122,7 +122,7 @@ const cleanup = observeEnergyLevel((state, prev) => {
 Import the reference stylesheet:
 
 ```ts
-import '@kumbatio/neurodivergent-adhd-energy-system/css'
+import '@kumbatio/energy-system/css'
 ```
 
 Then use classes like:
@@ -148,7 +148,7 @@ Then use classes like:
 - Strategies: `uiVisibilityStrategy`, `notificationStrategy`, `taskComplexityStrategy`
 - Types: `EnergyLevel`, `EnergyState`, `AdaptationStrategy`, etc.
 
-### `@kumbatio/neurodivergent-adhd-energy-system/react`
+### `@kumbatio/energy-system/react`
 
 - `EnergyProvider`
 - `useEnergyState()`
@@ -158,12 +158,12 @@ Then use classes like:
 - `useEnergyGate(minLevel)`
 - `EnergyIndicator`
 
-### `@kumbatio/neurodivergent-adhd-energy-system/persistence`
+### `@kumbatio/energy-system/persistence`
 
 - `localStoragePersistence(key?)`
 - `memoryPersistence(initial?)`
 
-### `@kumbatio/neurodivergent-adhd-energy-system/dom`
+### `@kumbatio/energy-system/dom`
 
 - `applyEnergyLevel(level, root?)`
 - `readEnergyLevel(root?)`
@@ -186,7 +186,7 @@ use compatibility helpers during migration.
 import {
   createExternalLevelCompatibility,
   cycleEnergyLevel,
-} from '@kumbatio/neurodivergent-adhd-energy-system'
+} from '@kumbatio/energy-system'
 
 const legacy = createExternalLevelCompatibility({
   levels: [100, 66, 33, 0] as const,
