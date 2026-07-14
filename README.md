@@ -228,3 +228,20 @@ pnpm run pack:dry-run
 
 This package is framework-agnostic at its core. Platform-specific persistence
 adapters (e.g., SQLite-backed desktop stores) should live in consuming apps.
+
+## Kumbatio
+
+`energy-system` is the infrastructure layer of [Kumbatio](https://kumbat.io) — an ecosystem of open-source, neuroinclusive software built from lived experience with ADHD and depression. The position behind it, in one line: **energy ≠ time**, and software should adapt to real cognitive capacity instead of assuming a default brain.
+
+- The full argument: [kumbat.io/manifesto](https://kumbat.io/manifesto) — agree? [Sign it](https://kumbat.io/endorse)
+- Where this library is going: [ROADMAP.md](./ROADMAP.md)
+- How to help: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Live demo: [kumbat.io](https://kumbat.io) adapts its entire interface with this model — move the energy control and watch
+
+## License
+
+[MIT](./LICENSE)
+
+---
+
+_energy-system supports self-management and workflow adaptation. It is not a medical device, diagnosis tool, or treatment._

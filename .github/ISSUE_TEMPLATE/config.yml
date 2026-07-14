@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question / discussion
+    url: https://github.com/kumbatio/energy-system/discussions
+    about: Not sure it's a bug? Ask here — two sentences is a fine question.
+  - name: Everything else
+    url: mailto:hello@kumbat.io
+    about: Partnerships, press, or anything that doesn't fit an issue.

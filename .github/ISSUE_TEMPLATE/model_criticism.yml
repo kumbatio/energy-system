@@ -1,0 +1,30 @@
+name: Model criticism
+description: A place where the 5-level model oversimplifies or breaks. Genuinely wanted.
+labels: [model]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The energy model is a design hypothesis, not settled truth. Criticism with a concrete scenario is one of the most valuable contributions this project can receive.
+  - type: textarea
+    id: scenario
+    attributes:
+      label: The scenario that breaks it
+      description: A real situation where the model gives the wrong answer or can't express what's needed.
+      placeholder: 'ADHD hyperfocus is high capacity for ONE thing and near-zero for everything else — a single scalar level can't represent that.'
+    validations:
+      required: true
+  - type: textarea
+    id: direction
+    attributes:
+      label: A direction, if you have one
+      description: Optional. Identifying the break is already the contribution.
+    validations:
+      required: false
+  - type: input
+    id: grounding
+    attributes:
+      label: Related research or lived experience
+      description: Optional — a paper, an article, or 'personal experience' is a valid citation here.
+    validations:
+      required: false

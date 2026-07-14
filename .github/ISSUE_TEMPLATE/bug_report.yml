@@ -1,0 +1,44 @@
+name: Bug report
+description: Something doesn't work. Short is fine.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The minimum viable bug report is two sentences. Fill what you can, skip what you can't — a partial report beats no report.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, and what went wrong?
+      placeholder: 'Set level to 25, the adaptation strategy for notifications still fired.'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Version / environment
+      placeholder: 'energy-system 0.3.1, React 19, Chrome'
+    validations:
+      required: false
+  - type: dropdown
+    id: energy-levels
+    attributes:
+      label: Which energy levels are affected?
+      multiple: true
+      options:
+        - '0 (rest)'
+        - '25 (low)'
+        - '50 (steady)'
+        - '75 (active)'
+        - '100 (peak)'
+        - 'transitions between levels'
+        - 'not sure'
+    validations:
+      required: false

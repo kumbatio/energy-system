@@ -1,0 +1,30 @@
+name: Adaptation strategy proposal
+description: A reusable pattern mapping energy levels to interface behavior.
+labels: [adaptation-strategy]
+body:
+  - type: input
+    id: situation
+    attributes:
+      label: UI situation
+      placeholder: 'Multi-step form / notification center / onboarding flow'
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior per level
+      description: What should happen at each level? Levels you skip inherit from the nearest defined one.
+      placeholder: |
+        100 — full form, all optional fields, inline validation
+        50 — required fields only, one per screen
+        25 — save draft, offer to resume later
+        0 — hidden entirely
+    validations:
+      required: true
+  - type: textarea
+    id: filter
+    attributes:
+      label: Decision filter check
+      description: 'Does it reduce load? Improve agency? Help at low energy? Work without judging? A sentence is enough.'
+    validations:
+      required: false
