@@ -16,7 +16,8 @@
 
 ## M1 — Identity and polish (v0.1)
 
-- [ ] Rename package to `@kumbatio/energy-system` (deprecate the old name on npm)
+- [x] Rename package to `@kumbatio/energy-system` in the repo
+- [ ] Publish `@kumbatio/energy-system` to npm and deprecate the old name
 - [ ] API review pass: naming consistency, exhaustive level handling, error surfaces
 - [ ] CI: typecheck, lint, and tests on every PR
 
@@ -28,7 +29,7 @@
 
 ## M3 — Reference integration
 
-- [ ] Migrate [kumbat.io](https://kumbat.io) from its inline energy provider to this package — the site becomes the living integration test
+- [x] Migrate [kumbat.io](https://kumbat.io) from its inline energy provider to this package — the site becomes the living integration test
 - [ ] Case study: what adaptation strategies survived contact with real use
 
 ## M4 — v1.0 stable
