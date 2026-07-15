@@ -47,8 +47,22 @@ export function applyEnergyLevel(level: EnergyLevel, root?: HTMLElement): void {
  */
 export function readEnergyLevel(root?: HTMLElement): EnergyLevel {
   const target = resolveRoot(root)
-  const raw = Number(target.dataset[ATTR])
-  return isEnergyLevel(raw) ? raw : 100
+  const raw = target.dataset[ATTR]
+
+  switch (raw) {
+    case '100':
+      return 100
+    case '75':
+      return 75
+    case '50':
+      return 50
+    case '25':
+      return 25
+    case '0':
+      return 0
+    default:
+      return 100
+  }
 }
 
 /**

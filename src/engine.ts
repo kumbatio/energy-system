@@ -1,4 +1,10 @@
-import { createEnergyState, cycleEnergyLevel, isEnergyLevel, isEnergySource } from './levels.js'
+import {
+  createEnergyOrigin,
+  createEnergyState,
+  cycleEnergyLevel,
+  isEnergyLevel,
+  isEnergySource,
+} from './levels.js'
 import type {
   AdaptationStrategy,
   EnergyClock,
@@ -13,8 +19,12 @@ export interface EnergyEngineOptions {
   initialLevel?: EnergyLevel
   persistence?: EnergyPersistence
   onChange?: EnergyChangeListener
+  /** Called when a persistence attempt fails before the engine schedules a retry. */
+  onPersistenceError?: (error: unknown, state: EnergyState) => void
   /** Deterministic time source for tests/simulations */
   clock?: EnergyClock | (() => number)
+  /** Stable producer identity for deterministic reconciliation. Primarily useful in tests. */
+  originId?: string
 }
 
 export interface EnergyEngine {
@@ -30,6 +40,8 @@ export interface EnergyEngine {
   resolve<T>(strategy: AdaptationStrategy<T>): T
   /** Load persisted state (called automatically, but can be called manually) */
   hydrate(): Promise<void>
+  /** Wait until the current state version is durably persisted. */
+  flush(): Promise<void>
   /** Release engine-owned subscriptions/resources */
   dispose(): void
 }
@@ -48,7 +60,13 @@ function resolveNow(clock?: EnergyEngineOptions['clock']): () => number {
 }
 
 function isSameState(a: EnergyState, b: EnergyState): boolean {
-  return a.level === b.level && a.timestamp === b.timestamp && a.source === b.source
+  return (
+    a.level === b.level &&
+    a.timestamp === b.timestamp &&
+    a.source === b.source &&
+    a.revision === b.revision &&
+    a.origin === b.origin
+  )
 }
 
 function getSourcePriority(source: EnergySource): number {
@@ -67,37 +85,82 @@ function isPreferredExternalState(candidate: EnergyState, current: EnergyState):
     return candidate.timestamp > current.timestamp
   }
 
+  if (candidate.revision !== current.revision) {
+    return candidate.revision > current.revision
+  }
+
   if (candidate.source !== current.source) {
     return getSourcePriority(candidate.source) > getSourcePriority(current.source)
+  }
+
+  if (candidate.origin !== current.origin) {
+    return candidate.origin > current.origin
+  }
+
+  // A producer must not reuse an identity for different state. Keep a final
+  // deterministic fallback so malformed duplicate identities still converge.
+  if (candidate.level !== current.level) {
+    return candidate.level > current.level
   }
 
   return false
 }
 
-function normalizeState(candidate: EnergyState, now: () => number): EnergyState {
+function normalizeState(candidate: EnergyState): EnergyState {
   if (!isEnergyLevel(candidate.level)) {
     throw new Error(`Invalid energy level from persistence: ${String(candidate.level)}`)
   }
 
-  const timestamp = Number.isFinite(candidate.timestamp) ? candidate.timestamp : now()
-  const source: EnergySource = isEnergySource(candidate.source) ? candidate.source : 'manual'
+  if (!isEnergySource(candidate.source)) {
+    throw new Error(`Invalid energy source from persistence: ${String(candidate.source)}`)
+  }
 
-  return createEnergyState(candidate.level, source, timestamp)
+  return createEnergyState(
+    candidate.level,
+    candidate.source,
+    candidate.timestamp,
+    candidate.revision,
+    candidate.origin,
+  )
 }
 
 export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEngine {
-  const { initialLevel = 100, persistence, onChange, clock } = options
+  const {
+    initialLevel = 100,
+    persistence,
+    onChange,
+    onPersistenceError,
+    clock,
+    originId = createEnergyOrigin(),
+  } = options
   const now = resolveNow(clock)
   const listeners = new Set<EnergyChangeListener>()
+  const notificationQueue: Array<{ next: EnergyState; prev: EnergyState }> = []
   let stateVersion = 0
   let disposed = false
+  let isNotifying = false
 
-  let state: EnergyState = createEnergyState(initialLevel, 'manual', now())
+  let state: EnergyState = createEnergyState(initialLevel, 'manual', now(), 0, originId)
   let persistedVersion = 0
   let requestedPersistVersion = 0
   let persistTask: Promise<void> | undefined
   let persistRetryTimer: ReturnType<typeof setTimeout> | undefined
   let persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS
+  const persistWaiters: Array<{
+    version: number
+    resolve: () => void
+    reject: (error: Error) => void
+  }> = []
+
+  function resolvePersistWaiters(): void {
+    for (let index = persistWaiters.length - 1; index >= 0; index -= 1) {
+      const waiter = persistWaiters[index]
+      if (waiter && waiter.version <= persistedVersion) {
+        persistWaiters.splice(index, 1)
+        waiter.resolve()
+      }
+    }
+  }
 
   function queuePersist(): void {
     if (!persistence || disposed) return
@@ -115,8 +178,16 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
           await persistence.save(snapshot)
           persistedVersion = Math.max(persistedVersion, snapshotVersion)
           persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS
+          resolvePersistWaiters()
         } catch (err: unknown) {
           logEngineError('Failed to persist energy state', err)
+          if (onPersistenceError) {
+            try {
+              onPersistenceError(err, snapshot)
+            } catch (err: unknown) {
+              logEngineError('onPersistenceError callback threw', err)
+            }
+          }
           persistTask = undefined
 
           if (!disposed && !persistRetryTimer && persistedVersion < requestedPersistVersion) {
@@ -142,21 +213,35 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     })()
   }
 
-  function notify(prev: EnergyState): void {
-    if (onChange) {
-      try {
-        onChange(state, prev)
-      } catch (err: unknown) {
-        logEngineError('onChange listener threw', err)
-      }
-    }
+  function notify(next: EnergyState, prev: EnergyState): void {
+    notificationQueue.push({ next, prev })
+    if (isNotifying) return
 
-    for (const listener of listeners) {
-      try {
-        listener(state, prev)
-      } catch (err: unknown) {
-        logEngineError('Energy subscriber threw', err)
+    isNotifying = true
+    try {
+      while (notificationQueue.length > 0) {
+        const transition = notificationQueue.shift()
+        if (!transition) continue
+
+        if (onChange) {
+          try {
+            onChange(transition.next, transition.prev)
+          } catch (err: unknown) {
+            logEngineError('onChange listener threw', err)
+          }
+        }
+
+        const transitionListeners = [...listeners]
+        for (const listener of transitionListeners) {
+          try {
+            listener(transition.next, transition.prev)
+          } catch (err: unknown) {
+            logEngineError('Energy subscriber threw', err)
+          }
+        }
       }
+    } finally {
+      isNotifying = false
     }
   }
 
@@ -168,7 +253,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     const prev = state
     state = next
     stateVersion += 1
-    notify(prev)
+    notify(next, prev)
     if (persistence) {
       queuePersist()
     }
@@ -183,7 +268,10 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     },
 
     setLevel(level, source = 'manual') {
-      applyState(createEnergyState(level, source, now()))
+      const wallTime = now()
+      const timestamp = Math.max(wallTime, state.timestamp)
+      const revision = timestamp === state.timestamp ? state.revision + 1 : 0
+      applyState(createEnergyState(level, source, timestamp, revision, originId))
     },
 
     cycleLevel() {
@@ -223,7 +311,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       let normalized: EnergyState
 
       try {
-        normalized = normalizeState(stored, now)
+        normalized = normalizeState(stored)
       } catch (err: unknown) {
         logEngineError('Ignoring invalid persisted energy state', err)
         return
@@ -236,6 +324,23 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       }
     },
 
+    async flush() {
+      if (!persistence) return
+      if (disposed) {
+        throw new Error('Cannot flush a disposed energy engine')
+      }
+
+      const targetVersion = stateVersion
+      if (persistedVersion >= targetVersion) return
+
+      requestedPersistVersion = Math.max(requestedPersistVersion, targetVersion)
+      const pending = new Promise<void>((resolve, reject) => {
+        persistWaiters.push({ version: targetVersion, resolve, reject })
+      })
+      queuePersist()
+      return pending
+    },
+
     dispose() {
       if (disposed) return
 
@@ -246,6 +351,11 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
         persistRetryTimer = undefined
       }
       listeners.clear()
+      notificationQueue.length = 0
+      const disposeError = new Error('Energy engine disposed before persistence completed')
+      for (const waiter of persistWaiters.splice(0)) {
+        waiter.reject(disposeError)
+      }
     },
   }
 
@@ -264,7 +374,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
         let normalized: EnergyState
 
         try {
-          normalized = normalizeState(externalState, now)
+          normalized = normalizeState(externalState)
         } catch (err: unknown) {
           logEngineError('Ignoring invalid observed energy state', err)
           return

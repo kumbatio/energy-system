@@ -158,7 +158,11 @@ export const notificationStrategy: AdaptationStrategy<NotificationConfig> = {
     const def = getEnergyLevel(level)
     const config = NOTIFICATION_CONFIGS[def.value]
     if (config.priorityThreshold === 'none') return 'Rest: All notifications silenced'
-    if (config.priorityThreshold === 'all') return `${def.label}: All notifications enabled`
+    if (config.priorityThreshold === 'all') {
+      return config.allowVibration
+        ? `${def.label}: All notification channels enabled`
+        : `${def.label}: Visual and sound notifications enabled, haptics disabled`
+    }
     return `${def.label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`
   },
   resolve(level) {

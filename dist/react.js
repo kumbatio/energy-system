@@ -4,6 +4,29 @@ import { createEnergyEngine } from './engine.js';
 import { getEnergyLevel, getEnergyLevels } from './levels.js';
 // ── Context ──
 const EnergyEngineContext = createContext(null);
+const DOM_STYLE_PROPERTIES = [
+    '--energy-chrome-opacity',
+    '--energy-chrome-opacity-hover',
+    '--energy-content-max-width',
+    '--energy-content-font-scale',
+];
+const domProjectionStacks = new WeakMap();
+function restoreDOMProjection(target, snapshot) {
+    if (snapshot.attribute === null) {
+        target.removeAttribute('data-energy-level');
+    }
+    else {
+        target.setAttribute('data-energy-level', snapshot.attribute);
+    }
+    for (const [property, value] of snapshot.styles) {
+        if (value === '') {
+            target.style.removeProperty(property);
+        }
+        else {
+            target.style.setProperty(property, value);
+        }
+    }
+}
 function useEngine() {
     const engine = useContext(EnergyEngineContext);
     if (!engine)
@@ -49,12 +72,47 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
     useEffect(() => {
         if (!applyToDOM || typeof document === 'undefined')
             return;
-        // Apply initial
-        applyEnergyLevel(engine.getState().level);
-        // Subscribe to changes
-        return engine.subscribe((state) => {
-            applyEnergyLevel(state.level);
+        const target = document.body;
+        const owner = {};
+        const existingStack = domProjectionStacks.get(target);
+        const stack = existingStack ?? {
+            baseline: {
+                attribute: target.getAttribute('data-energy-level'),
+                styles: new Map(DOM_STYLE_PROPERTIES.map((property) => [
+                    property,
+                    target.style.getPropertyValue(property),
+                ])),
+            },
+            layers: [],
+        };
+        const layer = { owner, level: engine.getState().level };
+        stack.layers.push(layer);
+        domProjectionStacks.set(target, stack);
+        applyEnergyLevel(layer.level, target);
+        const unsubscribe = engine.subscribe((state) => {
+            layer.level = state.level;
+            if (stack.layers.at(-1)?.owner === owner) {
+                applyEnergyLevel(state.level, target);
+            }
         });
+        return () => {
+            unsubscribe();
+            const layerIndex = stack.layers.findIndex((candidate) => candidate.owner === owner);
+            if (layerIndex === -1)
+                return;
+            const wasTopLayer = layerIndex === stack.layers.length - 1;
+            stack.layers.splice(layerIndex, 1);
+            if (!wasTopLayer)
+                return;
+            const nextLayer = stack.layers.at(-1);
+            if (nextLayer) {
+                applyEnergyLevel(nextLayer.level, target);
+            }
+            else {
+                domProjectionStacks.delete(target);
+                restoreDOMProjection(target, stack.baseline);
+            }
+        };
     }, [engine, applyToDOM]);
     useEffect(() => {
         if (!onLevelChange)
@@ -82,8 +140,8 @@ export function useEnergyState() {
 export function useEnergyLevel() {
     const engine = useEngine();
     const state = useEnergyStoreState();
-    const setLevel = useCallback((level) => {
-        engine.setLevel(level);
+    const setLevel = useCallback((level, source = 'manual') => {
+        engine.setLevel(level, source);
     }, [engine]);
     return [state.level, setLevel];
 }

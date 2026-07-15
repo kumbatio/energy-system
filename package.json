@@ -1,6 +1,6 @@
 {
   "name": "@kumbatio/energy-system",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
@@ -42,24 +42,26 @@
     "build": "tsc -p tsconfig.build.json",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "test": "pnpm run build && node --test --import tsx",
-    "prepack": "pnpm run check-types && pnpm run build",
-    "prepublishOnly": "pnpm run prepack",
+    "validate": "pnpm run format:check && pnpm run lint && pnpm run check-types && pnpm run test && pnpm run pack:dry-run",
+    "prepack": "pnpm run format:check && pnpm run lint && pnpm run check-types && pnpm run test",
     "pack:dry-run": "npm pack --dry-run",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint --fix .",
-    "lint:fix-unsafe": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions --fix-dangerously src/",
+    "lint": "oxlint --import-plugin --type-aware --type-check --vitest-plugin .",
+    "lint:fix": "oxlint --import-plugin --type-aware --type-check --vitest-plugin --fix . && oxfmt --write .",
+    "lint:fix-unsafe": "oxlint --import-plugin --type-aware --type-check --vitest-plugin --fix --fix-suggestions --fix-dangerously . && oxfmt --write .",
     "check:fix-suggestions": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions . && oxfmt --write ."
   },
   "devDependencies": {
-    "@happy-dom/global-registrator": "^20.10.2",
+    "@happy-dom/global-registrator": "^20.10.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "oxfmt": "0.58.0",
+    "oxlint": "1.73.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "react": ">=19"
@@ -71,5 +73,6 @@
   },
   "engines": {
     "node": ">=24"
-  }
+  },
+  "packageManager": "pnpm@11.13.0"
 }

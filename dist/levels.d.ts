@@ -1,4 +1,6 @@
 import type { EnergyLevel, EnergyLevelDefinition, EnergySource, EnergyState } from './types.js';
+/** Create a unique producer identity for deterministic cross-context ordering. */
+export declare function createEnergyOrigin(): string;
 /** Get all energy level definitions, ordered highest to lowest */
 export declare function getEnergyLevels(): ReadonlyArray<Readonly<EnergyLevelDefinition>>;
 /** Get definition for a specific energy level */
@@ -12,5 +14,5 @@ export declare function isEnergySource(value: unknown): value is EnergySource;
 /** Returns true if level `a` represents higher energy than level `b` */
 export declare function isHigherEnergy(a: EnergyLevel, b: EnergyLevel): boolean;
 /** Create an EnergyState for the current moment */
-export declare function createEnergyState(level: EnergyLevel, source?: EnergySource, timestamp?: number): EnergyState;
+export declare function createEnergyState(level: EnergyLevel, source?: EnergySource, timestamp?: number, revision?: number, origin?: string): EnergyState;
 //# sourceMappingURL=levels.d.ts.map

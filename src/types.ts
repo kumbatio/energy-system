@@ -25,6 +25,10 @@ export interface EnergyState {
   readonly timestamp: number
   /** How this state was determined */
   readonly source: EnergySource
+  /** Logical sequence for writes sharing the same timestamp and source priority */
+  readonly revision: number
+  /** Stable identity of the engine/context that produced this state */
+  readonly origin: string
 }
 
 // ── Clock ──

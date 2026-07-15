@@ -1,15 +1,19 @@
-import { createEnergyState, isEnergyLevel } from './levels.js';
+import { createEnergyState, isEnergyLevel, isEnergySource } from './levels.js';
 function parsePersistedState(raw) {
     if (!raw)
         return null;
     try {
         const parsed = JSON.parse(raw);
-        if (typeof parsed === 'object' &&
-            parsed !== null &&
-            'level' in parsed &&
-            isEnergyLevel(parsed.level)) {
+        if (typeof parsed === 'object' && parsed !== null && 'level' in parsed) {
             const obj = parsed;
-            return createEnergyState(obj.level, obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual', typeof obj.timestamp === 'number' ? obj.timestamp : Date.now());
+            if (!isEnergyLevel(obj['level']) ||
+                !isEnergySource(obj['source']) ||
+                typeof obj['timestamp'] !== 'number' ||
+                typeof obj['revision'] !== 'number' ||
+                typeof obj['origin'] !== 'string') {
+                return null;
+            }
+            return createEnergyState(obj['level'], obj['source'], obj['timestamp'], obj['revision'], obj['origin']);
         }
         return null;
     }
@@ -70,14 +74,14 @@ export function localStoragePersistence(key = 'energy-state') {
 export function memoryPersistence(initial) {
     let stored = initial === undefined
         ? null
-        : createEnergyState(initial.level, initial.source, initial.timestamp);
+        : createEnergyState(initial.level, initial.source, initial.timestamp, initial.revision, initial.origin);
     const listeners = new Set();
     return {
         async load() {
             return stored;
         },
         async save(state) {
-            stored = createEnergyState(state.level, state.source, state.timestamp);
+            stored = createEnergyState(state.level, state.source, state.timestamp, state.revision, state.origin);
             for (const listener of listeners) {
                 listener(stored);
             }

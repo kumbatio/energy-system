@@ -1,22 +1,29 @@
-import { createEnergyState, isEnergyLevel } from './levels.js'
-import type { EnergyLevel, EnergyPersistence, EnergyState } from './types.js'
+import { createEnergyState, isEnergyLevel, isEnergySource } from './levels.js'
+import type { EnergyPersistence, EnergyState } from './types.js'
 
 function parsePersistedState(raw: string | null): EnergyState | null {
   if (!raw) return null
 
   try {
     const parsed: unknown = JSON.parse(raw)
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      'level' in parsed &&
-      isEnergyLevel((parsed as { level: unknown }).level)
-    ) {
-      const obj = parsed as { level: EnergyLevel; timestamp?: number; source?: string }
+    if (typeof parsed === 'object' && parsed !== null && 'level' in parsed) {
+      const obj = parsed as Record<string, unknown>
+      if (
+        !isEnergyLevel(obj['level']) ||
+        !isEnergySource(obj['source']) ||
+        typeof obj['timestamp'] !== 'number' ||
+        typeof obj['revision'] !== 'number' ||
+        typeof obj['origin'] !== 'string'
+      ) {
+        return null
+      }
+
       return createEnergyState(
-        obj.level,
-        obj.source === 'scheduled' || obj.source === 'inferred' ? obj.source : 'manual',
-        typeof obj.timestamp === 'number' ? obj.timestamp : Date.now(),
+        obj['level'],
+        obj['source'],
+        obj['timestamp'],
+        obj['revision'],
+        obj['origin'],
       )
     }
     return null
@@ -83,7 +90,13 @@ export function memoryPersistence(initial?: EnergyState): EnergyPersistence {
   let stored =
     initial === undefined
       ? null
-      : createEnergyState(initial.level, initial.source, initial.timestamp)
+      : createEnergyState(
+          initial.level,
+          initial.source,
+          initial.timestamp,
+          initial.revision,
+          initial.origin,
+        )
   const listeners = new Set<(state: EnergyState) => void>()
 
   return {
@@ -91,7 +104,13 @@ export function memoryPersistence(initial?: EnergyState): EnergyPersistence {
       return stored
     },
     async save(state: EnergyState): Promise<void> {
-      stored = createEnergyState(state.level, state.source, state.timestamp)
+      stored = createEnergyState(
+        state.level,
+        state.source,
+        state.timestamp,
+        state.revision,
+        state.origin,
+      )
       for (const listener of listeners) {
         listener(stored)
       }

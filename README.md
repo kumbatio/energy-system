@@ -23,7 +23,7 @@ This library gives applications a structured way to adapt to energy state instea
 ## Features
 
 - 5-level energy model: `100 | 75 | 50 | 25 | 0`
-- Rich immutable state object: `level`, `timestamp`, `source`
+- Rich immutable state object: `level`, `timestamp`, `source`, `revision`, `origin`
 - Framework-agnostic core engine
 - Strategy system for behavior adaptation
 - Built-in strategies:
@@ -62,6 +62,7 @@ const engine = createEnergyEngine({
 })
 
 engine.setLevel(50)
+await engine.flush() // optional durable acknowledgement
 
 const uiConfig = engine.resolve(uiVisibilityStrategy)
 const notifConfig = engine.resolve(notificationStrategy)
@@ -172,6 +173,9 @@ Then use classes like:
 ### Additional APIs
 
 - `createEnergyEngine({ clock })` - inject a deterministic time source
+- `createEnergyEngine({ originId })` - inject a deterministic producer identity for tests
+- `createEnergyEngine({ onPersistenceError })` - observe failed save attempts before retry
+- `engine.flush()` - wait until the current state version is durably persisted
 - `engine.dispose()` - release engine-owned observation/subscription resources
 - `EnergyPersistence.observe(onState)` - subscribe to external state changes
 - `getEnergyMetrics(state, now?)` - derive productivity/break/task guidance metrics
@@ -216,10 +220,26 @@ Recommended migration sequence:
 3. **Switch UI controls** to native `cycleEnergyLevel`.
 4. **Remove compatibility mapping** after persisted data is fully normalized.
 
+## Persistence and reconciliation
+
+Persisted states are validated strictly. A state must contain a legal level and source, a finite
+non-negative timestamp, a non-negative integer revision, and a non-empty origin. Invalid records
+are ignored rather than repaired into a more authoritative state.
+
+The engine orders concurrent writes by timestamp, logical revision, source priority, and producer
+origin. This gives every context the same deterministic winner even when two writes share a wall
+clock timestamp. Local writes advance the logical revision when the clock does not advance.
+
+`setLevel()` updates in-memory subscribers synchronously. Persistence runs in the background with
+bounded exponential backoff. Call `await engine.flush()` when a workflow must wait for durable
+storage before reporting completion.
+
 ## Development
 
 ```bash
 pnpm run check-types
+pnpm run lint
+pnpm test
 pnpm run build
 pnpm run pack:dry-run
 ```

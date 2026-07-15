@@ -4,7 +4,7 @@
 
 ## Shipped (v0.0.x)
 
-- [x] 5-level energy model (`100 | 75 | 50 | 25 | 0`) with immutable state (`level`, `timestamp`, `source`)
+- [x] 5-level energy model (`100 | 75 | 50 | 25 | 0`) with immutable, revisioned state
 - [x] Framework-agnostic core engine with strategy resolution
 - [x] Built-in strategies: UI visibility, notification filtering, task complexity guidance
 - [x] DOM adapter (`data-energy-level` + CSS variables)
@@ -17,9 +17,9 @@
 ## M1 — Identity and polish (v0.1)
 
 - [x] Rename package to `@kumbatio/energy-system` in the repo
-- [ ] Publish `@kumbatio/energy-system` to npm and deprecate the old name
-- [ ] API review pass: naming consistency, exhaustive level handling, error surfaces
-- [ ] CI: typecheck, lint, and tests on every PR
+- [x] Publish `@kumbatio/energy-system` to npm and deprecate the old name
+- [x] API review pass: naming consistency, exhaustive level handling, error surfaces
+- [x] CI: typecheck, lint, and tests on every PR
 
 ## M2 — Documentation for real adoption
 
@@ -50,4 +50,4 @@
 
 ## How to influence this
 
-Open an issue. Adopters shipping real features get the loudest voice; sponsors get roadmap *input*, never veto — the [internal decision filter](https://kumbat.io/manifesto) outranks money.
+Open an issue. Adopters shipping real features get the loudest voice; sponsors get roadmap _input_, never veto — the [internal decision filter](https://kumbat.io/manifesto) outranks money.

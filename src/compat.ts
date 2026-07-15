@@ -26,7 +26,7 @@ export function mapToNearestDiscreteLevel<TLevel extends number>(
   levels: readonly TLevel[],
   fallback: TLevel,
 ): TLevel {
-  if (levels.length === 0 || Number.isNaN(value)) {
+  if (levels.length === 0 || !Number.isFinite(value)) {
     return fallback
   }
 
@@ -97,6 +97,14 @@ export function createExternalLevelCompatibility<TExternal extends number>(
     throw new Error('External compatibility requires at least one level value')
   }
 
+  if (normalizedLevels.some((level) => !Number.isFinite(level))) {
+    throw new Error('External compatibility levels must be finite numbers')
+  }
+
+  if (new Set(normalizedLevels).size !== normalizedLevels.length) {
+    throw new Error('External compatibility levels must be unique')
+  }
+
   if (!normalizedLevels.includes(fallbackLevel)) {
     throw new Error('fallbackLevel must be present in levels')
   }
@@ -120,19 +128,23 @@ export function createExternalLevelCompatibility<TExternal extends number>(
 
   const fallbackEnergyLevel = options.fallbackEnergyLevel ?? normalizedMap.get(fallbackLevel) ?? 100
 
+  if (!isEnergyLevel(fallbackEnergyLevel)) {
+    throw new Error(`Invalid fallbackEnergyLevel: ${String(fallbackEnergyLevel)}`)
+  }
+
   const reverseMap = new Map<EnergyLevel, TExternal>()
   for (const externalLevel of normalizedLevels) {
     const mapped = normalizedMap.get(externalLevel)
-    if (!mapped) continue
+    if (mapped === undefined) continue
     if (!reverseMap.has(mapped)) {
       reverseMap.set(mapped, externalLevel)
     }
   }
 
   const toNativeLevel = (externalLevel: TExternal | number): EnergyLevel => {
-    if (hasOwn(toEnergyLevel, externalLevel)) {
-      const mapped = toEnergyLevel[externalLevel as TExternal]
-      return isEnergyLevel(mapped) ? mapped : fallbackEnergyLevel
+    const exact = normalizedMap.get(externalLevel as TExternal)
+    if (exact !== undefined) {
+      return exact
     }
 
     const nearestExternal = mapToNearestDiscreteLevel(

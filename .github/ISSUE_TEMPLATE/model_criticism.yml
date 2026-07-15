@@ -11,7 +11,7 @@ body:
     attributes:
       label: The scenario that breaks it
       description: A real situation where the model gives the wrong answer or can't express what's needed.
-      placeholder: 'ADHD hyperfocus is high capacity for ONE thing and near-zero for everything else — a single scalar level can't represent that.'
+      placeholder: "ADHD hyperfocus is high capacity for ONE thing and near-zero for everything else — a single scalar level can't represent that."
     validations:
       required: true
   - type: textarea

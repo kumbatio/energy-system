@@ -20,12 +20,52 @@ import type {
   EnergyLevel,
   EnergyLevelDefinition,
   EnergyPersistence,
+  EnergySource,
   EnergyState,
 } from './types.js'
 
 // ── Context ──
 
 const EnergyEngineContext = createContext<EnergyEngine | null>(null)
+const DOM_STYLE_PROPERTIES = [
+  '--energy-chrome-opacity',
+  '--energy-chrome-opacity-hover',
+  '--energy-content-max-width',
+  '--energy-content-font-scale',
+] as const
+
+interface DOMProjectionSnapshot {
+  attribute: string | null
+  styles: ReadonlyMap<(typeof DOM_STYLE_PROPERTIES)[number], string>
+}
+
+interface DOMProjectionLayer {
+  owner: object
+  level: EnergyLevel
+}
+
+interface DOMProjectionStack {
+  baseline: DOMProjectionSnapshot
+  layers: DOMProjectionLayer[]
+}
+
+const domProjectionStacks = new WeakMap<HTMLElement, DOMProjectionStack>()
+
+function restoreDOMProjection(target: HTMLElement, snapshot: DOMProjectionSnapshot): void {
+  if (snapshot.attribute === null) {
+    target.removeAttribute('data-energy-level')
+  } else {
+    target.setAttribute('data-energy-level', snapshot.attribute)
+  }
+
+  for (const [property, value] of snapshot.styles) {
+    if (value === '') {
+      target.style.removeProperty(property)
+    } else {
+      target.style.setProperty(property, value)
+    }
+  }
+}
 
 function useEngine(): EnergyEngine {
   const engine = useContext(EnergyEngineContext)
@@ -103,12 +143,50 @@ export function EnergyProvider({
   // Sync to DOM when state changes
   useEffect(() => {
     if (!applyToDOM || typeof document === 'undefined') return
-    // Apply initial
-    applyEnergyLevel(engine.getState().level)
-    // Subscribe to changes
-    return engine.subscribe((state) => {
-      applyEnergyLevel(state.level)
+
+    const target = document.body
+    const owner = {}
+    const existingStack = domProjectionStacks.get(target)
+    const stack = existingStack ?? {
+      baseline: {
+        attribute: target.getAttribute('data-energy-level'),
+        styles: new Map(
+          DOM_STYLE_PROPERTIES.map((property) => [
+            property,
+            target.style.getPropertyValue(property),
+          ]),
+        ),
+      },
+      layers: [],
+    }
+    const layer: DOMProjectionLayer = { owner, level: engine.getState().level }
+    stack.layers.push(layer)
+    domProjectionStacks.set(target, stack)
+    applyEnergyLevel(layer.level, target)
+    const unsubscribe = engine.subscribe((state) => {
+      layer.level = state.level
+      if (stack.layers.at(-1)?.owner === owner) {
+        applyEnergyLevel(state.level, target)
+      }
     })
+
+    return () => {
+      unsubscribe()
+      const layerIndex = stack.layers.findIndex((candidate) => candidate.owner === owner)
+      if (layerIndex === -1) return
+
+      const wasTopLayer = layerIndex === stack.layers.length - 1
+      stack.layers.splice(layerIndex, 1)
+      if (!wasTopLayer) return
+
+      const nextLayer = stack.layers.at(-1)
+      if (nextLayer) {
+        applyEnergyLevel(nextLayer.level, target)
+      } else {
+        domProjectionStacks.delete(target)
+        restoreDOMProjection(target, stack.baseline)
+      }
+    }
   }, [engine, applyToDOM])
 
   useEffect(() => {
@@ -143,12 +221,15 @@ export function useEnergyState(): EnergyState {
 }
 
 /** Read the current energy level and setter */
-export function useEnergyLevel(): [EnergyLevel, (level: EnergyLevel) => void] {
+export function useEnergyLevel(): [
+  EnergyLevel,
+  (level: EnergyLevel, source?: EnergySource) => void,
+] {
   const engine = useEngine()
   const state = useEnergyStoreState()
   const setLevel = useCallback(
-    (level: EnergyLevel) => {
-      engine.setLevel(level)
+    (level: EnergyLevel, source: EnergySource = 'manual') => {
+      engine.setLevel(level, source)
     },
     [engine],
   )
@@ -191,7 +272,7 @@ export interface EnergyIndicatorRenderProps {
   definition: EnergyLevelDefinition
   levels: readonly EnergyLevelDefinition[]
   cycle: () => void
-  setLevel: (level: EnergyLevel) => void
+  setLevel: (level: EnergyLevel, source?: EnergySource) => void
 }
 
 export interface EnergyIndicatorProps {

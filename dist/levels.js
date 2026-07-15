@@ -2,6 +2,28 @@ import { ENERGY_LEVEL_VALUES, ENERGY_SOURCE_VALUES } from './types.js';
 function freezeObject(value) {
     return Object.freeze(value);
 }
+let originSequence = 0;
+let standaloneRevision = 0;
+/** Create a unique producer identity for deterministic cross-context ordering. */
+export function createEnergyOrigin() {
+    const cryptoApi = globalThis.crypto;
+    const randomUUID = cryptoApi?.randomUUID;
+    if (typeof randomUUID === 'function') {
+        return randomUUID.call(cryptoApi);
+    }
+    if (typeof cryptoApi?.getRandomValues === 'function') {
+        const random = new Uint32Array(4);
+        cryptoApi.getRandomValues(random);
+        return [...random].map((value) => value.toString(36)).join('-');
+    }
+    originSequence += 1;
+    return `${Date.now().toString(36)}-${originSequence.toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+const STANDALONE_ORIGIN = createEnergyOrigin();
+function nextStandaloneRevision() {
+    standaloneRevision += 1;
+    return standaloneRevision;
+}
 const LEVELS = Object.freeze([
     freezeObject({
         value: 100,
@@ -98,17 +120,28 @@ export function isHigherEnergy(a, b) {
     return a > b;
 }
 /** Create an EnergyState for the current moment */
-export function createEnergyState(level, source = 'manual', timestamp = Date.now()) {
+export function createEnergyState(level, source = 'manual', timestamp = Date.now(), revision = nextStandaloneRevision(), origin = STANDALONE_ORIGIN) {
     if (!isEnergyLevel(level)) {
         throw new Error(`Invalid energy level: ${String(level)}`);
     }
     if (!isEnergySource(source)) {
         throw new Error(`Invalid energy source: ${String(source)}`);
     }
+    if (!Number.isFinite(timestamp) || timestamp < 0) {
+        throw new Error(`Invalid energy timestamp: ${String(timestamp)}`);
+    }
+    if (!Number.isSafeInteger(revision) || revision < 0) {
+        throw new Error(`Invalid energy revision: ${String(revision)}`);
+    }
+    if (typeof origin !== 'string' || origin.trim().length === 0) {
+        throw new Error(`Invalid energy origin: ${String(origin)}`);
+    }
     return freezeObject({
         level,
-        timestamp: Number.isFinite(timestamp) ? timestamp : Date.now(),
+        timestamp,
         source,
+        revision,
+        origin,
     });
 }
 //# sourceMappingURL=levels.js.map

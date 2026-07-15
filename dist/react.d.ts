@@ -1,5 +1,5 @@
 import type { EnergyEngine } from './engine.js';
-import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyPersistence, EnergyState } from './types.js';
+import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyPersistence, EnergySource, EnergyState } from './types.js';
 export interface EnergyProviderProps {
     /** Pre-created engine. When provided, this engine is used directly. */
     engine?: EnergyEngine;
@@ -17,7 +17,10 @@ export declare function EnergyProvider({ engine: externalEngine, defaultLevel, p
 /** Get the full energy state (level + timestamp + source) */
 export declare function useEnergyState(): EnergyState;
 /** Read the current energy level and setter */
-export declare function useEnergyLevel(): [EnergyLevel, (level: EnergyLevel) => void];
+export declare function useEnergyLevel(): [
+    EnergyLevel,
+    (level: EnergyLevel, source?: EnergySource) => void
+];
 /** @deprecated Use useEnergyState instead. */
 export declare function useFullEnergyState(): EnergyState;
 /** Returns a function that cycles to the next energy level */
@@ -35,7 +38,7 @@ export interface EnergyIndicatorRenderProps {
     definition: EnergyLevelDefinition;
     levels: readonly EnergyLevelDefinition[];
     cycle: () => void;
-    setLevel: (level: EnergyLevel) => void;
+    setLevel: (level: EnergyLevel, source?: EnergySource) => void;
 }
 export interface EnergyIndicatorProps {
     children: (props: EnergyIndicatorRenderProps) => React.ReactNode;
