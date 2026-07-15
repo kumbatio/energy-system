@@ -155,10 +155,12 @@ const TASK_CONFIGS = freezeObject({
         suggestBreaks: true,
         breakIntervalMinutes: 25,
     }),
+    // Rest is already a break: prompting someone at 0 to take a break from
+    // resting is noise, so break suggestions are disabled entirely.
     0: freezeObject({
         maxComplexity: 'consumption',
-        suggestBreaks: true,
-        breakIntervalMinutes: 15,
+        suggestBreaks: false,
+        breakIntervalMinutes: 0,
     }),
 });
 export const taskComplexityStrategy = {

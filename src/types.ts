@@ -108,7 +108,7 @@ export interface EnergyMetrics {
   readonly stateAgeMinutes: number
   /** Suggested focused-work window length */
   readonly expectedProductivityWindowMinutes: number
-  /** Suggested break cadence for the current level */
+  /** Suggested break cadence for the current level. 0 means no breaks are suggested (rest is already a break). */
   readonly suggestedBreakIntervalMinutes: number
   /** Recommended task complexity based on cognitive profile */
   readonly recommendedTaskComplexity: TaskComplexity

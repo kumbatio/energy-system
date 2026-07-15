@@ -4,6 +4,7 @@ function logEngineError(message, err) {
 }
 const PERSIST_RETRY_INITIAL_MS = 250;
 const PERSIST_RETRY_MAX_MS = 30_000;
+const DEFAULT_MAX_FUTURE_SKEW_MS = 5 * 60_000;
 function resolveNow(clock) {
     if (typeof clock === 'function')
         return clock;
@@ -48,17 +49,23 @@ function isPreferredExternalState(candidate, current) {
     }
     return false;
 }
-function normalizeState(candidate) {
+function normalizeState(candidate, nowMs, maxFutureSkewMs) {
     if (!isEnergyLevel(candidate.level)) {
         throw new Error(`Invalid energy level from persistence: ${String(candidate.level)}`);
     }
     if (!isEnergySource(candidate.source)) {
         throw new Error(`Invalid energy source from persistence: ${String(candidate.source)}`);
     }
+    if (candidate.timestamp - nowMs > maxFutureSkewMs) {
+        throw new Error(`Energy state timestamp ${String(candidate.timestamp)} exceeds local clock by more than ${String(maxFutureSkewMs)}ms`);
+    }
     return createEnergyState(candidate.level, candidate.source, candidate.timestamp, candidate.revision, candidate.origin);
 }
 export function createEnergyEngine(options = {}) {
-    const { initialLevel = 100, persistence, onChange, onPersistenceError, clock, originId = createEnergyOrigin(), } = options;
+    const { initialLevel = 100, persistence, onChange, onPersistenceError, clock, originId = createEnergyOrigin(), maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS, } = options;
+    if (Number.isNaN(maxFutureSkewMs) || maxFutureSkewMs < 0) {
+        throw new Error(`Invalid maxFutureSkewMs: ${String(maxFutureSkewMs)}`);
+    }
     const now = resolveNow(clock);
     const listeners = new Set();
     const notificationQueue = [];
@@ -216,7 +223,7 @@ export function createEnergyEngine(options = {}) {
                 return;
             let normalized;
             try {
-                normalized = normalizeState(stored);
+                normalized = normalizeState(stored, now(), maxFutureSkewMs);
             }
             catch (err) {
                 logEngineError('Ignoring invalid persisted energy state', err);
@@ -274,7 +281,7 @@ export function createEnergyEngine(options = {}) {
                     return;
                 let normalized;
                 try {
-                    normalized = normalizeState(externalState);
+                    normalized = normalizeState(externalState, now(), maxFutureSkewMs);
                 }
                 catch (err) {
                     logEngineError('Ignoring invalid observed energy state', err);

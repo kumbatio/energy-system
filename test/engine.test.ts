@@ -675,3 +675,102 @@ void test('notification descriptions match enabled channels', () => {
   assert.match(notificationStrategy.describe(100), /All notification channels enabled/)
   assert.match(notificationStrategy.describe(75), /haptics disabled/)
 })
+
+void test('rest level suggests no breaks anywhere: the user is already resting', () => {
+  const config = taskComplexityStrategy.resolve(0)
+  assert.equal(config.suggestBreaks, false)
+  assert.equal(config.breakIntervalMinutes, 0)
+  assert.equal(getEnergyMetrics(createEnergyState(0, 'manual', 10), 10).suggestedBreakIntervalMinutes, 0)
+  assert.doesNotMatch(taskComplexityStrategy.describe(0), /breaks every/)
+})
+
+void test('observed state beyond the future skew budget is rejected, within it is applied', () => {
+  let observeState: ((state: ReturnType<typeof createEnergyState>) => void) | undefined
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  try {
+    const engine = createEnergyEngine({
+      initialLevel: 100,
+      originId: 'skew-test',
+      clock: () => 1_000,
+      persistence: {
+        async load() {
+          return null
+        },
+        async save() {},
+        observe(listener: (state: ReturnType<typeof createEnergyState>) => void) {
+          observeState = listener
+          return () => {}
+        },
+      },
+    })
+
+    // Default budget is 5 minutes: 1000 + 300_000 ms.
+    observeState?.(createEnergyState(25, 'manual', 1_000 + 300_001, 1, 'remote'))
+    assert.equal(engine.getState().level, 100)
+
+    observeState?.(createEnergyState(25, 'manual', 1_000 + 299_000, 1, 'remote'))
+    assert.equal(engine.getState().level, 25)
+  } finally {
+    console.error = originalConsoleError
+  }
+})
+
+void test('hydrate rejects persisted state beyond the future skew budget', async () => {
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  try {
+    const engine = createEnergyEngine({
+      initialLevel: 100,
+      originId: 'skew-hydrate-test',
+      clock: () => 1_000,
+      maxFutureSkewMs: 60_000,
+      persistence: {
+        async load() {
+          return createEnergyState(25, 'manual', 1_000 + 60_001, 1, 'remote')
+        },
+        async save() {},
+      },
+    })
+
+    await engine.hydrate()
+    assert.equal(engine.getState().level, 100)
+  } finally {
+    console.error = originalConsoleError
+  }
+})
+
+void test('maxFutureSkewMs is configurable, allows opting out, and rejects invalid values', () => {
+  let observeState: ((state: ReturnType<typeof createEnergyState>) => void) | undefined
+  const persistence = {
+    async load() {
+      return null
+    },
+    async save() {},
+    observe(listener: (state: ReturnType<typeof createEnergyState>) => void) {
+      observeState = listener
+      return () => {}
+    },
+  }
+
+  const unbounded = createEnergyEngine({
+    initialLevel: 100,
+    originId: 'skew-config-test',
+    clock: () => 1_000,
+    maxFutureSkewMs: Number.POSITIVE_INFINITY,
+    persistence,
+  })
+  observeState?.(createEnergyState(25, 'manual', Number.MAX_SAFE_INTEGER, 1, 'remote'))
+  assert.equal(unbounded.getState().level, 25)
+
+  assert.throws(
+    () => createEnergyEngine({ maxFutureSkewMs: -1 }),
+    /Invalid maxFutureSkewMs/,
+  )
+  assert.throws(
+    () => createEnergyEngine({ maxFutureSkewMs: Number.NaN }),
+    /Invalid maxFutureSkewMs/,
+  )
+})

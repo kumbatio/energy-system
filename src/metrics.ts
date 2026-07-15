@@ -13,12 +13,14 @@ const PRODUCTIVITY_WINDOW_MINUTES: Record<EnergyLevel, number> = {
   0: 0,
 }
 
+// Rest (0) has no break cadence: the user is already resting, so there is
+// nothing to take a break from. 0 means "no breaks suggested".
 const BREAK_INTERVAL_MINUTES: Record<EnergyLevel, number> = {
   100: 90,
   75: 60,
   50: 45,
   25: 25,
-  0: 15,
+  0: 0,
 }
 
 const RECOVERY_HINT_MINUTES: Partial<Record<EnergyLevel, number>> = {

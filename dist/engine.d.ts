@@ -9,6 +9,14 @@ export interface EnergyEngineOptions {
     clock?: EnergyClock | (() => number);
     /** Stable producer identity for deterministic reconciliation. Primarily useful in tests. */
     originId?: string;
+    /**
+     * Maximum tolerated future clock skew (ms) for externally supplied state
+     * (hydration and cross-context observation). States stamped further ahead of
+     * the local clock are rejected so one bad clock cannot win reconciliation
+     * until its timestamp passes. Pass Number.POSITIVE_INFINITY to accept any
+     * finite timestamp. Default: 5 minutes.
+     */
+    maxFutureSkewMs?: number;
 }
 export interface EnergyEngine {
     /** Get current energy state */

@@ -175,6 +175,9 @@ Then use classes like:
 - `createEnergyEngine({ clock })` - inject a deterministic time source
 - `createEnergyEngine({ originId })` - inject a deterministic producer identity for tests
 - `createEnergyEngine({ onPersistenceError })` - observe failed save attempts before retry
+- `createEnergyEngine({ maxFutureSkewMs })` - reject hydrated/observed state stamped further
+  ahead of the local clock than this budget (default 5 minutes; `Number.POSITIVE_INFINITY`
+  accepts any finite timestamp). Guards reconciliation against contexts with bad clocks.
 - `engine.flush()` - wait until the current state version is durably persisted
 - `engine.dispose()` - release engine-owned observation/subscription resources
 - `EnergyPersistence.observe(onState)` - subscribe to external state changes

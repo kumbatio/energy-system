@@ -25,6 +25,14 @@ export interface EnergyEngineOptions {
   clock?: EnergyClock | (() => number)
   /** Stable producer identity for deterministic reconciliation. Primarily useful in tests. */
   originId?: string
+  /**
+   * Maximum tolerated future clock skew (ms) for externally supplied state
+   * (hydration and cross-context observation). States stamped further ahead of
+   * the local clock are rejected so one bad clock cannot win reconciliation
+   * until its timestamp passes. Pass Number.POSITIVE_INFINITY to accept any
+   * finite timestamp. Default: 5 minutes.
+   */
+  maxFutureSkewMs?: number
 }
 
 export interface EnergyEngine {
@@ -52,6 +60,7 @@ function logEngineError(message: string, err: unknown): void {
 
 const PERSIST_RETRY_INITIAL_MS = 250
 const PERSIST_RETRY_MAX_MS = 30_000
+const DEFAULT_MAX_FUTURE_SKEW_MS = 5 * 60_000
 
 function resolveNow(clock?: EnergyEngineOptions['clock']): () => number {
   if (typeof clock === 'function') return clock
@@ -106,13 +115,23 @@ function isPreferredExternalState(candidate: EnergyState, current: EnergyState):
   return false
 }
 
-function normalizeState(candidate: EnergyState): EnergyState {
+function normalizeState(
+  candidate: EnergyState,
+  nowMs: number,
+  maxFutureSkewMs: number,
+): EnergyState {
   if (!isEnergyLevel(candidate.level)) {
     throw new Error(`Invalid energy level from persistence: ${String(candidate.level)}`)
   }
 
   if (!isEnergySource(candidate.source)) {
     throw new Error(`Invalid energy source from persistence: ${String(candidate.source)}`)
+  }
+
+  if (candidate.timestamp - nowMs > maxFutureSkewMs) {
+    throw new Error(
+      `Energy state timestamp ${String(candidate.timestamp)} exceeds local clock by more than ${String(maxFutureSkewMs)}ms`,
+    )
   }
 
   return createEnergyState(
@@ -132,7 +151,13 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     onPersistenceError,
     clock,
     originId = createEnergyOrigin(),
+    maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS,
   } = options
+
+  if (Number.isNaN(maxFutureSkewMs) || maxFutureSkewMs < 0) {
+    throw new Error(`Invalid maxFutureSkewMs: ${String(maxFutureSkewMs)}`)
+  }
+
   const now = resolveNow(clock)
   const listeners = new Set<EnergyChangeListener>()
   const notificationQueue: Array<{ next: EnergyState; prev: EnergyState }> = []
@@ -311,7 +336,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       let normalized: EnergyState
 
       try {
-        normalized = normalizeState(stored)
+        normalized = normalizeState(stored, now(), maxFutureSkewMs)
       } catch (err: unknown) {
         logEngineError('Ignoring invalid persisted energy state', err)
         return
@@ -374,7 +399,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
         let normalized: EnergyState
 
         try {
-          normalized = normalizeState(externalState)
+          normalized = normalizeState(externalState, now(), maxFutureSkewMs)
         } catch (err: unknown) {
           logEngineError('Ignoring invalid observed energy state', err)
           return
