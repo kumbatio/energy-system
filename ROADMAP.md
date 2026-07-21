@@ -21,6 +21,27 @@
 - [x] API review pass: naming consistency, exhaustive level handling, error surfaces
 - [x] CI: typecheck, lint, and tests on every PR
 
+## Shipped (v0.4) — Presence annotation and behavioral runtime
+
+Patterns studied in a field ADHD app (an email client that shipped focus
+mode, universal snooze, and notification batching) and reimplemented here as
+first-class, tested primitives — including guarantees against the two failure
+modes observed in the wild (suppressed reminders destroyed instead of
+deferred; focus suppression that never auto-expired).
+
+- [x] Presence annotation: `EnergyPresence`/`EnergyPresenceMap` types,
+      `defineEnergyPresence`, `presenceAtOrAbove`/`presenceAtOrBelow`,
+      `createPresenceStrategy`, `useEnergyPresence`, `<EnergyGate>`, and the
+      CSS-only `data-energy-min`/`data-energy-max` path
+- [x] Notification gate: runtime enforcement of `NotificationConfig`
+      (threshold, batch windows, suppression) with a defer-not-drop guarantee
+- [x] Focus sessions: time-boxed suppression with auto-expiry events, break
+      nudges, and energy-derived default duration/cadence
+- [x] Deferral presets with energy-aware ordering (`deferralStrategy`)
+- [x] Interaction forgiveness strategy (undo windows, destructive-action
+      confirmation, autosave cadence scaled inversely with energy)
+- [x] `prefers-reduced-motion` handling for the stylesheet's own transitions
+
 ## M2 — Documentation for real adoption
 
 - [ ] Docs readable at energy `25`: short pages, one concept each, optional depth

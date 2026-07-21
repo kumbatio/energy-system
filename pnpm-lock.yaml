@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@happy-dom/global-registrator':
-        specifier: ^20.10.6
-        version: 20.10.6
+        specifier: ^20.11.0
+        version: 20.11.0
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
@@ -194,8 +194,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@happy-dom/global-registrator@20.10.6':
-    resolution: {integrity: sha512-Nu/IjRkkNxmeG2ywWsyJSO4d1BrWTqVzxCPL+gXj0b97klhmjd6wLzt6Bx/laNpkZ3WLW7zNCqmtMIbIlahqug==}
+  '@happy-dom/global-registrator@20.11.0':
+    resolution: {integrity: sha512-rHb/2dOy3APuHKNU4aqPQt+HbEt6BkulTTyCks89z5a+EipJecnFFd+3cz3meaFfCOXWsoxplPTLrGjFIEhd0A==}
     engines: {node: '>=20.0.0'}
 
   '@oxfmt/binding-android-arm-eabi@0.59.0':
@@ -600,8 +600,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  happy-dom@20.10.6:
-    resolution: {integrity: sha512-6QD0ilzDDt93tX44y8tbmZdAcdTRYDhUP+Asgi6pC8Pp5IA3cvaZGyoVN/EGtlq9ziT65iPuBBn3ASLr6hCgVw==}
+  happy-dom@20.11.0:
+    resolution: {integrity: sha512-XogN4asPd1a56di9prVG6bZxteNcXsZxxKmAvcEfc5Px5Ca2hMyMgk8wvqK2K1V8zXg40j9VANXsDaJYh9DeNA==}
     engines: {node: '>=20.0.0'}
 
   oxfmt@0.59.0:
@@ -755,10 +755,10 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@happy-dom/global-registrator@20.10.6':
+  '@happy-dom/global-registrator@20.11.0':
     dependencies:
       '@types/node': 26.1.1
-      happy-dom: 20.10.6
+      happy-dom: 20.11.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -995,7 +995,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  happy-dom@20.10.6:
+  happy-dom@20.11.0:
     dependencies:
       '@types/node': 26.1.1
       '@types/whatwg-mimetype': 3.0.2

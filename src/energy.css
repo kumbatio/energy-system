@@ -27,6 +27,7 @@
   --energy-chrome-opacity-hover: 1;
   --energy-content-max-width: none;
   --energy-content-font-scale: 1;
+  --energy-muted-opacity: 0.5;
 }
 
 [data-energy-level='75'] {
@@ -131,4 +132,65 @@
 
 [data-energy-level='0'] .energy-content * {
   cursor: default !important;
+}
+
+/* ── Presence gating (CSS-only path) ──
+ *
+ * Annotate any element with the energy range it belongs to:
+ *
+ *   <div data-energy-min="75">AI chat — needs 75+ energy</div>
+ *   <div data-energy-max="25">Recovery hint — low energy only</div>
+ *
+ * The element hides automatically whenever the root's data-energy-level
+ * falls outside its declared range. This mirrors the JS presence API
+ * (presenceAtOrAbove / presenceAtOrBelow); both paths agree by definition
+ * because the rules below enumerate the same comparisons.
+ */
+
+/* Hidden when current level is BELOW the element's minimum */
+[data-energy-level='75'] [data-energy-min='100'],
+[data-energy-level='50'] [data-energy-min='100'],
+[data-energy-level='50'] [data-energy-min='75'],
+[data-energy-level='25'] [data-energy-min='100'],
+[data-energy-level='25'] [data-energy-min='75'],
+[data-energy-level='25'] [data-energy-min='50'],
+[data-energy-level='0'] [data-energy-min='100'],
+[data-energy-level='0'] [data-energy-min='75'],
+[data-energy-level='0'] [data-energy-min='50'],
+[data-energy-level='0'] [data-energy-min='25'] {
+  display: none;
+}
+
+/* Hidden when current level is ABOVE the element's maximum */
+[data-energy-level='100'] [data-energy-max='75'],
+[data-energy-level='100'] [data-energy-max='50'],
+[data-energy-level='100'] [data-energy-max='25'],
+[data-energy-level='100'] [data-energy-max='0'],
+[data-energy-level='75'] [data-energy-max='50'],
+[data-energy-level='75'] [data-energy-max='25'],
+[data-energy-level='75'] [data-energy-max='0'],
+[data-energy-level='50'] [data-energy-max='25'],
+[data-energy-level='50'] [data-energy-max='0'],
+[data-energy-level='25'] [data-energy-max='0'] {
+  display: none;
+}
+
+/* Resolved-presence hooks: stamp data-energy-presence with the value from
+ * resolveEnergyPresence()/useEnergyPresence() when you want CSS to handle
+ * the muted treatment. */
+[data-energy-presence='muted'] {
+  opacity: var(--energy-muted-opacity, 0.5);
+}
+
+[data-energy-presence='hidden'] {
+  display: none;
+}
+
+/* Presence changes are layout changes; keep them instant when the user
+ * (or OS) asked for reduced motion. Apps animating presence transitions
+ * should honour the same preference. */
+@media (prefers-reduced-motion: reduce) {
+  [data-energy-level] .energy-chrome {
+    transition: none;
+  }
 }

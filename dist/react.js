@@ -1,7 +1,8 @@
-import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useSyncExternalStore, } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useInsertionEffect, useLayoutEffect, useMemo, useReducer, useRef, useSyncExternalStore, } from 'react';
 import { applyEnergyLevel } from './dom.js';
 import { createEnergyEngine } from './engine.js';
 import { getEnergyLevel, getEnergyLevels } from './levels.js';
+import { defineEnergyPresence, presenceAtOrAbove, resolveEnergyPresence } from './presence.js';
 // ── Context ──
 const EnergyEngineContext = createContext(null);
 const DOM_STYLE_PROPERTIES = [
@@ -11,6 +12,16 @@ const DOM_STYLE_PROPERTIES = [
     '--energy-content-font-scale',
 ];
 const domProjectionStacks = new WeakMap();
+function callLevelChange(listener, state, prev) {
+    if (!listener)
+        return;
+    try {
+        listener(state, prev);
+    }
+    catch (err) {
+        console.error('[energy-system] onLevelChange listener threw', err);
+    }
+}
 function restoreDOMProjection(target, snapshot) {
     if (snapshot.attribute === null) {
         target.removeAttribute('data-energy-level');
@@ -36,11 +47,26 @@ function useEngine() {
 export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, persistence, onLevelChange, applyToDOM = true, children, }) {
     const internalEngineRef = useRef(null);
     const [, refreshEngine] = useReducer((version) => version + 1, 0);
+    const onLevelChangeRef = useRef(onLevelChange);
+    const isProviderCommittedRef = useRef(false);
+    const pendingInternalChangesRef = useRef([]);
+    useInsertionEffect(() => {
+        onLevelChangeRef.current = onLevelChange;
+    }, [onLevelChange]);
     // `defaultLevel` and `persistence` are initial-only by contract: they
     // configure the engine the provider creates, they do not reconfigure it.
     const createInternalEngine = () => createEnergyEngine({
         initialLevel: defaultLevel,
         ...(persistence ? { persistence } : {}),
+        onChange(state, prev) {
+            if (isProviderCommittedRef.current) {
+                callLevelChange(onLevelChangeRef.current, state, prev);
+                return;
+            }
+            if (onLevelChangeRef.current) {
+                pendingInternalChangesRef.current.push({ state, prev });
+            }
+        },
     });
     if (!externalEngine && !internalEngineRef.current) {
         internalEngineRef.current = createInternalEngine();
@@ -60,6 +86,8 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
             return;
         }
         if (!internalEngineRef.current) {
+            isProviderCommittedRef.current = false;
+            pendingInternalChangesRef.current.length = 0;
             internalEngineRef.current = createInternalEngine();
             refreshEngine();
         }
@@ -68,6 +96,32 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
             internalEngineRef.current = null;
         };
     }, [externalEngine]);
+    // Internal changes can happen during hydration or child layout effects
+    // before a parent effect subscription would exist. Queue them until the
+    // provider commits, then deliver them in transition order.
+    useLayoutEffect(() => {
+        if (externalEngine)
+            return;
+        isProviderCommittedRef.current = true;
+        const pending = pendingInternalChangesRef.current.splice(0);
+        for (const transition of pending) {
+            callLevelChange(onLevelChangeRef.current, transition.state, transition.prev);
+        }
+        return () => {
+            isProviderCommittedRef.current = false;
+            pendingInternalChangesRef.current.length = 0;
+        };
+    }, [engine, externalEngine]);
+    // External engines own their own pre-provider history. Subscribe before
+    // descendant layout effects so changes made after this provider commits are
+    // still reported through onLevelChange.
+    useInsertionEffect(() => {
+        if (!externalEngine)
+            return;
+        return engine.subscribe((state, prev) => {
+            callLevelChange(onLevelChangeRef.current, state, prev);
+        });
+    }, [engine, externalEngine]);
     // Sync to DOM when state changes
     useEffect(() => {
         if (!applyToDOM || typeof document === 'undefined')
@@ -114,11 +168,6 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
             }
         };
     }, [engine, applyToDOM]);
-    useEffect(() => {
-        if (!onLevelChange)
-            return;
-        return engine.subscribe(onLevelChange);
-    }, [engine, onLevelChange]);
     return createElement(EnergyEngineContext.Provider, { value: engine }, children);
 }
 // ── Hooks ──
@@ -165,6 +214,56 @@ export function useStrategy(strategy) {
 export function useEnergyGate(minLevel) {
     const state = useEnergyStoreState();
     return state.level >= minLevel;
+}
+/** Resolve a presence map against the current energy level */
+export function useEnergyPresence(presence) {
+    const state = useEnergyStoreState();
+    return useMemo(() => resolveEnergyPresence(presence, state.level), [presence, state.level]);
+}
+/**
+ * Declarative energy gating for a subtree.
+ *
+ * ```tsx
+ * // Hide the AI chat at 50 and below:
+ * <EnergyGate min={75}>
+ *   <AiChatPanel />
+ * </EnergyGate>
+ *
+ * // Full presence map, muted state styled by the child:
+ * <EnergyGate presence={aiChatPresence}>
+ *   {(presence) => <AiChatPanel muted={presence === 'muted'} />}
+ * </EnergyGate>
+ * ```
+ *
+ * Headless: renders no wrapper element of its own.
+ */
+export function EnergyGate({ presence, min, max, fallback = null, children, }) {
+    const map = useMemo(() => {
+        if (presence)
+            return presence;
+        if (min !== undefined && max !== undefined) {
+            const spec = {};
+            for (const definition of getEnergyLevels()) {
+                spec[definition.value] =
+                    definition.value >= min && definition.value <= max ? 'visible' : 'hidden';
+            }
+            return defineEnergyPresence(spec);
+        }
+        if (min !== undefined)
+            return presenceAtOrAbove(min);
+        if (max !== undefined) {
+            const spec = {};
+            for (const definition of getEnergyLevels()) {
+                spec[definition.value] = definition.value <= max ? 'visible' : 'hidden';
+            }
+            return defineEnergyPresence(spec);
+        }
+        throw new Error('EnergyGate requires a presence map or min/max level');
+    }, [presence, min, max]);
+    const resolved = useEnergyPresence(map);
+    if (resolved === 'hidden')
+        return fallback;
+    return typeof children === 'function' ? children(resolved) : children;
 }
 /** Headless energy indicator - bring your own UI */
 export function EnergyIndicator({ children }) {

@@ -33,4 +33,19 @@ export interface TaskComplexityConfig {
     readonly breakIntervalMinutes: number;
 }
 export declare const taskComplexityStrategy: AdaptationStrategy<TaskComplexityConfig>;
+/**
+ * How much room the interface gives the user to notice and reverse mistakes.
+ * Lower energy means slower error detection, so forgiveness scales inversely
+ * with capacity: longer undo windows, confirmation on destructive actions,
+ * more frequent autosave.
+ */
+export interface InteractionForgivenessConfig {
+    /** How long an undo affordance stays available after an action */
+    readonly undoWindowMs: number;
+    /** Whether destructive actions (delete, discard, overwrite) ask first */
+    readonly confirmDestructive: boolean;
+    /** Suggested autosave cadence for in-progress work */
+    readonly autosaveIntervalMs: number;
+}
+export declare const interactionForgivenessStrategy: AdaptationStrategy<InteractionForgivenessConfig>;
 //# sourceMappingURL=strategies.d.ts.map

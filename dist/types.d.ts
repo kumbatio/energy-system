@@ -6,6 +6,22 @@ export type EnergySource = 'manual' | 'scheduled' | 'inferred';
 export declare const ENERGY_LEVEL_VALUES: ReadonlySet<number>;
 /** Valid energy source values for runtime validation */
 export declare const ENERGY_SOURCE_VALUES: ReadonlySet<EnergySource>;
+/**
+ * How a UI element participates at a given energy level.
+ *
+ * - `visible`: rendered normally
+ * - `muted`: rendered but de-emphasized (reduced opacity, secondary styling)
+ * - `hidden`: not rendered at all
+ */
+export type EnergyPresence = 'visible' | 'muted' | 'hidden';
+/**
+ * A complete presence declaration: one presence value per energy level.
+ * This is the annotation apps attach to components/views to state which
+ * energy levels they belong to (e.g. "hide the AI chat at 50 and below").
+ */
+export type EnergyPresenceMap = Readonly<Record<EnergyLevel, EnergyPresence>>;
+/** Valid energy presence values for runtime validation */
+export declare const ENERGY_PRESENCE_VALUES: ReadonlySet<EnergyPresence>;
 /** A point-in-time snapshot of cognitive capacity */
 export interface EnergyState {
     /** Current cognitive capacity */
@@ -14,7 +30,7 @@ export interface EnergyState {
     readonly timestamp: number;
     /** How this state was determined */
     readonly source: EnergySource;
-    /** Logical sequence for writes sharing the same timestamp and source priority */
+    /** Logical sequence for writes sharing the same timestamp */
     readonly revision: number;
     /** Stable identity of the engine/context that produced this state */
     readonly origin: string;

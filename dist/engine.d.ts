@@ -31,7 +31,11 @@ export interface EnergyEngine {
     resolve<T>(strategy: AdaptationStrategy<T>): T;
     /** Load persisted state (called automatically, but can be called manually) */
     hydrate(): Promise<void>;
-    /** Wait until the current state version is durably persisted. */
+    /**
+     * Wait until the current state version is durably persisted.
+     * Rejects if the engine is disposed or an unchanged initial state cannot be
+     * reconciled because its persistence hydration read failed.
+     */
     flush(): Promise<void>;
     /** Release engine-owned subscriptions/resources */
     dispose(): void;

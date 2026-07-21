@@ -4,6 +4,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useInsertionEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -14,12 +16,15 @@ import { applyEnergyLevel } from './dom.js'
 import type { EnergyEngine } from './engine.js'
 import { createEnergyEngine } from './engine.js'
 import { getEnergyLevel, getEnergyLevels } from './levels.js'
+import { defineEnergyPresence, presenceAtOrAbove, resolveEnergyPresence } from './presence.js'
 import type {
   AdaptationStrategy,
   EnergyChangeListener,
   EnergyLevel,
   EnergyLevelDefinition,
   EnergyPersistence,
+  EnergyPresence,
+  EnergyPresenceMap,
   EnergySource,
   EnergyState,
 } from './types.js'
@@ -50,6 +55,20 @@ interface DOMProjectionStack {
 }
 
 const domProjectionStacks = new WeakMap<HTMLElement, DOMProjectionStack>()
+
+function callLevelChange(
+  listener: EnergyChangeListener | undefined,
+  state: EnergyState,
+  prev: EnergyState,
+): void {
+  if (!listener) return
+
+  try {
+    listener(state, prev)
+  } catch (err: unknown) {
+    console.error('[energy-system] onLevelChange listener threw', err)
+  }
+}
 
 function restoreDOMProjection(target: HTMLElement, snapshot: DOMProjectionSnapshot): void {
   if (snapshot.attribute === null) {
@@ -99,6 +118,13 @@ export function EnergyProvider({
 }: EnergyProviderProps) {
   const internalEngineRef = useRef<EnergyEngine | null>(null)
   const [, refreshEngine] = useReducer((version: number) => version + 1, 0)
+  const onLevelChangeRef = useRef(onLevelChange)
+  const isProviderCommittedRef = useRef(false)
+  const pendingInternalChangesRef = useRef<Array<{ state: EnergyState; prev: EnergyState }>>([])
+
+  useInsertionEffect(() => {
+    onLevelChangeRef.current = onLevelChange
+  }, [onLevelChange])
 
   // `defaultLevel` and `persistence` are initial-only by contract: they
   // configure the engine the provider creates, they do not reconfigure it.
@@ -106,6 +132,16 @@ export function EnergyProvider({
     createEnergyEngine({
       initialLevel: defaultLevel,
       ...(persistence ? { persistence } : {}),
+      onChange(state, prev) {
+        if (isProviderCommittedRef.current) {
+          callLevelChange(onLevelChangeRef.current, state, prev)
+          return
+        }
+
+        if (onLevelChangeRef.current) {
+          pendingInternalChangesRef.current.push({ state, prev })
+        }
+      },
     })
 
   if (!externalEngine && !internalEngineRef.current) {
@@ -130,6 +166,8 @@ export function EnergyProvider({
     }
 
     if (!internalEngineRef.current) {
+      isProviderCommittedRef.current = false
+      pendingInternalChangesRef.current.length = 0
       internalEngineRef.current = createInternalEngine()
       refreshEngine()
     }
@@ -139,6 +177,35 @@ export function EnergyProvider({
       internalEngineRef.current = null
     }
   }, [externalEngine])
+
+  // Internal changes can happen during hydration or child layout effects
+  // before a parent effect subscription would exist. Queue them until the
+  // provider commits, then deliver them in transition order.
+  useLayoutEffect(() => {
+    if (externalEngine) return
+
+    isProviderCommittedRef.current = true
+    const pending = pendingInternalChangesRef.current.splice(0)
+    for (const transition of pending) {
+      callLevelChange(onLevelChangeRef.current, transition.state, transition.prev)
+    }
+
+    return () => {
+      isProviderCommittedRef.current = false
+      pendingInternalChangesRef.current.length = 0
+    }
+  }, [engine, externalEngine])
+
+  // External engines own their own pre-provider history. Subscribe before
+  // descendant layout effects so changes made after this provider commits are
+  // still reported through onLevelChange.
+  useInsertionEffect(() => {
+    if (!externalEngine) return
+
+    return engine.subscribe((state, prev) => {
+      callLevelChange(onLevelChangeRef.current, state, prev)
+    })
+  }, [engine, externalEngine])
 
   // Sync to DOM when state changes
   useEffect(() => {
@@ -188,12 +255,6 @@ export function EnergyProvider({
       }
     }
   }, [engine, applyToDOM])
-
-  useEffect(() => {
-    if (!onLevelChange) return
-
-    return engine.subscribe(onLevelChange)
-  }, [engine, onLevelChange])
 
   return createElement(EnergyEngineContext.Provider, { value: engine }, children)
 }
@@ -259,6 +320,98 @@ export function useStrategy<T>(strategy: AdaptationStrategy<T>): T {
 export function useEnergyGate(minLevel: EnergyLevel): boolean {
   const state = useEnergyStoreState()
   return state.level >= minLevel
+}
+
+/** Resolve a presence map against the current energy level */
+export function useEnergyPresence(presence: EnergyPresenceMap): EnergyPresence {
+  const state = useEnergyStoreState()
+  return useMemo(() => resolveEnergyPresence(presence, state.level), [presence, state.level])
+}
+
+// ── EnergyGate component ──
+
+interface EnergyGateBaseProps {
+  /** Rendered instead of children while hidden. Default: nothing. */
+  fallback?: React.ReactNode
+  /**
+   * Content to gate. The function form receives the resolved presence so
+   * 'muted' can style itself differently from 'visible'.
+   */
+  children: React.ReactNode | ((presence: EnergyPresence) => React.ReactNode)
+}
+
+export type EnergyGateProps = EnergyGateBaseProps &
+  (
+    | {
+        /** Full presence declaration for this element */
+        presence: EnergyPresenceMap
+        min?: never
+        max?: never
+      }
+    | {
+        presence?: never
+        /** Shorthand: visible at or above this level, hidden below */
+        min: EnergyLevel
+        /** Optionally also hidden above this level (band gating) */
+        max?: EnergyLevel
+      }
+    | {
+        presence?: never
+        min?: never
+        /** Shorthand: visible at or below this level, hidden above */
+        max: EnergyLevel
+      }
+  )
+
+/**
+ * Declarative energy gating for a subtree.
+ *
+ * ```tsx
+ * // Hide the AI chat at 50 and below:
+ * <EnergyGate min={75}>
+ *   <AiChatPanel />
+ * </EnergyGate>
+ *
+ * // Full presence map, muted state styled by the child:
+ * <EnergyGate presence={aiChatPresence}>
+ *   {(presence) => <AiChatPanel muted={presence === 'muted'} />}
+ * </EnergyGate>
+ * ```
+ *
+ * Headless: renders no wrapper element of its own.
+ */
+export function EnergyGate({
+  presence,
+  min,
+  max,
+  fallback = null,
+  children,
+}: EnergyGateProps): React.ReactNode {
+  const map = useMemo<EnergyPresenceMap>(() => {
+    if (presence) return presence
+    if (min !== undefined && max !== undefined) {
+      const spec: Partial<Record<EnergyLevel, EnergyPresence>> = {}
+      for (const definition of getEnergyLevels()) {
+        spec[definition.value] =
+          definition.value >= min && definition.value <= max ? 'visible' : 'hidden'
+      }
+      return defineEnergyPresence(spec)
+    }
+    if (min !== undefined) return presenceAtOrAbove(min)
+    if (max !== undefined) {
+      const spec: Partial<Record<EnergyLevel, EnergyPresence>> = {}
+      for (const definition of getEnergyLevels()) {
+        spec[definition.value] = definition.value <= max ? 'visible' : 'hidden'
+      }
+      return defineEnergyPresence(spec)
+    }
+    throw new Error('EnergyGate requires a presence map or min/max level')
+  }, [presence, min, max])
+
+  const resolved = useEnergyPresence(map)
+
+  if (resolved === 'hidden') return fallback
+  return typeof children === 'function' ? children(resolved) : children
 }
 
 // ── Headless Components ──

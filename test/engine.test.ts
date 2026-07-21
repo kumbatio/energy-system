@@ -3,12 +3,16 @@ import test from 'node:test'
 
 import { applyEnergyLevel, readEnergyLevel } from '../src/dom.ts'
 import {
+  ENERGY_LEVEL_VALUES,
+  ENERGY_SOURCE_VALUES,
   createExternalLevelCompatibility,
   createEnergyEngine,
   createEnergyState,
   cycleEnergyLevel,
   getEnergyLevel,
   getEnergyMetrics,
+  isEnergyLevel,
+  isEnergySource,
   notificationStrategy,
   taskComplexityStrategy,
   uiVisibilityStrategy,
@@ -49,6 +53,19 @@ void test('core snapshots and configs are frozen', () => {
   assert.throws(() => {
     ;(uiConfig as { sidebar: boolean }).sidebar = true
   }, TypeError)
+})
+
+void test('public validation collections cannot be mutated to admit illegal domain values', () => {
+  assert.throws(() => {
+    ;(ENERGY_LEVEL_VALUES as Set<number>).add(33)
+  }, TypeError)
+  assert.throws(() => {
+    ;(ENERGY_SOURCE_VALUES as Set<string>).add('guessed')
+  }, TypeError)
+
+  assert.equal(isEnergyLevel(33), false)
+  assert.equal(isEnergySource('guessed'), false)
+  assert.throws(() => createEnergyState(33 as never), /Invalid energy level/)
 })
 
 void test('hydrate does not override a newer local change', async () => {
@@ -256,9 +273,14 @@ void test('cycleEnergyLevel follows the documented order and recovers from inval
 })
 
 void test('state-changing operations after dispose are inert', () => {
+  let clockCalls = 0
   const changes: Array<[number, number]> = []
   const engine = createEnergyEngine({
     initialLevel: 100,
+    clock: () => {
+      clockCalls += 1
+      return clockCalls
+    },
     onChange: (state, prev) => {
       changes.push([prev.level, state.level])
     },
@@ -266,11 +288,14 @@ void test('state-changing operations after dispose are inert', () => {
 
   engine.setLevel(75)
   engine.dispose()
-  engine.setLevel(25)
+  assert.doesNotThrow(() => {
+    engine.setLevel(33 as never)
+  })
   engine.cycleLevel()
 
   assert.equal(engine.getState().level, 75)
   assert.deepEqual(changes, [[100, 75]])
+  assert.equal(clockCalls, 2)
 })
 
 void test('failed saves are retried with backoff until the state is durably persisted', async () => {
@@ -516,6 +541,35 @@ void test('same-origin logical revisions outrank an earlier write source priorit
   assert.equal(observer.getState().revision, 2)
 })
 
+void test('local writes remain possible when an accepted logical revision is exhausted', () => {
+  let observeState: ((state: ReturnType<typeof createEnergyState>) => void) | undefined
+  const engine = createEnergyEngine({
+    initialLevel: 100,
+    originId: 'revision-rollover-local',
+    clock: () => 10,
+    persistence: {
+      async load() {
+        return null
+      },
+      async save() {},
+      observe(listener: (state: ReturnType<typeof createEnergyState>) => void) {
+        observeState = listener
+        return () => {}
+      },
+    },
+  })
+
+  observeState?.(
+    createEnergyState(25, 'manual', 10, Number.MAX_SAFE_INTEGER, 'revision-rollover-remote'),
+  )
+  engine.setLevel(50)
+
+  assert.equal(engine.getState().level, 50)
+  assert.equal(engine.getState().timestamp, 11)
+  assert.equal(engine.getState().revision, 0)
+  engine.dispose()
+})
+
 void test('malformed observed state is ignored without gaining manual priority', () => {
   let observeState: ((state: ReturnType<typeof createEnergyState>) => void) | undefined
   const originalConsoleError = console.error
@@ -586,6 +640,88 @@ void test('flush resolves only after the current state is durably saved', async 
 
   assert.equal(flushed, true)
   assert.equal((await persistence.load())?.level, 25)
+})
+
+void test('flush durably stores an unchanged initial state after hydration completes', async () => {
+  const persistence = memoryPersistence()
+  const engine = createEnergyEngine({
+    initialLevel: 75,
+    persistence,
+    originId: 'initial-flush-test',
+    clock: () => 10,
+  })
+
+  await engine.flush()
+
+  assert.deepEqual(await persistence.load(), engine.getState())
+  engine.dispose()
+})
+
+void test('initial flush waits for hydration instead of overwriting unread persisted state', async () => {
+  let releaseLoad: (() => void) | undefined
+  const stored = createEnergyState(25, 'manual', 10, 1, 'stored')
+  const saves: Array<ReturnType<typeof createEnergyState>> = []
+  const engine = createEnergyEngine({
+    initialLevel: 100,
+    originId: 'initial-flush-hydration-test',
+    clock: () => 10,
+    persistence: {
+      async load() {
+        await new Promise<void>((resolve) => {
+          releaseLoad = resolve
+        })
+        return stored
+      },
+      async save(state) {
+        saves.push(state)
+      },
+    },
+  })
+
+  let flushed = false
+  const flush = engine.flush().then(() => {
+    flushed = true
+  })
+  await sleep(0)
+
+  assert.equal(flushed, false)
+  assert.equal(saves.length, 0)
+
+  releaseLoad?.()
+  await flush
+
+  assert.equal(engine.getState().level, 25)
+  assert.deepEqual(saves.at(-1), engine.getState())
+  engine.dispose()
+})
+
+void test('initial flush rejects instead of overwriting storage after a hydration read failure', async () => {
+  let saveAttempts = 0
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  try {
+    const engine = createEnergyEngine({
+      initialLevel: 100,
+      persistence: {
+        async load() {
+          throw new Error('read unavailable')
+        },
+        async save() {
+          saveAttempts += 1
+        },
+      },
+    })
+
+    await assert.rejects(
+      engine.flush(),
+      /Cannot flush the initial energy state because persistence hydration did not complete/,
+    )
+    assert.equal(saveAttempts, 0)
+    engine.dispose()
+  } finally {
+    console.error = originalConsoleError
+  }
 })
 
 void test('persistence failures are observable and pending flushes reject on dispose', async () => {
@@ -773,4 +909,39 @@ void test('maxFutureSkewMs is configurable, allows opting out, and rejects inval
     () => createEnergyEngine({ maxFutureSkewMs: Number.NaN }),
     /Invalid maxFutureSkewMs/,
   )
+  assert.throws(
+    () => createEnergyEngine({ maxFutureSkewMs: 'unbounded' as never }),
+    /Invalid maxFutureSkewMs/,
+  )
+  assert.throws(
+    () => createEnergyEngine({ maxFutureSkewMs: null as never }),
+    /Invalid maxFutureSkewMs/,
+  )
+})
+
+void test('dispose contains persistence observer cleanup failures', () => {
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  try {
+    const engine = createEnergyEngine({
+      persistence: {
+        async load() {
+          return null
+        },
+        async save() {},
+        observe() {
+          return () => {
+            throw new Error('cleanup failed')
+          }
+        },
+      },
+    })
+
+    assert.doesNotThrow(() => {
+      engine.dispose()
+    })
+  } finally {
+    console.error = originalConsoleError
+  }
 })

@@ -63,7 +63,9 @@ function normalizeState(candidate, nowMs, maxFutureSkewMs) {
 }
 export function createEnergyEngine(options = {}) {
     const { initialLevel = 100, persistence, onChange, onPersistenceError, clock, originId = createEnergyOrigin(), maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS, } = options;
-    if (Number.isNaN(maxFutureSkewMs) || maxFutureSkewMs < 0) {
+    if (typeof maxFutureSkewMs !== 'number' ||
+        (!Number.isFinite(maxFutureSkewMs) && maxFutureSkewMs !== Number.POSITIVE_INFINITY) ||
+        maxFutureSkewMs < 0) {
         throw new Error(`Invalid maxFutureSkewMs: ${String(maxFutureSkewMs)}`);
     }
     const now = resolveNow(clock);
@@ -73,11 +75,17 @@ export function createEnergyEngine(options = {}) {
     let disposed = false;
     let isNotifying = false;
     let state = createEnergyState(initialLevel, 'manual', now(), 0, originId);
-    let persistedVersion = 0;
+    // Version 0 is the initial in-memory state, not proof that a persistence
+    // adapter has durably stored it. Starting below the version domain keeps
+    // flush() honest even before the first state transition.
+    let persistedVersion = -1;
     let requestedPersistVersion = 0;
     let persistTask;
     let persistRetryTimer;
     let persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS;
+    let initialHydrationTask;
+    let hasCompletedPersistenceLoad = false;
+    let persistenceLoadError;
     const persistWaiters = [];
     function resolvePersistWaiters() {
         for (let index = persistWaiters.length - 1; index >= 0; index -= 1) {
@@ -187,12 +195,26 @@ export function createEnergyEngine(options = {}) {
             return state;
         },
         setLevel(level, source = 'manual') {
+            if (disposed)
+                return;
             const wallTime = now();
-            const timestamp = Math.max(wallTime, state.timestamp);
-            const revision = timestamp === state.timestamp ? state.revision + 1 : 0;
+            let timestamp = Math.max(wallTime, state.timestamp);
+            let revision = 0;
+            if (timestamp === state.timestamp) {
+                if (state.revision === Number.MAX_SAFE_INTEGER) {
+                    // Preserve a strictly newer ordering key without producing an
+                    // invalid revision when a deterministic/future clock cannot advance.
+                    timestamp += 1;
+                }
+                else {
+                    revision = state.revision + 1;
+                }
+            }
             applyState(createEnergyState(level, source, timestamp, revision, originId));
         },
         cycleLevel() {
+            if (disposed)
+                return;
             engine.setLevel(cycleEnergyLevel(state.level), 'manual');
         },
         subscribe(listener) {
@@ -214,8 +236,11 @@ export function createEnergyEngine(options = {}) {
             let stored;
             try {
                 stored = await persistence.load();
+                hasCompletedPersistenceLoad = true;
+                persistenceLoadError = undefined;
             }
             catch (err) {
+                persistenceLoadError = err;
                 logEngineError('Failed to load persisted energy state', err);
                 return;
             }
@@ -241,6 +266,18 @@ export function createEnergyEngine(options = {}) {
             if (disposed) {
                 throw new Error('Cannot flush a disposed energy engine');
             }
+            // Do not persist the default state over an unread stored value. Once a
+            // local/external transition exists, that newer intent can persist
+            // immediately; an unchanged initial state must wait for auto-hydration.
+            if (stateVersion === 0 && initialHydrationTask) {
+                await initialHydrationTask;
+            }
+            if (disposed) {
+                throw new Error('Cannot flush a disposed energy engine');
+            }
+            if (stateVersion === 0 && !hasCompletedPersistenceLoad) {
+                throw new Error('Cannot flush the initial energy state because persistence hydration did not complete', { cause: persistenceLoadError });
+            }
             const targetVersion = stateVersion;
             if (persistedVersion >= targetVersion)
                 return;
@@ -255,7 +292,12 @@ export function createEnergyEngine(options = {}) {
             if (disposed)
                 return;
             disposed = true;
-            disposePersistenceObservation();
+            try {
+                disposePersistenceObservation();
+            }
+            catch (err) {
+                logEngineError('Failed to release persistence observation', err);
+            }
             if (persistRetryTimer) {
                 clearTimeout(persistRetryTimer);
                 persistRetryTimer = undefined;
@@ -270,7 +312,7 @@ export function createEnergyEngine(options = {}) {
     };
     // Auto-hydrate from persistence
     if (persistence) {
-        void engine.hydrate().catch((err) => {
+        initialHydrationTask = engine.hydrate().catch((err) => {
             logEngineError('Unexpected hydrate failure', err);
         });
     }

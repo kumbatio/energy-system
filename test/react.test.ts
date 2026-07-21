@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
-import { StrictMode, act, createElement } from 'react'
+import { StrictMode, act, createElement, useEffect, useLayoutEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import type { EnergyLevel, EnergySource } from '../src/index.ts'
@@ -19,6 +19,17 @@ function LevelProbe() {
   const state = useEnergyState()
   latestSetLevel = setLevel
   return createElement('span', { 'data-source': state.source }, String(level))
+}
+
+function SetLevelOnMount({ level, layout = false }: { level: EnergyLevel; layout?: boolean }) {
+  const [, setLevel] = useEnergyLevel()
+  useLayoutEffect(() => {
+    if (layout) setLevel(level)
+  }, [layout, level, setLevel])
+  useEffect(() => {
+    if (!layout) setLevel(level)
+  }, [layout, level, setLevel])
+  return null
 }
 
 void test('provider-owned engine survives StrictMode remounting: changes reach hooks and the DOM', async () => {
@@ -129,6 +140,66 @@ void test('React setter preserves non-manual state provenance', async () => {
     await act(async () => {
       root.unmount()
     })
+    container.remove()
+  }
+})
+
+void test('onLevelChange observes changes initiated by descendant mount effects', async () => {
+  const changes: Array<[number, number]> = []
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+
+  try {
+    await act(async () => {
+      root.render(
+        createElement(EnergyProvider, {
+          defaultLevel: 100,
+          applyToDOM: false,
+          onLevelChange: (state, prev) => {
+            changes.push([prev.level, state.level])
+          },
+          children: createElement(SetLevelOnMount, { level: 25 }),
+        }),
+      )
+    })
+
+    assert.deepEqual(changes, [[100, 25]])
+  } finally {
+    await act(async () => {
+      root.unmount()
+    })
+    container.remove()
+  }
+})
+
+void test('external-engine onLevelChange is installed before descendant layout effects', async () => {
+  const changes: Array<[number, number]> = []
+  const engine = createEnergyEngine({ initialLevel: 100 })
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+
+  try {
+    await act(async () => {
+      root.render(
+        createElement(EnergyProvider, {
+          engine,
+          applyToDOM: false,
+          onLevelChange: (state, prev) => {
+            changes.push([prev.level, state.level])
+          },
+          children: createElement(SetLevelOnMount, { level: 50, layout: true }),
+        }),
+      )
+    })
+
+    assert.deepEqual(changes, [[100, 50]])
+  } finally {
+    await act(async () => {
+      root.unmount()
+    })
+    engine.dispose()
     container.remove()
   }
 })

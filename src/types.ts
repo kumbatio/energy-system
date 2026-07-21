@@ -6,13 +6,65 @@ export type EnergyLevel = 0 | 25 | 50 | 75 | 100
 /** How the energy level was set */
 export type EnergySource = 'manual' | 'scheduled' | 'inferred'
 
+function createReadonlySet<T>(values: readonly T[]): ReadonlySet<T> {
+  const set = new Set(values)
+  const readonlySet = new Proxy(set, {
+    get(target, property) {
+      if (property === 'add' || property === 'delete' || property === 'clear') {
+        return undefined
+      }
+
+      if (property === 'forEach') {
+        return (
+          callback: (value: T, value2: T, set: ReadonlySet<T>) => void,
+          thisArg?: unknown,
+        ) => {
+          for (const value of target) {
+            callback.call(thisArg, value, value, readonlySet)
+          }
+        }
+      }
+
+      const value: unknown = Reflect.get(target, property, target)
+      return typeof value === 'function' ? value.bind(target) : value
+    },
+  })
+
+  return Object.freeze(readonlySet)
+}
+
 /** Valid energy level values for runtime validation */
-export const ENERGY_LEVEL_VALUES: ReadonlySet<number> = new Set([0, 25, 50, 75, 100])
+export const ENERGY_LEVEL_VALUES = createReadonlySet([0, 25, 50, 75, 100])
 /** Valid energy source values for runtime validation */
-export const ENERGY_SOURCE_VALUES: ReadonlySet<EnergySource> = new Set([
+export const ENERGY_SOURCE_VALUES = createReadonlySet<EnergySource>([
   'manual',
   'scheduled',
   'inferred',
+])
+
+// ── Energy Presence ──
+
+/**
+ * How a UI element participates at a given energy level.
+ *
+ * - `visible`: rendered normally
+ * - `muted`: rendered but de-emphasized (reduced opacity, secondary styling)
+ * - `hidden`: not rendered at all
+ */
+export type EnergyPresence = 'visible' | 'muted' | 'hidden'
+
+/**
+ * A complete presence declaration: one presence value per energy level.
+ * This is the annotation apps attach to components/views to state which
+ * energy levels they belong to (e.g. "hide the AI chat at 50 and below").
+ */
+export type EnergyPresenceMap = Readonly<Record<EnergyLevel, EnergyPresence>>
+
+/** Valid energy presence values for runtime validation */
+export const ENERGY_PRESENCE_VALUES = createReadonlySet<EnergyPresence>([
+  'visible',
+  'muted',
+  'hidden',
 ])
 
 // ── Energy State ──
@@ -25,7 +77,7 @@ export interface EnergyState {
   readonly timestamp: number
   /** How this state was determined */
   readonly source: EnergySource
-  /** Logical sequence for writes sharing the same timestamp and source priority */
+  /** Logical sequence for writes sharing the same timestamp */
   readonly revision: number
   /** Stable identity of the engine/context that produced this state */
   readonly origin: string

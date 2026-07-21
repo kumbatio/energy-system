@@ -177,4 +177,45 @@ export const taskComplexityStrategy = {
         return TASK_CONFIGS[getEnergyLevel(level).value];
     },
 };
+const FORGIVENESS_CONFIGS = freezeObject({
+    100: freezeObject({
+        undoWindowMs: 5000,
+        confirmDestructive: false,
+        autosaveIntervalMs: 60_000,
+    }),
+    75: freezeObject({
+        undoWindowMs: 8000,
+        confirmDestructive: false,
+        autosaveIntervalMs: 45_000,
+    }),
+    50: freezeObject({
+        undoWindowMs: 10_000,
+        confirmDestructive: true,
+        autosaveIntervalMs: 30_000,
+    }),
+    25: freezeObject({
+        undoWindowMs: 15_000,
+        confirmDestructive: true,
+        autosaveIntervalMs: 20_000,
+    }),
+    0: freezeObject({
+        undoWindowMs: 20_000,
+        confirmDestructive: true,
+        autosaveIntervalMs: 15_000,
+    }),
+});
+export const interactionForgivenessStrategy = {
+    name: 'interaction-forgiveness',
+    describe(level) {
+        const def = getEnergyLevel(level);
+        const config = FORGIVENESS_CONFIGS[def.value];
+        const confirm = config.confirmDestructive
+            ? 'destructive actions confirm first'
+            : 'no confirmation friction';
+        return `${def.label}: ${config.undoWindowMs / 1000}s undo window, ${confirm}`;
+    },
+    resolve(level) {
+        return FORGIVENESS_CONFIGS[getEnergyLevel(level).value];
+    },
+};
 //# sourceMappingURL=strategies.js.map
