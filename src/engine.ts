@@ -147,6 +147,20 @@ function normalizeState(
   )
 }
 
+/**
+ * Origin stamped on the untouched initial state.
+ *
+ * The initial state is the *absence* of a produced value, so it needs no unique producer identity —
+ * and generating one eagerly meant every engine construction called `crypto.randomUUID()`. React
+ * providers build their engine during render, so under a prerender that random value was baked into
+ * static output, which fails the build outright for consumers using Next.js Cache Components.
+ *
+ * Sorts below any generated origin, so if it ever meets a real one in the final tiebreak of
+ * `isPreferredExternalState` the actual producer wins. Reaching that tiebreak at all requires
+ * matching timestamp, revision and source — states that are equivalent anyway.
+ */
+const INITIAL_ORIGIN = '0-initial'
+
 export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEngine {
   const {
     initialLevel = 100,
@@ -154,9 +168,18 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     onChange,
     onPersistenceError,
     clock,
-    originId = createEnergyOrigin(),
     maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS,
   } = options
+
+  /*
+   * Deferred to the first state this engine actually produces. An explicitly supplied `originId`
+   * is honoured immediately, so deterministic callers (tests, simulations) are unaffected.
+   */
+  let resolvedOriginId = options.originId
+  const originIdentity = (): string => {
+    resolvedOriginId ??= createEnergyOrigin()
+    return resolvedOriginId
+  }
 
   if (
     typeof maxFutureSkewMs !== 'number' ||
@@ -173,7 +196,13 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
   let disposed = false
   let isNotifying = false
 
-  let state: EnergyState = createEnergyState(initialLevel, 'manual', now(), 0, originId)
+  let state: EnergyState = createEnergyState(
+    initialLevel,
+    'manual',
+    now(),
+    0,
+    options.originId ?? INITIAL_ORIGIN,
+  )
   // Version 0 is the initial in-memory state, not proof that a persistence
   // adapter has durably stored it. Starting below the version domain keeps
   // flush() honest even before the first state transition.
@@ -323,7 +352,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
         }
       }
 
-      applyState(createEnergyState(level, source, timestamp, revision, originId))
+      applyState(createEnergyState(level, source, timestamp, revision, originIdentity()))
     },
 
     cycleLevel() {

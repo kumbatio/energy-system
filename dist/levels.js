@@ -19,7 +19,19 @@ export function createEnergyOrigin() {
     originSequence += 1;
     return `${Date.now().toString(36)}-${originSequence.toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
-const STANDALONE_ORIGIN = createEnergyOrigin();
+let standaloneOrigin;
+/**
+ * The standalone producer identity, generated on first use rather than at module load.
+ *
+ * Generating it eagerly meant that merely importing this module called `crypto.randomUUID()`. Under
+ * a React prerender that is an unstable value baked into static output, which fails the build
+ * outright when a consumer enables Next.js Cache Components. Nothing needs an identity until a
+ * state object is actually produced, so nothing pays for one until then.
+ */
+function getStandaloneOrigin() {
+    standaloneOrigin ??= createEnergyOrigin();
+    return standaloneOrigin;
+}
 function nextStandaloneRevision() {
     standaloneRevision += 1;
     return standaloneRevision;
@@ -120,7 +132,7 @@ export function isHigherEnergy(a, b) {
     return a > b;
 }
 /** Create an EnergyState for the current moment */
-export function createEnergyState(level, source = 'manual', timestamp = Date.now(), revision = nextStandaloneRevision(), origin = STANDALONE_ORIGIN) {
+export function createEnergyState(level, source = 'manual', timestamp = Date.now(), revision = nextStandaloneRevision(), origin = getStandaloneOrigin()) {
     if (!isEnergyLevel(level)) {
         throw new Error(`Invalid energy level: ${String(level)}`);
     }
