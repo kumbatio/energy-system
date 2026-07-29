@@ -355,6 +355,9 @@ animating presence changes should do the same.
 - `createEnergyEngine({ maxFutureSkewMs })` - reject hydrated/observed state stamped further
   ahead of the local clock than this budget (default 5 minutes; `Number.POSITIVE_INFINITY`
   accepts any finite timestamp). Guards reconciliation against contexts with bad clocks.
+- `<EnergyProvider domTarget={() => document.documentElement}>` - project the level onto an element
+  other than `<body>`, for stylesheets that key off `[data-energy-level]` at the root. The provider
+  snapshots the target, layers overlapping providers, and restores the baseline on unmount.
 - `createEnergyEngine({ autoStart: false })` + `engine.start()` - construct the engine without
   hydrating or subscribing to cross-context updates, then begin both explicitly. For engines
   built somewhere that may never be committed: `EnergyProvider` constructs during render and

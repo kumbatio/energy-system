@@ -116,6 +116,16 @@ export interface EnergyProviderProps {
   onLevelChange?: EnergyChangeListener
   /** Whether to apply energy level to DOM via data attributes */
   applyToDOM?: boolean
+  /**
+   * Element the level is projected onto. Default: `document.body`.
+   *
+   * Pass `() => document.documentElement` when the stylesheet keys off
+   * `[data-energy-level]` at the root — resolved inside the effect, so the
+   * render phase never touches the DOM. Whatever the target, the provider
+   * snapshots what was there, layers overlapping providers, and restores the
+   * baseline on unmount.
+   */
+  domTarget?: HTMLElement | (() => HTMLElement | null)
   children: ReactNode
 }
 
@@ -125,17 +135,24 @@ export function EnergyProvider({
   persistence,
   onLevelChange,
   applyToDOM = true,
+  domTarget,
   children,
 }: EnergyProviderProps) {
   const internalEngineRef = useRef<EnergyEngine | null>(null)
   const [, refreshEngine] = useReducer((version: number) => version + 1, 0)
   const onLevelChangeRef = useRef(onLevelChange)
+  // Held in a ref, not a dependency: `domTarget={() => document.documentElement}`
+  // is the natural way to write this, and a fresh arrow every render would tear
+  // the projection down and rebuild it on every render. The target is resolved
+  // once per mount, like `defaultLevel` and `persistence`.
+  const domTargetRef = useRef(domTarget)
   const isProviderCommittedRef = useRef(false)
   const pendingInternalChangesRef = useRef<Array<{ state: EnergyState; prev: EnergyState }>>([])
 
   useInsertionEffect(() => {
     onLevelChangeRef.current = onLevelChange
-  }, [onLevelChange])
+    domTargetRef.current = domTarget
+  }, [onLevelChange, domTarget])
 
   // `defaultLevel` and `persistence` are initial-only by contract: they
   // configure the engine the provider creates, they do not reconfigure it.
@@ -234,7 +251,10 @@ export function EnergyProvider({
   useEffect(() => {
     if (!applyToDOM || typeof document === 'undefined') return
 
-    const target = document.body
+    const requested = domTargetRef.current
+    const target = (typeof requested === 'function' ? requested() : requested) ?? document.body
+    if (!target) return
+
     const owner = {}
     const existingStack = domProjectionStacks.get(target)
     const stack = existingStack ?? {

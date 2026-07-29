@@ -12,9 +12,19 @@ export interface EnergyProviderProps {
     onLevelChange?: EnergyChangeListener;
     /** Whether to apply energy level to DOM via data attributes */
     applyToDOM?: boolean;
+    /**
+     * Element the level is projected onto. Default: `document.body`.
+     *
+     * Pass `() => document.documentElement` when the stylesheet keys off
+     * `[data-energy-level]` at the root — resolved inside the effect, so the
+     * render phase never touches the DOM. Whatever the target, the provider
+     * snapshots what was there, layers overlapping providers, and restores the
+     * baseline on unmount.
+     */
+    domTarget?: HTMLElement | (() => HTMLElement | null);
     children: ReactNode;
 }
-export declare function EnergyProvider({ engine: externalEngine, defaultLevel, persistence, onLevelChange, applyToDOM, children, }: EnergyProviderProps): import("react").FunctionComponentElement<import("react").ProviderProps<EnergyEngine | null>>;
+export declare function EnergyProvider({ engine: externalEngine, defaultLevel, persistence, onLevelChange, applyToDOM, domTarget, children, }: EnergyProviderProps): import("react").FunctionComponentElement<import("react").ProviderProps<EnergyEngine | null>>;
 /** Get the full energy state (level + timestamp + source) */
 export declare function useEnergyState(): EnergyState;
 /** Read the current energy level and setter */

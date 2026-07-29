@@ -45,15 +45,21 @@ function useEngine() {
         throw new Error('Energy hooks must be used within an EnergyProvider');
     return engine;
 }
-export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, persistence, onLevelChange, applyToDOM = true, children, }) {
+export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, persistence, onLevelChange, applyToDOM = true, domTarget, children, }) {
     const internalEngineRef = useRef(null);
     const [, refreshEngine] = useReducer((version) => version + 1, 0);
     const onLevelChangeRef = useRef(onLevelChange);
+    // Held in a ref, not a dependency: `domTarget={() => document.documentElement}`
+    // is the natural way to write this, and a fresh arrow every render would tear
+    // the projection down and rebuild it on every render. The target is resolved
+    // once per mount, like `defaultLevel` and `persistence`.
+    const domTargetRef = useRef(domTarget);
     const isProviderCommittedRef = useRef(false);
     const pendingInternalChangesRef = useRef([]);
     useInsertionEffect(() => {
         onLevelChangeRef.current = onLevelChange;
-    }, [onLevelChange]);
+        domTargetRef.current = domTarget;
+    }, [onLevelChange, domTarget]);
     // `defaultLevel` and `persistence` are initial-only by contract: they
     // configure the engine the provider creates, they do not reconfigure it.
     //
@@ -138,7 +144,10 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
     useEffect(() => {
         if (!applyToDOM || typeof document === 'undefined')
             return;
-        const target = document.body;
+        const requested = domTargetRef.current;
+        const target = (typeof requested === 'function' ? requested() : requested) ?? document.body;
+        if (!target)
+            return;
         const owner = {};
         const existingStack = domProjectionStacks.get(target);
         const stack = existingStack ?? {

@@ -378,3 +378,58 @@ void test('a provider render that never commits leaves no persistence observer b
   assert.equal(observers, 0, 'unmount releases the observer')
   container.remove()
 })
+
+void test('domTarget projects onto a custom element and restores it on unmount', async () => {
+  // The stylesheet keying off [data-energy-level] often lives on <html>, not
+  // <body>. Consumers that had to hand-roll this were also hand-rolling the
+  // snapshot/restore the provider already does.
+  const target = document.documentElement
+  const originalAttribute = target.getAttribute('data-energy-level')
+  const originalWidth = target.style.getPropertyValue('--energy-content-max-width')
+  target.setAttribute('data-energy-level', '100')
+  target.style.setProperty('--energy-content-max-width', '42ch')
+
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+  const bodyBefore = document.body.getAttribute('data-energy-level')
+
+  try {
+    await act(async () => {
+      root.render(
+        createElement(EnergyProvider, {
+          defaultLevel: 25,
+          domTarget: () => document.documentElement,
+          children: null,
+        }),
+      )
+    })
+
+    assert.equal(target.dataset['energyLevel'], '25')
+    assert.equal(target.style.getPropertyValue('--energy-content-max-width'), '80ch')
+    assert.equal(
+      document.body.getAttribute('data-energy-level'),
+      bodyBefore,
+      'a custom target must leave <body> untouched',
+    )
+
+    await act(async () => {
+      root.unmount()
+    })
+
+    assert.equal(target.dataset['energyLevel'], '100')
+    assert.equal(target.style.getPropertyValue('--energy-content-max-width'), '42ch')
+  } finally {
+    if (originalAttribute === null) {
+      target.removeAttribute('data-energy-level')
+    } else {
+      target.setAttribute('data-energy-level', originalAttribute)
+    }
+    if (originalWidth === '') {
+      target.style.removeProperty('--energy-content-max-width')
+    } else {
+      target.style.setProperty('--energy-content-max-width', originalWidth)
+    }
+    container.remove()
+  }
+})
