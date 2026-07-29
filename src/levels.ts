@@ -26,6 +26,25 @@ export function createEnergyOrigin(): string {
   return `${Date.now().toString(36)}-${originSequence.toString(36)}-${Math.random().toString(36).slice(2)}`
 }
 
+/*
+ * Markers for a state that has never been *produced* — the untouched default an engine starts with,
+ * as opposed to a level anyone actually chose.
+ *
+ * Both exist so engine construction reads neither the clock nor the random source. React providers
+ * build their engine during render, so under a prerender those reads are unstable values baked into
+ * static output, and Next.js Cache Components fails the build on them.
+ *
+ * Both sentinels sort below any real value, which is also the semantics you want: a persisted or
+ * observed state must always beat the default it replaces.
+ */
+export const UNPRODUCED_ORIGIN = '0-initial'
+export const UNPRODUCED_TIMESTAMP = 0
+
+/** True for the untouched default state — its age and identity are not meaningful. */
+export function isUnproducedState(state: Pick<EnergyState, 'timestamp' | 'origin'>): boolean {
+  return state.timestamp === UNPRODUCED_TIMESTAMP && state.origin === UNPRODUCED_ORIGIN
+}
+
 let standaloneOrigin: string | undefined
 
 /**

@@ -1,4 +1,4 @@
-import { getEnergyLevel } from './levels.js'
+import { getEnergyLevel, isUnproducedState } from './levels.js'
 import type { EnergyLevel, EnergyMetrics, EnergyState } from './types.js'
 
 function freezeObject<T extends object>(value: T): Readonly<T> {
@@ -34,7 +34,12 @@ const RECOVERY_HINT_MINUTES: Partial<Record<EnergyLevel, number>> = {
  */
 export function getEnergyMetrics(state: EnergyState, now = Date.now()): EnergyMetrics {
   const safeNow = Number.isFinite(now) ? now : Date.now()
-  const stateAgeMs = Math.max(0, safeNow - state.timestamp)
+  /*
+   * The untouched default carries a sentinel timestamp rather than the moment its engine happened
+   * to be constructed, so that construction stays prerender-safe. Subtracting from it would report
+   * an age measured from the epoch — decades — for a state nobody has set yet. It has no age.
+   */
+  const stateAgeMs = isUnproducedState(state) ? 0 : Math.max(0, safeNow - state.timestamp)
   const definition = getEnergyLevel(state.level)
   const recoveryHintMinutes = RECOVERY_HINT_MINUTES[state.level]
 

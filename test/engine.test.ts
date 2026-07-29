@@ -5,6 +5,8 @@ import { applyEnergyLevel, readEnergyLevel } from '../src/dom.ts'
 import {
   ENERGY_LEVEL_VALUES,
   ENERGY_SOURCE_VALUES,
+  UNPRODUCED_ORIGIN,
+  UNPRODUCED_TIMESTAMP,
   createExternalLevelCompatibility,
   createEnergyEngine,
   createEnergyState,
@@ -13,6 +15,7 @@ import {
   getEnergyMetrics,
   isEnergyLevel,
   isEnergySource,
+  isUnproducedState,
   notificationStrategy,
   taskComplexityStrategy,
   uiVisibilityStrategy,
@@ -272,6 +275,100 @@ void test('cycleEnergyLevel follows the documented order and recovers from inval
   assert.equal(cycleEnergyLevel(33 as never), 100)
 })
 
+void test('engine construction reads neither the clock nor the random source', () => {
+  /*
+   * React providers construct their engine during render. Under a prerender, any clock or random
+   * read during render is an unstable value baked into static output — Next.js Cache Components
+   * fails the build on exactly this. The untouched initial state therefore carries sentinels, and
+   * the real timestamp and origin are produced on the first state anyone actually sets.
+   */
+  const realRandomUUID = globalThis.crypto.randomUUID
+  const realGetRandomValues = globalThis.crypto.getRandomValues
+  let randomReads = 0
+  let clockReads = 0
+
+  // Annotated rather than asserted, so the parameter and return types are inferred from the real
+  // signatures instead of being forced onto them.
+  const countingRandomUUID: Crypto['randomUUID'] = () => {
+    randomReads += 1
+    return realRandomUUID.call(globalThis.crypto)
+  }
+  const countingGetRandomValues: Crypto['getRandomValues'] = (array) => {
+    randomReads += 1
+    // Fills in place and returns the same reference; returning `array` keeps the caller's type.
+    realGetRandomValues.call(globalThis.crypto, array)
+    return array
+  }
+
+  globalThis.crypto.randomUUID = countingRandomUUID
+  globalThis.crypto.getRandomValues = countingGetRandomValues
+
+  try {
+    const engine = createEnergyEngine({
+      initialLevel: 100,
+      clock: () => {
+        clockReads += 1
+        return 1000
+      },
+    })
+
+    assert.equal(randomReads, 0, 'construction must not generate an origin')
+    assert.equal(clockReads, 0, 'construction must not read the clock')
+    assert.equal(engine.getState().timestamp, UNPRODUCED_TIMESTAMP)
+    assert.equal(engine.getState().origin, UNPRODUCED_ORIGIN)
+    assert.ok(isUnproducedState(engine.getState()))
+
+    // Reading state is still free; only producing one costs an identity and a timestamp.
+    engine.getState()
+    assert.equal(randomReads, 0)
+    assert.equal(clockReads, 0)
+
+    engine.setLevel(75)
+    assert.equal(randomReads, 1, 'the first produced state gets a real origin')
+    assert.equal(clockReads, 1, 'the first produced state gets a real timestamp')
+    assert.equal(engine.getState().timestamp, 1000)
+    assert.notEqual(engine.getState().origin, UNPRODUCED_ORIGIN)
+    assert.ok(!isUnproducedState(engine.getState()))
+
+    // The identity is stable across subsequent writes rather than regenerated.
+    const { origin } = engine.getState()
+    engine.setLevel(50)
+    assert.equal(randomReads, 1)
+    assert.equal(engine.getState().origin, origin)
+  } finally {
+    globalThis.crypto.randomUUID = realRandomUUID
+    globalThis.crypto.getRandomValues = realGetRandomValues
+  }
+})
+
+void test('an unproduced state reports no age, and a produced one reports its real age', () => {
+  const engine = createEnergyEngine({ initialLevel: 100, clock: () => 60_000 })
+
+  // Subtracting from the sentinel would report an age measured from the epoch.
+  assert.equal(getEnergyMetrics(engine.getState(), 60_000).stateAgeMs, 0)
+
+  engine.setLevel(75)
+  assert.equal(getEnergyMetrics(engine.getState(), 90_000).stateAgeMs, 30_000)
+})
+
+void test('a persisted state always outranks the untouched default', async () => {
+  const stored = createEnergyState(25, 'manual', 5000, 0, 'previous-session')
+  const engine = createEnergyEngine({
+    initialLevel: 100,
+    clock: () => 10_000,
+    persistence: {
+      async load() {
+        return stored
+      },
+      async save() {},
+    },
+  })
+
+  await engine.hydrate()
+  assert.equal(engine.getState().level, 25)
+  assert.equal(engine.getState().origin, 'previous-session')
+})
+
 void test('state-changing operations after dispose are inert', () => {
   let clockCalls = 0
   const changes: Array<[number, number]> = []
@@ -295,7 +392,9 @@ void test('state-changing operations after dispose are inert', () => {
 
   assert.equal(engine.getState().level, 75)
   assert.deepEqual(changes, [[100, 75]])
-  assert.equal(clockCalls, 2)
+  // One call, from `setLevel`. Construction deliberately reads no clock — see
+  // 'engine construction reads neither the clock nor the random source' below.
+  assert.equal(clockCalls, 1)
 })
 
 void test('failed saves are retried with backoff until the state is durably persisted', async () => {
@@ -538,7 +637,14 @@ void test('same-origin logical revisions outrank an earlier write source priorit
 
   assert.equal(observer.getState().level, 25)
   assert.equal(observer.getState().source, 'inferred')
-  assert.equal(observer.getState().revision, 2)
+  /*
+   * Revisions are 0 and 1 for the two writes. The untouched initial state no longer carries the
+   * wall clock, so under this frozen clock the first real write is genuinely the first state at
+   * t=100 rather than colliding with the default and starting at 1. What this test exists to prove
+   * is unchanged and asserted above: the later 'inferred' write wins over the earlier 'manual' one
+   * because revision is compared before source priority.
+   */
+  assert.equal(observer.getState().revision, 1)
 })
 
 void test('local writes remain possible when an accepted logical revision is exhausted', () => {

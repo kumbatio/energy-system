@@ -1,4 +1,4 @@
-import { createEnergyOrigin, createEnergyState, cycleEnergyLevel, isEnergyLevel, isEnergySource, } from './levels.js';
+import { UNPRODUCED_ORIGIN, UNPRODUCED_TIMESTAMP, createEnergyOrigin, createEnergyState, cycleEnergyLevel, isEnergyLevel, isEnergySource, } from './levels.js';
 function logEngineError(message, err) {
     console.error(`[energy-system] ${message}`, err);
 }
@@ -61,19 +61,6 @@ function normalizeState(candidate, nowMs, maxFutureSkewMs) {
     }
     return createEnergyState(candidate.level, candidate.source, candidate.timestamp, candidate.revision, candidate.origin);
 }
-/**
- * Origin stamped on the untouched initial state.
- *
- * The initial state is the *absence* of a produced value, so it needs no unique producer identity —
- * and generating one eagerly meant every engine construction called `crypto.randomUUID()`. React
- * providers build their engine during render, so under a prerender that random value was baked into
- * static output, which fails the build outright for consumers using Next.js Cache Components.
- *
- * Sorts below any generated origin, so if it ever meets a real one in the final tiebreak of
- * `isPreferredExternalState` the actual producer wins. Reaching that tiebreak at all requires
- * matching timestamp, revision and source — states that are equivalent anyway.
- */
-const INITIAL_ORIGIN = '0-initial';
 export function createEnergyEngine(options = {}) {
     const { initialLevel = 100, persistence, onChange, onPersistenceError, clock, maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS, } = options;
     /*
@@ -96,7 +83,13 @@ export function createEnergyEngine(options = {}) {
     let stateVersion = 0;
     let disposed = false;
     let isNotifying = false;
-    let state = createEnergyState(initialLevel, 'manual', now(), 0, options.originId ?? INITIAL_ORIGIN);
+    /*
+     * The untouched default: no clock read and no random read, so constructing an engine during a
+     * React render (which is what every provider does) stays prerender-safe. Both sentinels sort
+     * below any real value, so the first persisted, observed or user-set state replaces this
+     * unconditionally.
+     */
+    let state = createEnergyState(initialLevel, 'manual', UNPRODUCED_TIMESTAMP, 0, options.originId ?? UNPRODUCED_ORIGIN);
     // Version 0 is the initial in-memory state, not proof that a persistence
     // adapter has durably stored it. Starting below the version domain keeps
     // flush() honest even before the first state transition.

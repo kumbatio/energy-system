@@ -21,6 +21,8 @@ export { ENERGY_LEVEL_VALUES, ENERGY_PRESENCE_VALUES, ENERGY_SOURCE_VALUES } fro
 
 // Level definitions and pure functions
 export {
+  UNPRODUCED_ORIGIN,
+  UNPRODUCED_TIMESTAMP,
   createEnergyState,
   cycleEnergyLevel,
   getEnergyLevel,
@@ -28,6 +30,7 @@ export {
   isEnergyLevel,
   isEnergySource,
   isHigherEnergy,
+  isUnproducedState,
 } from './levels.js'
 // Compatibility helpers for non-native external level models
 export type { ExternalLevelCompatibility, ExternalLevelCompatibilityOptions } from './compat.js'

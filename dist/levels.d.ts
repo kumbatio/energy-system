@@ -1,6 +1,10 @@
 import type { EnergyLevel, EnergyLevelDefinition, EnergySource, EnergyState } from './types.js';
 /** Create a unique producer identity for deterministic cross-context ordering. */
 export declare function createEnergyOrigin(): string;
+export declare const UNPRODUCED_ORIGIN = "0-initial";
+export declare const UNPRODUCED_TIMESTAMP = 0;
+/** True for the untouched default state — its age and identity are not meaningful. */
+export declare function isUnproducedState(state: Pick<EnergyState, 'timestamp' | 'origin'>): boolean;
 /** Get all energy level definitions, ordered highest to lowest */
 export declare function getEnergyLevels(): ReadonlyArray<Readonly<EnergyLevelDefinition>>;
 /** Get definition for a specific energy level */
