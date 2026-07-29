@@ -1,5 +1,5 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.2",
   "entryPoints": [
     {
       "specifier": "@kumbatio/energy-system",
@@ -130,5 +130,208 @@
       ],
       "types": []
     }
-  ]
+  ],
+  "members": {
+    "ExternalLevelCompatibilityOptions": [
+      "fallbackEnergyLevel",
+      "fallbackLevel",
+      "levels",
+      "toEnergyLevel"
+    ],
+    "ExternalLevelCompatibility": [
+      "cycleExternalLevel",
+      "cycleMappedEnergyLevel",
+      "fallbackEnergyLevel",
+      "fallbackLevel",
+      "fromEnergyLevel",
+      "levels",
+      "toEnergyLevel"
+    ],
+    "DeferralPreset": [
+      "compute",
+      "id",
+      "label"
+    ],
+    "DeferralPresetOptions": [
+      "eveningHour",
+      "morningHour"
+    ],
+    "DeferralConfig": [
+      "defaultPresetId",
+      "orderedPresetIds"
+    ],
+    "EnergyEngineOptions": [
+      "autoStart",
+      "clock",
+      "initialLevel",
+      "maxFutureSkewMs",
+      "onChange",
+      "onPersistenceError",
+      "originId",
+      "persistence"
+    ],
+    "EnergyEngine": [
+      "cycleLevel",
+      "dispose",
+      "flush",
+      "getState",
+      "hydrate",
+      "setLevel",
+      "start",
+      "subscribe"
+    ],
+    "EnergyNotification": [
+      "createdAt",
+      "payload",
+      "priority"
+    ],
+    "NotificationChannels": [
+      "sound",
+      "vibration",
+      "visual"
+    ],
+    "NotificationDelivery": [
+      "channels",
+      "level",
+      "notifications",
+      "reason"
+    ],
+    "GateScheduler": [
+      "clearTimeout",
+      "setTimeout"
+    ],
+    "NotificationGateOptions": [
+      "clock",
+      "onDeliver",
+      "scheduler",
+      "strategy"
+    ],
+    "NotificationGate": [
+      "dispose",
+      "flush",
+      "isSuppressed",
+      "pendingCount",
+      "publish",
+      "setSuppressed"
+    ],
+    "EnergyProviderProps": [
+      "applyToDOM",
+      "children",
+      "defaultLevel",
+      "domTarget",
+      "engine",
+      "onLevelChange",
+      "persistence"
+    ],
+    "EnergyIndicatorRenderProps": [
+      "cognitiveProfile",
+      "cycle",
+      "definition",
+      "description",
+      "label",
+      "level",
+      "levels",
+      "setLevel",
+      "state"
+    ],
+    "EnergyIndicatorProps": [
+      "children"
+    ],
+    "FocusSession": [
+      "breakIntervalMs",
+      "endsAt",
+      "startedAt"
+    ],
+    "FocusSuppressible": [
+      "setSuppressed"
+    ],
+    "FocusSessionControllerOptions": [
+      "clock",
+      "engine",
+      "gate",
+      "scheduler"
+    ],
+    "StartFocusSessionOptions": [
+      "breakEveryMinutes",
+      "durationMinutes"
+    ],
+    "FocusSessionController": [
+      "dispose",
+      "getSession",
+      "remainingMs",
+      "start",
+      "stop",
+      "subscribe"
+    ],
+    "UIVisibilityConfig": [
+      "chromeOpacity",
+      "chromeOpacityHover",
+      "contentFontScale",
+      "contentMaxWidth",
+      "readOnlyCursor",
+      "sidebar",
+      "statusBar",
+      "tabBar",
+      "toolbar"
+    ],
+    "NotificationConfig": [
+      "allowSound",
+      "allowVibration",
+      "allowVisual",
+      "batchInterval",
+      "priorityThreshold"
+    ],
+    "TaskComplexityConfig": [
+      "breakIntervalMinutes",
+      "maxComplexity",
+      "suggestBreaks"
+    ],
+    "InteractionForgivenessConfig": [
+      "autosaveIntervalMs",
+      "confirmDestructive",
+      "undoWindowMs"
+    ],
+    "EnergyState": [
+      "level",
+      "origin",
+      "revision",
+      "source",
+      "timestamp"
+    ],
+    "EnergyClock": [
+      "now"
+    ],
+    "CognitiveProfile": [
+      "decisionCapacity",
+      "focusDuration",
+      "interruptionTolerance",
+      "taskComplexity"
+    ],
+    "EnergyLevelDefinition": [
+      "cognitiveProfile",
+      "description",
+      "key",
+      "label",
+      "value"
+    ],
+    "AdaptationStrategy": [
+      "describe",
+      "name",
+      "resolve"
+    ],
+    "EnergyPersistence": [
+      "load",
+      "observe",
+      "save"
+    ],
+    "EnergyMetrics": [
+      "expectedProductivityWindowMinutes",
+      "recommendedTaskComplexity",
+      "recoveryHintMinutes",
+      "stateAgeMinutes",
+      "stateAgeMs",
+      "suggestedBreakIntervalMinutes",
+      "sustainable"
+    ]
+  }
 }
