@@ -4,8 +4,9 @@ import test from 'node:test'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import { StrictMode, act, createElement, useEffect, useLayoutEffect } from 'react'
 import { createRoot } from 'react-dom/client'
+import { renderToStaticMarkup } from 'react-dom/server'
 
-import type { EnergyLevel, EnergySource } from '../src/index.ts'
+import type { EnergyLevel, EnergyPersistence, EnergySource } from '../src/index.ts'
 import { createEnergyEngine } from '../src/index.ts'
 import { EnergyProvider, useEnergyLevel, useEnergyState } from '../src/react.ts'
 
@@ -328,4 +329,52 @@ void test('overlapping providers restore the baseline after out-of-order unmount
     firstContainer.remove()
     secondContainer.remove()
   }
+})
+
+void test('a provider render that never commits leaves no persistence observer behind', async () => {
+  // A render React throws away still ran the provider body, which is where the
+  // engine is constructed. Nothing disposes that engine, so anything it
+  // subscribed to at construction would be stranded for the life of the page.
+  let observers = 0
+  let hydrations = 0
+  const persistence: EnergyPersistence = {
+    async load() {
+      hydrations += 1
+      return null
+    },
+    async save() {},
+    observe() {
+      observers += 1
+      return () => {
+        observers -= 1
+      }
+    },
+  }
+
+  // A server render runs the provider's render phase and then stops: no commit,
+  // no effects, no cleanup — the same shape as a concurrent render React throws
+  // away, and reproducible without racing the scheduler.
+  const markup = renderToStaticMarkup(
+    createElement(EnergyProvider, { persistence, applyToDOM: false, children: null }),
+  )
+  assert.equal(markup, '')
+  assert.equal(observers, 0, 'an uncommitted render must not subscribe to persistence')
+  assert.equal(hydrations, 0, 'an uncommitted render must not start hydration')
+
+  // A committed provider does subscribe, and releases it on unmount.
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+
+  await act(async () => {
+    root.render(createElement(EnergyProvider, { persistence, applyToDOM: false, children: null }))
+  })
+  assert.equal(observers, 1, 'a committed provider subscribes exactly once')
+  assert.equal(hydrations, 1)
+
+  await act(async () => {
+    root.unmount()
+  })
+  assert.equal(observers, 0, 'unmount releases the observer')
+  container.remove()
 })

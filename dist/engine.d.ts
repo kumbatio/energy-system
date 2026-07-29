@@ -17,8 +17,26 @@ export interface EnergyEngineOptions {
      * finite timestamp. Default: 5 minutes.
      */
     maxFutureSkewMs?: number;
+    /**
+     * Whether construction immediately hydrates from persistence and subscribes
+     * to cross-context updates. Default: true.
+     *
+     * Pass false when the engine is constructed somewhere that may never be
+     * committed — a React render, most notably — and call `start()` from a
+     * lifecycle that only runs for trees React kept. Without this, a discarded
+     * render leaves an engine nobody will ever dispose, holding a live
+     * cross-context observer (a `storage` listener, for the localStorage
+     * adapter) for the lifetime of the page.
+     */
+    autoStart?: boolean;
 }
 export interface EnergyEngine {
+    /**
+     * Begin hydration and cross-context observation. Idempotent, and a no-op on
+     * a disposed engine. Only needed when the engine was created with
+     * `autoStart: false`.
+     */
+    start(): void;
     /** Get current energy state */
     getState(): EnergyState;
     /** Set energy level with optional source */

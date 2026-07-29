@@ -30,12 +30,27 @@ export declare function useStrategy<T>(strategy: AdaptationStrategy<T>): T;
 export declare function useEnergyGate(minLevel: EnergyLevel): boolean;
 /** Resolve a presence map against the current energy level */
 export declare function useEnergyPresence(presence: EnergyPresenceMap): EnergyPresence;
+/**
+ * What happens to the gated subtree when its presence resolves to 'hidden'.
+ *
+ * - `preserve` (default): kept mounted inside `<Activity mode="hidden">`, so
+ *   component state, DOM and scroll position survive. Effects are torn down
+ *   while hidden and re-run on reveal, and hidden content is not rendered on
+ *   the server. Energy is expected to move up and down; a half-written message
+ *   should still be there when capacity returns.
+ * - `unmount`: removed from the tree entirely. Use for subtrees whose cost is
+ *   worth reclaiming at low energy (media, canvases, live connections).
+ */
+export type EnergyHiddenBehavior = 'preserve' | 'unmount';
 interface EnergyGateBaseProps {
     /** Rendered instead of children while hidden. Default: nothing. */
     fallback?: ReactNode;
+    /** How the subtree is treated while hidden. Default: 'preserve'. */
+    whenHidden?: EnergyHiddenBehavior;
     /**
      * Content to gate. The function form receives the resolved presence so
-     * 'muted' can style itself differently from 'visible'.
+     * 'muted' can style itself differently from 'visible'. Under `preserve` it
+     * is also called with 'hidden', because the subtree stays mounted.
      */
     children: ReactNode | ((presence: EnergyPresence) => ReactNode);
 }
@@ -73,7 +88,7 @@ export type EnergyGateProps = EnergyGateBaseProps & ({
  *
  * Headless: renders no wrapper element of its own.
  */
-export declare function EnergyGate({ presence, min, max, fallback, children, }: EnergyGateProps): ReactNode;
+export declare function EnergyGate({ presence, min, max, fallback, whenHidden, children, }: EnergyGateProps): ReactNode;
 export interface EnergyIndicatorRenderProps {
     level: EnergyLevel;
     label: string;

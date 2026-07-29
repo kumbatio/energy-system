@@ -62,7 +62,7 @@ function normalizeState(candidate, nowMs, maxFutureSkewMs) {
     return createEnergyState(candidate.level, candidate.source, candidate.timestamp, candidate.revision, candidate.origin);
 }
 export function createEnergyEngine(options = {}) {
-    const { initialLevel = 100, persistence, onChange, onPersistenceError, clock, maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS, } = options;
+    const { initialLevel = 100, persistence, onChange, onPersistenceError, clock, maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS, autoStart = true, } = options;
     /*
      * Deferred to the first state this engine actually produces. An explicitly supplied `originId`
      * is honoured immediately, so deterministic callers (tests, simulations) are unaffected.
@@ -216,7 +216,38 @@ export function createEnergyEngine(options = {}) {
         return true;
     }
     let disposePersistenceObservation = () => { };
+    let started = false;
     const engine = {
+        start() {
+            if (started || disposed || !persistence)
+                return;
+            started = true;
+            initialHydrationTask = engine.hydrate().catch((err) => {
+                logEngineError('Unexpected hydrate failure', err);
+            });
+            if (!persistence.observe)
+                return;
+            try {
+                disposePersistenceObservation = persistence.observe((externalState) => {
+                    if (disposed)
+                        return;
+                    let normalized;
+                    try {
+                        normalized = normalizeState(externalState, now(), maxFutureSkewMs);
+                    }
+                    catch (err) {
+                        logEngineError('Ignoring invalid observed energy state', err);
+                        return;
+                    }
+                    if (!isPreferredExternalState(normalized, state))
+                        return;
+                    applyState(normalized);
+                });
+            }
+            catch (err) {
+                logEngineError('Failed to subscribe to persistence observation', err);
+            }
+        },
         getState() {
             return state;
         },
@@ -336,33 +367,8 @@ export function createEnergyEngine(options = {}) {
             }
         },
     };
-    // Auto-hydrate from persistence
-    if (persistence) {
-        initialHydrationTask = engine.hydrate().catch((err) => {
-            logEngineError('Unexpected hydrate failure', err);
-        });
-    }
-    if (persistence?.observe) {
-        try {
-            disposePersistenceObservation = persistence.observe((externalState) => {
-                if (disposed)
-                    return;
-                let normalized;
-                try {
-                    normalized = normalizeState(externalState, now(), maxFutureSkewMs);
-                }
-                catch (err) {
-                    logEngineError('Ignoring invalid observed energy state', err);
-                    return;
-                }
-                if (!isPreferredExternalState(normalized, state))
-                    return;
-                applyState(normalized);
-            });
-        }
-        catch (err) {
-            logEngineError('Failed to subscribe to persistence observation', err);
-        }
+    if (autoStart) {
+        engine.start();
     }
     return engine;
 }

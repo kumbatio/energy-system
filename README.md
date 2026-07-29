@@ -166,6 +166,21 @@ import { EnergyGate } from '@kumbatio/energy-system/react'
 </EnergyGate>
 ```
 
+Hidden subtrees keep their state. Energy moves up and down, so a gate that
+destroyed its children would throw away a half-written message every time
+capacity dipped. `<EnergyGate>` hides through React 19.2's `<Activity>`:
+component state, DOM and scroll position survive, effects are torn down while
+hidden and re-run on reveal, and hidden content is not server-rendered.
+
+Opt out for subtrees whose cost is worth reclaiming — media, canvases, live
+connections:
+
+```tsx
+<EnergyGate min={75} whenHidden="unmount">
+  <VideoWall />
+</EnergyGate>
+```
+
 CSS-only path — annotate elements with the range they belong to and the
 stylesheet handles hiding as `data-energy-level` changes:
 
@@ -317,7 +332,8 @@ animating presence changes should do the same.
 - `useStrategy(strategy)`
 - `useEnergyGate(minLevel)`
 - `useEnergyPresence(presenceMap)`
-- `EnergyGate` (presence-gated subtree: `presence` map or `min`/`max` shorthand)
+- `EnergyGate` (presence-gated subtree: `presence` map or `min`/`max` shorthand;
+  `whenHidden` is `'preserve'` by default, `'unmount'` to drop the subtree)
 - `EnergyIndicator`
 
 ### `@kumbatio/energy-system/persistence`
@@ -339,6 +355,10 @@ animating presence changes should do the same.
 - `createEnergyEngine({ maxFutureSkewMs })` - reject hydrated/observed state stamped further
   ahead of the local clock than this budget (default 5 minutes; `Number.POSITIVE_INFINITY`
   accepts any finite timestamp). Guards reconciliation against contexts with bad clocks.
+- `createEnergyEngine({ autoStart: false })` + `engine.start()` - construct the engine without
+  hydrating or subscribing to cross-context updates, then begin both explicitly. For engines
+  built somewhere that may never be committed: `EnergyProvider` constructs during render and
+  starts from an effect, so a render React discards leaves no stranded observer behind.
 - `engine.flush()` - wait until the current state version is durably persisted; rejects if the
   engine is disposed or an unchanged initial state cannot be safely reconciled after a hydration
   read failure

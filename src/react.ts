@@ -8,6 +8,8 @@
 
 import type { ReactNode } from 'react'
 import {
+  Activity,
+  Fragment,
   createContext,
   createElement,
   useCallback,
@@ -137,9 +139,17 @@ export function EnergyProvider({
 
   // `defaultLevel` and `persistence` are initial-only by contract: they
   // configure the engine the provider creates, they do not reconfigure it.
+  //
+  // `autoStart: false` because this runs during render. React discards
+  // in-progress renders (an interrupted transition, a sibling suspending), and
+  // the effect that disposes the engine only runs for a tree it committed. An
+  // engine that hydrated and subscribed at construction would strand a live
+  // cross-context observer with nothing left to release it. Starting from the
+  // effect below ties both to a commit.
   const createInternalEngine = () =>
     createEnergyEngine({
       initialLevel: defaultLevel,
+      autoStart: false,
       ...(persistence ? { persistence } : {}),
       onChange(state, prev) {
         if (isProviderCommittedRef.current) {
@@ -180,6 +190,10 @@ export function EnergyProvider({
       internalEngineRef.current = createInternalEngine()
       refreshEngine()
     }
+
+    // Idempotent, so the StrictMode remount path above and the ordinary mount
+    // path both land here exactly once per live engine.
+    internalEngineRef.current.start()
 
     return () => {
       internalEngineRef.current?.dispose()
@@ -334,12 +348,28 @@ export function useEnergyPresence(presence: EnergyPresenceMap): EnergyPresence {
 
 // ── EnergyGate component ──
 
+/**
+ * What happens to the gated subtree when its presence resolves to 'hidden'.
+ *
+ * - `preserve` (default): kept mounted inside `<Activity mode="hidden">`, so
+ *   component state, DOM and scroll position survive. Effects are torn down
+ *   while hidden and re-run on reveal, and hidden content is not rendered on
+ *   the server. Energy is expected to move up and down; a half-written message
+ *   should still be there when capacity returns.
+ * - `unmount`: removed from the tree entirely. Use for subtrees whose cost is
+ *   worth reclaiming at low energy (media, canvases, live connections).
+ */
+export type EnergyHiddenBehavior = 'preserve' | 'unmount'
+
 interface EnergyGateBaseProps {
   /** Rendered instead of children while hidden. Default: nothing. */
   fallback?: ReactNode
+  /** How the subtree is treated while hidden. Default: 'preserve'. */
+  whenHidden?: EnergyHiddenBehavior
   /**
    * Content to gate. The function form receives the resolved presence so
-   * 'muted' can style itself differently from 'visible'.
+   * 'muted' can style itself differently from 'visible'. Under `preserve` it
+   * is also called with 'hidden', because the subtree stays mounted.
    */
   children: ReactNode | ((presence: EnergyPresence) => ReactNode)
 }
@@ -389,6 +419,7 @@ export function EnergyGate({
   min,
   max,
   fallback = null,
+  whenHidden = 'preserve',
   children,
 }: EnergyGateProps): ReactNode {
   const map = useMemo<EnergyPresenceMap>(() => {
@@ -413,9 +444,29 @@ export function EnergyGate({
   }, [presence, min, max])
 
   const resolved = useEnergyPresence(map)
+  const isHidden = resolved === 'hidden'
 
-  if (resolved === 'hidden') return fallback
-  return typeof children === 'function' ? children(resolved) : children
+  if (whenHidden === 'unmount') {
+    if (isHidden) return fallback
+    return typeof children === 'function' ? children(resolved) : children
+  }
+
+  /*
+   * The <Activity> element sits at a fixed position in a fixed Fragment on every
+   * render, hidden or not. That stability is the whole mechanism: reconciling the
+   * same boundary is what carries state across the transition. Rendering Activity
+   * only while hidden would swap the element type at that slot and remount the
+   * subtree on reveal — losing exactly the state this is here to keep.
+   */
+  return createElement(
+    Fragment,
+    null,
+    isHidden ? fallback : null,
+    createElement(Activity, {
+      mode: isHidden ? 'hidden' : 'visible',
+      children: typeof children === 'function' ? children(resolved) : children,
+    }),
+  )
 }
 
 // ── Headless Components ──

@@ -1,5 +1,5 @@
 'use client';
-import { createContext, createElement, useCallback, useContext, useEffect, useInsertionEffect, useLayoutEffect, useMemo, useReducer, useRef, useSyncExternalStore, } from 'react';
+import { Activity, Fragment, createContext, createElement, useCallback, useContext, useEffect, useInsertionEffect, useLayoutEffect, useMemo, useReducer, useRef, useSyncExternalStore, } from 'react';
 import { applyEnergyLevel } from './dom.js';
 import { createEnergyEngine } from './engine.js';
 import { getEnergyLevel, getEnergyLevels } from './levels.js';
@@ -56,8 +56,16 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
     }, [onLevelChange]);
     // `defaultLevel` and `persistence` are initial-only by contract: they
     // configure the engine the provider creates, they do not reconfigure it.
+    //
+    // `autoStart: false` because this runs during render. React discards
+    // in-progress renders (an interrupted transition, a sibling suspending), and
+    // the effect that disposes the engine only runs for a tree it committed. An
+    // engine that hydrated and subscribed at construction would strand a live
+    // cross-context observer with nothing left to release it. Starting from the
+    // effect below ties both to a commit.
     const createInternalEngine = () => createEnergyEngine({
         initialLevel: defaultLevel,
+        autoStart: false,
         ...(persistence ? { persistence } : {}),
         onChange(state, prev) {
             if (isProviderCommittedRef.current) {
@@ -92,6 +100,9 @@ export function EnergyProvider({ engine: externalEngine, defaultLevel = 100, per
             internalEngineRef.current = createInternalEngine();
             refreshEngine();
         }
+        // Idempotent, so the StrictMode remount path above and the ordinary mount
+        // path both land here exactly once per live engine.
+        internalEngineRef.current.start();
         return () => {
             internalEngineRef.current?.dispose();
             internalEngineRef.current = null;
@@ -234,7 +245,7 @@ export function useEnergyPresence(presence) {
  *
  * Headless: renders no wrapper element of its own.
  */
-export function EnergyGate({ presence, min, max, fallback = null, children, }) {
+export function EnergyGate({ presence, min, max, fallback = null, whenHidden = 'preserve', children, }) {
     const map = useMemo(() => {
         if (presence)
             return presence;
@@ -258,9 +269,23 @@ export function EnergyGate({ presence, min, max, fallback = null, children, }) {
         throw new Error('EnergyGate requires a presence map or min/max level');
     }, [presence, min, max]);
     const resolved = useEnergyPresence(map);
-    if (resolved === 'hidden')
-        return fallback;
-    return typeof children === 'function' ? children(resolved) : children;
+    const isHidden = resolved === 'hidden';
+    if (whenHidden === 'unmount') {
+        if (isHidden)
+            return fallback;
+        return typeof children === 'function' ? children(resolved) : children;
+    }
+    /*
+     * The <Activity> element sits at a fixed position in a fixed Fragment on every
+     * render, hidden or not. That stability is the whole mechanism: reconciling the
+     * same boundary is what carries state across the transition. Rendering Activity
+     * only while hidden would swap the element type at that slot and remount the
+     * subtree on reveal — losing exactly the state this is here to keep.
+     */
+    return createElement(Fragment, null, isHidden ? fallback : null, createElement(Activity, {
+        mode: isHidden ? 'hidden' : 'visible',
+        children: typeof children === 'function' ? children(resolved) : children,
+    }));
 }
 /** Headless energy indicator - bring your own UI */
 export function EnergyIndicator({ children }) {
