@@ -439,6 +439,14 @@ pnpm run pack:dry-run
 This package is framework-agnostic at its core. Platform-specific persistence
 adapters (e.g., SQLite-backed desktop stores) should live in consuming apps.
 
+## Who uses this
+
+- **[Anasa](https://anasa.md)** — Kumbatio's local-first writing and thinking workspace, in public alpha. Runs its entire adaptive shell on the engine: custom settings-backed persistence, energy-gated AI surfaces, notification filtering, and task-complexity guidance.
+- **[Meltemi](https://meltemi.app)** — an email client in private beta, built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, and interaction forgiveness — integrated without the React adapter.
+- **[kumbat.io](https://kumbat.io)** — the site itself runs on this model; change the energy level there and watch the interface adapt.
+
+The integration patterns these apps proved out are documented in the [Production Patterns guide](https://docs.kumbat.io/docs/energy-system/guides/production-patterns). If you ship something with `energy-system`, tell us: [hello@kumbat.io](mailto:hello@kumbat.io).
+
 ## Kumbatio
 
 `energy-system` is the infrastructure layer of [Kumbatio](https://kumbat.io) — an ecosystem of open-source, neuroinclusive software built from lived experience with ADHD and depression. The position behind it, in one line: **energy ≠ time**, and software should adapt to real cognitive capacity instead of assuming a default brain.

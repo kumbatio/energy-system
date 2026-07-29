@@ -51,7 +51,7 @@ deferred; focus suppression that never auto-expired).
 ## M3 — Reference integration
 
 - [x] Migrate [kumbat.io](https://kumbat.io) from its inline energy provider to this package — the site becomes the living integration test
-- [ ] Case study: what adaptation strategies survived contact with real use
+- [x] Case study: what adaptation strategies survived contact with real use — [Production Patterns](https://docs.kumbat.io/docs/energy-system/guides/production-patterns), drawn from [Anasa](https://anasa.md) (public alpha) and [Meltemi](https://meltemi.app) (private beta, built outside Kumbatio)
 
 ## M4 — v1.0 stable
 

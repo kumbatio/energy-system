@@ -1,6 +1,6 @@
 export type { AdaptationStrategy, CognitiveProfile, DecisionCapacity, EnergyClock, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyMetrics, EnergyPersistence, EnergyPresence, EnergyPresenceMap, EnergySource, EnergyState, FocusDuration, InterruptionTolerance, TaskComplexity, } from './types.js';
 export { ENERGY_LEVEL_VALUES, ENERGY_PRESENCE_VALUES, ENERGY_SOURCE_VALUES } from './types.js';
-export { UNPRODUCED_ORIGIN, UNPRODUCED_TIMESTAMP, createEnergyState, cycleEnergyLevel, getEnergyLevel, getEnergyLevels, isEnergyLevel, isEnergySource, isHigherEnergy, isUnproducedState, } from './levels.js';
+export { UNPRODUCED_ORIGIN, UNPRODUCED_TIMESTAMP, createEnergyOrigin, createEnergyState, cycleEnergyLevel, getEnergyLevel, getEnergyLevels, isEnergyLevel, isEnergySource, isHigherEnergy, isUnproducedState, } from './levels.js';
 export type { ExternalLevelCompatibility, ExternalLevelCompatibilityOptions } from './compat.js';
 export { createExternalLevelCompatibility, cycleDiscreteLevel, mapToNearestDiscreteLevel, mapToNearestEnergyLevel, } from './compat.js';
 export { getEnergyMetrics } from './metrics.js';

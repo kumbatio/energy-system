@@ -23,6 +23,7 @@ export { ENERGY_LEVEL_VALUES, ENERGY_PRESENCE_VALUES, ENERGY_SOURCE_VALUES } fro
 export {
   UNPRODUCED_ORIGIN,
   UNPRODUCED_TIMESTAMP,
+  createEnergyOrigin,
   createEnergyState,
   cycleEnergyLevel,
   getEnergyLevel,
