@@ -95,7 +95,7 @@ export function createEnergyEngine(options = {}) {
     // flush() honest even before the first state transition.
     let persistedVersion = -1;
     let requestedPersistVersion = 0;
-    let persistTask;
+    let isPersisting = false;
     let persistRetryTimer;
     let persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS;
     let initialHydrationTask;
@@ -111,51 +111,62 @@ export function createEnergyEngine(options = {}) {
             }
         }
     }
+    /*
+     * `isPersisting` is a plain flag rather than a handle on the in-flight promise.
+     * An adapter whose `save()` is not declared `async` can throw synchronously (a
+     * quota check on a bare `localStorage.setItem`, say). The drain then finishes
+     * before it ever awaits, so anything assigned from the *call site* afterwards
+     * would overwrite the cleared state and park the queue permanently: every later
+     * write would see work already in flight and return, and `flush()` would never
+     * settle. Only the drain itself owns this flag.
+     */
+    async function drainPersistQueue(store) {
+        while (!disposed && persistedVersion < requestedPersistVersion) {
+            const snapshot = state;
+            const snapshotVersion = stateVersion;
+            try {
+                await store.save(snapshot);
+                persistedVersion = Math.max(persistedVersion, snapshotVersion);
+                persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS;
+                resolvePersistWaiters();
+            }
+            catch (err) {
+                logEngineError('Failed to persist energy state', err);
+                if (onPersistenceError) {
+                    try {
+                        onPersistenceError(err, snapshot);
+                    }
+                    catch (err) {
+                        logEngineError('onPersistenceError callback threw', err);
+                    }
+                }
+                isPersisting = false;
+                if (!disposed && !persistRetryTimer && persistedVersion < requestedPersistVersion) {
+                    const retryDelayMs = persistRetryDelayMs;
+                    // Exponential backoff so a persistently failing store (e.g. quota
+                    // exceeded) is not hammered every 250ms forever.
+                    persistRetryDelayMs = Math.min(persistRetryDelayMs * 2, PERSIST_RETRY_MAX_MS);
+                    persistRetryTimer = setTimeout(() => {
+                        persistRetryTimer = undefined;
+                        queuePersist();
+                    }, retryDelayMs);
+                }
+                return;
+            }
+        }
+        isPersisting = false;
+        if (!disposed && persistedVersion < requestedPersistVersion) {
+            queuePersist();
+        }
+    }
     function queuePersist() {
         if (!persistence || disposed)
             return;
         requestedPersistVersion = Math.max(requestedPersistVersion, stateVersion);
-        if (persistTask)
+        if (isPersisting)
             return;
-        persistTask = (async () => {
-            while (!disposed && persistedVersion < requestedPersistVersion) {
-                const snapshot = state;
-                const snapshotVersion = stateVersion;
-                try {
-                    await persistence.save(snapshot);
-                    persistedVersion = Math.max(persistedVersion, snapshotVersion);
-                    persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS;
-                    resolvePersistWaiters();
-                }
-                catch (err) {
-                    logEngineError('Failed to persist energy state', err);
-                    if (onPersistenceError) {
-                        try {
-                            onPersistenceError(err, snapshot);
-                        }
-                        catch (err) {
-                            logEngineError('onPersistenceError callback threw', err);
-                        }
-                    }
-                    persistTask = undefined;
-                    if (!disposed && !persistRetryTimer && persistedVersion < requestedPersistVersion) {
-                        const retryDelayMs = persistRetryDelayMs;
-                        // Exponential backoff so a persistently failing store (e.g. quota
-                        // exceeded) is not hammered every 250ms forever.
-                        persistRetryDelayMs = Math.min(persistRetryDelayMs * 2, PERSIST_RETRY_MAX_MS);
-                        persistRetryTimer = setTimeout(() => {
-                            persistRetryTimer = undefined;
-                            queuePersist();
-                        }, retryDelayMs);
-                    }
-                    return;
-                }
-            }
-            persistTask = undefined;
-            if (!disposed && persistedVersion < requestedPersistVersion) {
-                queuePersist();
-            }
-        })();
+        isPersisting = true;
+        void drainPersistQueue(persistence);
     }
     function notify(next, prev) {
         notificationQueue.push({ next, prev });

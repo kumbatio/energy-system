@@ -1,33 +1,55 @@
 import { createEnergyState, isEnergyLevel, isEnergySource } from './levels.js'
 import type { EnergyPersistence, EnergyState } from './types.js'
 
-function parsePersistedState(raw: string | null): EnergyState | null {
+/*
+ * `null` means "nothing usable is stored", which the engine treats as a fresh
+ * install. Corrupt or schema-violating data reaches the same conclusion, but it
+ * is a different event and gets logged: silently equating "storage is damaged"
+ * with "first run" is how a user's persisted level disappears without trace.
+ */
+function parsePersistedState(source: string, raw: string | null): EnergyState | null {
   if (!raw) return null
 
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (typeof parsed === 'object' && parsed !== null && 'level' in parsed) {
-      const obj = parsed as Record<string, unknown>
-      if (
-        !isEnergyLevel(obj['level']) ||
-        !isEnergySource(obj['source']) ||
-        typeof obj['timestamp'] !== 'number' ||
-        typeof obj['revision'] !== 'number' ||
-        typeof obj['origin'] !== 'string'
-      ) {
-        return null
-      }
+  let parsed: unknown
 
-      return createEnergyState(
-        obj['level'],
-        obj['source'],
-        obj['timestamp'],
-        obj['revision'],
-        obj['origin'],
-      )
-    }
+  try {
+    parsed = JSON.parse(raw)
+  } catch (err: unknown) {
+    console.error(`[energy-system] Discarding unparseable persisted energy state (${source})`, err)
     return null
-  } catch {
+  }
+
+  if (typeof parsed !== 'object' || parsed === null || !('level' in parsed)) {
+    console.error(
+      `[energy-system] Discarding persisted energy state with unexpected shape (${source})`,
+    )
+    return null
+  }
+
+  const obj = parsed as Record<string, unknown>
+  if (
+    !isEnergyLevel(obj['level']) ||
+    !isEnergySource(obj['source']) ||
+    typeof obj['timestamp'] !== 'number' ||
+    typeof obj['revision'] !== 'number' ||
+    typeof obj['origin'] !== 'string'
+  ) {
+    console.error(`[energy-system] Discarding malformed persisted energy state (${source})`)
+    return null
+  }
+
+  try {
+    return createEnergyState(
+      obj['level'],
+      obj['source'],
+      obj['timestamp'],
+      obj['revision'],
+      obj['origin'],
+    )
+  } catch (err: unknown) {
+    // Field-level invariants (negative timestamp, non-integer revision, blank
+    // origin) are enforced by createEnergyState, not by the checks above.
+    console.error(`[energy-system] Discarding invalid persisted energy state (${source})`, err)
     return null
   }
 }
@@ -44,7 +66,7 @@ export function localStoragePersistence(key = 'energy-state'): EnergyPersistence
       }
 
       const raw = localStorage.getItem(key)
-      return parsePersistedState(raw)
+      return parsePersistedState(`localStorage key '${key}'`, raw)
     },
     async save(state: EnergyState): Promise<void> {
       try {
@@ -68,7 +90,7 @@ export function localStoragePersistence(key = 'energy-state'): EnergyPersistence
         if (event.storageArea !== localStorage) return
         if (event.key !== key) return
 
-        const parsed = parsePersistedState(event.newValue)
+        const parsed = parsePersistedState(`storage event for key '${key}'`, event.newValue)
         if (parsed) {
           onState(parsed)
         }

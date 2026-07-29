@@ -1,6 +1,6 @@
 {
   "name": "@kumbatio/energy-system",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.11.1",
+    "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "oxfmt": "0.61.0",
@@ -64,9 +65,13 @@
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
+    "@types/react": ">=19",
     "react": ">=19"
   },
   "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    },
     "react": {
       "optional": true
     }

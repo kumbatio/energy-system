@@ -1,3 +1,4 @@
+'use client';
 import { createContext, createElement, useCallback, useContext, useEffect, useInsertionEffect, useLayoutEffect, useMemo, useReducer, useRef, useSyncExternalStore, } from 'react';
 import { applyEnergyLevel } from './dom.js';
 import { createEnergyEngine } from './engine.js';
@@ -193,10 +194,6 @@ export function useEnergyLevel() {
         engine.setLevel(level, source);
     }, [engine]);
     return [state.level, setLevel];
-}
-/** @deprecated Use useEnergyState instead. */
-export function useFullEnergyState() {
-    return useEnergyStoreState();
 }
 /** Returns a function that cycles to the next energy level */
 export function useEnergyLevelCycler() {

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { applyEnergyLevel, readEnergyLevel } from '../src/dom.ts'
+import type { EnergyState } from '../src/index.ts'
 import {
   ENERGY_LEVEL_VALUES,
   ENERGY_SOURCE_VALUES,
@@ -1049,5 +1050,94 @@ void test('dispose contains persistence observer cleanup failures', () => {
     })
   } finally {
     console.error = originalConsoleError
+  }
+})
+
+void test('a synchronously throwing save does not permanently wedge the persist queue', async () => {
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  try {
+    const saved: number[] = []
+    let failNext = true
+    // Deliberately NOT declared `async`: an adapter built directly on
+    // localStorage.setItem throws its quota error synchronously, before the
+    // engine's persist loop ever reaches an await.
+    const persistence = {
+      load(): Promise<null> {
+        return Promise.resolve(null)
+      },
+      save(state: EnergyState): Promise<void> {
+        if (failNext) throw new Error('QuotaExceededError')
+        saved.push(state.level)
+        return Promise.resolve()
+      },
+    }
+
+    const engine = createEnergyEngine({ initialLevel: 100, persistence })
+    engine.setLevel(75)
+    await sleep(20)
+    assert.deepEqual(saved, [], 'the failing write must not be recorded')
+
+    // Storage recovers. Every later write has to reach it, and flush() has to
+    // settle rather than hang on a queue that already gave up.
+    failNext = false
+    engine.setLevel(50)
+    engine.setLevel(25)
+    await engine.flush()
+
+    // `slice(-1)` rather than `at(-1)`: oxlint 1.76.0's type-aware
+    // no-confusing-void-expression false-positives on Array.prototype.at here
+    // (tsc types it `number | undefined`).
+    assert.deepEqual(saved.slice(-1), [25], 'writes after recovery must reach storage')
+    assert.equal(engine.getState().level, 25)
+    engine.dispose()
+  } finally {
+    console.error = originalConsoleError
+  }
+})
+
+void test('corrupt persisted state is reported, not silently treated as a fresh install', async () => {
+  const messages: string[] = []
+  const originalConsoleError = console.error
+  console.error = (message: unknown) => {
+    messages.push(String(message))
+  }
+
+  try {
+    const store = new Map<string, string>()
+    globalThis.localStorage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value)
+      },
+      removeItem: (key: string) => {
+        store.delete(key)
+      },
+      clear: () => {
+        store.clear()
+      },
+      key: () => null,
+      length: 0,
+    }
+
+    const persistence = localStoragePersistence('corrupt-test')
+
+    store.set('corrupt-test', '{not json')
+    assert.equal(await persistence.load(), null)
+    assert.match(messages.at(-1) ?? '', /unparseable persisted energy state/)
+
+    store.set('corrupt-test', JSON.stringify({ level: 33, source: 'manual' }))
+    assert.equal(await persistence.load(), null)
+    assert.match(messages.at(-1) ?? '', /malformed persisted energy state/)
+
+    // An absent key is a genuine fresh install and must stay quiet.
+    const quietFrom = messages.length
+    store.delete('corrupt-test')
+    assert.equal(await persistence.load(), null)
+    assert.equal(messages.length, quietFrom)
+  } finally {
+    console.error = originalConsoleError
+    Reflect.deleteProperty(globalThis, 'localStorage')
   }
 })

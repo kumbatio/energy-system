@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { EnergyEngine } from './engine.js';
 import type { AdaptationStrategy, EnergyChangeListener, EnergyLevel, EnergyLevelDefinition, EnergyPersistence, EnergyPresence, EnergyPresenceMap, EnergySource, EnergyState } from './types.js';
 export interface EnergyProviderProps {
@@ -11,7 +12,7 @@ export interface EnergyProviderProps {
     onLevelChange?: EnergyChangeListener;
     /** Whether to apply energy level to DOM via data attributes */
     applyToDOM?: boolean;
-    children: React.ReactNode;
+    children: ReactNode;
 }
 export declare function EnergyProvider({ engine: externalEngine, defaultLevel, persistence, onLevelChange, applyToDOM, children, }: EnergyProviderProps): import("react").FunctionComponentElement<import("react").ProviderProps<EnergyEngine | null>>;
 /** Get the full energy state (level + timestamp + source) */
@@ -21,8 +22,6 @@ export declare function useEnergyLevel(): [
     EnergyLevel,
     (level: EnergyLevel, source?: EnergySource) => void
 ];
-/** @deprecated Use useEnergyState instead. */
-export declare function useFullEnergyState(): EnergyState;
 /** Returns a function that cycles to the next energy level */
 export declare function useEnergyLevelCycler(): () => void;
 /** Resolve a strategy against current energy level */
@@ -33,12 +32,12 @@ export declare function useEnergyGate(minLevel: EnergyLevel): boolean;
 export declare function useEnergyPresence(presence: EnergyPresenceMap): EnergyPresence;
 interface EnergyGateBaseProps {
     /** Rendered instead of children while hidden. Default: nothing. */
-    fallback?: React.ReactNode;
+    fallback?: ReactNode;
     /**
      * Content to gate. The function form receives the resolved presence so
      * 'muted' can style itself differently from 'visible'.
      */
-    children: React.ReactNode | ((presence: EnergyPresence) => React.ReactNode);
+    children: ReactNode | ((presence: EnergyPresence) => ReactNode);
 }
 export type EnergyGateProps = EnergyGateBaseProps & ({
     /** Full presence declaration for this element */
@@ -74,7 +73,7 @@ export type EnergyGateProps = EnergyGateBaseProps & ({
  *
  * Headless: renders no wrapper element of its own.
  */
-export declare function EnergyGate({ presence, min, max, fallback, children, }: EnergyGateProps): React.ReactNode;
+export declare function EnergyGate({ presence, min, max, fallback, children, }: EnergyGateProps): ReactNode;
 export interface EnergyIndicatorRenderProps {
     level: EnergyLevel;
     label: string;
@@ -87,9 +86,9 @@ export interface EnergyIndicatorRenderProps {
     setLevel: (level: EnergyLevel, source?: EnergySource) => void;
 }
 export interface EnergyIndicatorProps {
-    children: (props: EnergyIndicatorRenderProps) => React.ReactNode;
+    children: (props: EnergyIndicatorRenderProps) => ReactNode;
 }
 /** Headless energy indicator - bring your own UI */
-export declare function EnergyIndicator({ children }: EnergyIndicatorProps): React.ReactNode;
+export declare function EnergyIndicator({ children }: EnergyIndicatorProps): ReactNode;
 export {};
 //# sourceMappingURL=react.d.ts.map

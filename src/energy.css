@@ -59,7 +59,12 @@
   transition: opacity 0.3s ease;
 }
 
-[data-energy-level='75'] .energy-chrome:hover {
+/* `:focus-within` matters more than `:hover` as energy drops: chrome fades to
+ * 10% at level 25 and 5% at level 0, so a keyboard user tabbing into a control
+ * inside it would otherwise operate an effectively invisible target
+ * (WCAG 2.4.7 Focus Visible). Every reveal rule below pairs the two. */
+[data-energy-level='75'] .energy-chrome:hover,
+[data-energy-level='75'] .energy-chrome:focus-within {
   opacity: var(--energy-chrome-opacity-hover, 1);
 }
 
@@ -70,7 +75,8 @@
   transition: opacity 0.3s ease;
 }
 
-[data-energy-level='50'] .energy-chrome:hover {
+[data-energy-level='50'] .energy-chrome:hover,
+[data-energy-level='50'] .energy-chrome:focus-within {
   opacity: var(--energy-chrome-opacity-hover, 1);
 }
 
@@ -92,7 +98,8 @@
   transition: opacity 0.3s ease;
 }
 
-[data-energy-level='25'] .energy-chrome:hover {
+[data-energy-level='25'] .energy-chrome:hover,
+[data-energy-level='25'] .energy-chrome:focus-within {
   opacity: var(--energy-chrome-opacity-hover, 1);
 }
 
@@ -117,7 +124,8 @@
   transition: opacity 0.3s ease;
 }
 
-[data-energy-level='0'] .energy-chrome:hover {
+[data-energy-level='0'] .energy-chrome:hover,
+[data-energy-level='0'] .energy-chrome:focus-within {
   opacity: var(--energy-chrome-opacity-hover, 0.8);
 }
 

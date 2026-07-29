@@ -9,10 +9,13 @@
     "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "lib": ["ESNext", "DOM"],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    // The checking config covers src *and* test: `tsc -p tsconfig.build.json`
+    // narrows back to src for emit. Tests import source through explicit `.ts`
+    // specifiers, which only resolve under noEmit.
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }

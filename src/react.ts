@@ -1,3 +1,12 @@
+'use client'
+
+// Every export in this module is a hook, a context, or a component built on
+// one. Marking the module itself is what lets a consumer import it directly
+// from a Server Component tree (Next.js App Router, RSC bundlers) without
+// having to wrap it in their own client boundary first. The directive must
+// stay the first statement in the file for bundlers to honour it.
+
+import type { ReactNode } from 'react'
 import {
   createContext,
   createElement,
@@ -105,7 +114,7 @@ export interface EnergyProviderProps {
   onLevelChange?: EnergyChangeListener
   /** Whether to apply energy level to DOM via data attributes */
   applyToDOM?: boolean
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function EnergyProvider({
@@ -297,11 +306,6 @@ export function useEnergyLevel(): [
   return [state.level, setLevel]
 }
 
-/** @deprecated Use useEnergyState instead. */
-export function useFullEnergyState(): EnergyState {
-  return useEnergyStoreState()
-}
-
 /** Returns a function that cycles to the next energy level */
 export function useEnergyLevelCycler(): () => void {
   const engine = useEngine()
@@ -332,12 +336,12 @@ export function useEnergyPresence(presence: EnergyPresenceMap): EnergyPresence {
 
 interface EnergyGateBaseProps {
   /** Rendered instead of children while hidden. Default: nothing. */
-  fallback?: React.ReactNode
+  fallback?: ReactNode
   /**
    * Content to gate. The function form receives the resolved presence so
    * 'muted' can style itself differently from 'visible'.
    */
-  children: React.ReactNode | ((presence: EnergyPresence) => React.ReactNode)
+  children: ReactNode | ((presence: EnergyPresence) => ReactNode)
 }
 
 export type EnergyGateProps = EnergyGateBaseProps &
@@ -386,7 +390,7 @@ export function EnergyGate({
   max,
   fallback = null,
   children,
-}: EnergyGateProps): React.ReactNode {
+}: EnergyGateProps): ReactNode {
   const map = useMemo<EnergyPresenceMap>(() => {
     if (presence) return presence
     if (min !== undefined && max !== undefined) {
@@ -429,11 +433,11 @@ export interface EnergyIndicatorRenderProps {
 }
 
 export interface EnergyIndicatorProps {
-  children: (props: EnergyIndicatorRenderProps) => React.ReactNode
+  children: (props: EnergyIndicatorRenderProps) => ReactNode
 }
 
 /** Headless energy indicator - bring your own UI */
-export function EnergyIndicator({ children }: EnergyIndicatorProps): React.ReactNode {
+export function EnergyIndicator({ children }: EnergyIndicatorProps): ReactNode {
   const [level, setLevel] = useEnergyLevel()
   const state = useEnergyStoreState()
   const cycle = useEnergyLevelCycler()
