@@ -1,12 +1,13 @@
 {
   "name": "@kumbatio/energy-system",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
   "files": [
     "dist",
     "src/energy.css",
+    "api-surface.json",
     "README.md"
   ],
   "type": "module",
@@ -33,13 +34,15 @@
       "import": "./dist/persistence.js"
     },
     "./css": "./src/energy.css",
+    "./api-surface.json": "./api-surface.json",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && pnpm run api:surface",
+    "api:surface": "tsx scripts/extract-api-surface.ts",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "test": "pnpm run build && node --test --import tsx",
     "validate": "pnpm run format:check && pnpm run lint && pnpm run check-types && pnpm run test && pnpm run pack:dry-run",
