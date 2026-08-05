@@ -1,5 +1,5 @@
 {
-  "version": "0.5.4",
+  "version": "0.6.0",
   "entryPoints": [
     {
       "specifier": "@kumbatio/energy-system",
@@ -10,6 +10,7 @@
         "ENERGY_SOURCE_VALUES",
         "UNPRODUCED_ORIGIN",
         "UNPRODUCED_TIMESTAMP",
+        "autonomyStrategy",
         "createDeferralPresets",
         "createEnergyEngine",
         "createEnergyOrigin",
@@ -22,6 +23,7 @@
         "cycleEnergyLevel",
         "deferralStrategy",
         "defineEnergyPresence",
+        "demandAdmissionStrategy",
         "getEnergyLevel",
         "getEnergyLevels",
         "getEnergyMetrics",
@@ -31,6 +33,7 @@
         "isEnergySource",
         "isHigherEnergy",
         "isNotificationPriority",
+        "isOriginatorTier",
         "isPresenceVisible",
         "isSessionExpired",
         "isUnproducedState",
@@ -40,6 +43,7 @@
         "presenceAtOrAbove",
         "presenceAtOrBelow",
         "resolveDeferral",
+        "resolveDemandOutcome",
         "resolveEnergyPresence",
         "resolveNotificationOutcome",
         "sessionRemainingMs",
@@ -47,12 +51,20 @@
         "uiVisibilityStrategy"
       ],
       "types": [
+        "AcknowledgmentDetail",
         "AdaptationStrategy",
+        "AutonomyConfig",
         "CognitiveProfile",
         "DecisionCapacity",
         "DeferralConfig",
         "DeferralPreset",
         "DeferralPresetOptions",
+        "DemandAcknowledgment",
+        "DemandAdmission",
+        "DemandAdmissionConfig",
+        "DemandInput",
+        "DemandOutcome",
+        "DemandOutcomeReason",
         "EnergyChangeListener",
         "EnergyClock",
         "EnergyEngine",
@@ -86,6 +98,7 @@
         "NotificationGate",
         "NotificationGateOptions",
         "NotificationPriority",
+        "OriginatorTier",
         "PublishOutcome",
         "StartFocusSessionOptions",
         "TaskComplexity",
@@ -160,6 +173,25 @@
     "DeferralConfig": [
       "defaultPresetId",
       "orderedPresetIds"
+    ],
+    "DemandAcknowledgment": [
+      "allowGeneratedContent",
+      "detail"
+    ],
+    "DemandOutcome": [
+      "acknowledgment",
+      "admission",
+      "reason"
+    ],
+    "DemandInput": [
+      "bearsObligation",
+      "confidence",
+      "originatorTier"
+    ],
+    "DemandAdmissionConfig": [
+      "acknowledge",
+      "acknowledgmentDetail",
+      "originatorThreshold"
     ],
     "EnergyEngineOptions": [
       "autoStart",
@@ -291,6 +323,11 @@
       "autosaveIntervalMs",
       "confirmDestructive",
       "undoWindowMs"
+    ],
+    "AutonomyConfig": [
+      "allowGeneratedContent",
+      "confidenceThreshold",
+      "maxUnattendedSteps"
     ],
     "EnergyState": [
       "level",

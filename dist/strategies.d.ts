@@ -48,4 +48,30 @@ export interface InteractionForgivenessConfig {
     readonly autosaveIntervalMs: number;
 }
 export declare const interactionForgivenessStrategy: AdaptationStrategy<InteractionForgivenessConfig>;
+/**
+ * How much latitude automation has to act for the user without asking.
+ *
+ * The mirror of `interactionForgivenessStrategy`: forgiveness protects against
+ * the *user's* mistakes at low energy, autonomy against the *agent's*. The
+ * system acts on the user's behalf precisely when they are least able to
+ * supervise it, so the worst day is the wrong day for it to improvise.
+ *
+ * What narrows as energy falls is *discretion*, not action. At rest the
+ * automation may still take a single, certain, template-only step — an
+ * out-of-office reply is exactly that shape — but it may not chain steps,
+ * compose novel wording, or act on a judgment call.
+ */
+export interface AutonomyConfig {
+    /**
+     * Minimum confidence (0–1) an automated decision needs before acting
+     * unattended. `1` admits only certainty, which in practice means rule-based
+     * actions and never a judgment call.
+     */
+    readonly confidenceThreshold: number;
+    /** Whether automation may compose novel wording, or only fill fixed templates. */
+    readonly allowGeneratedContent: boolean;
+    /** How many automated steps may chain before control returns to the user. */
+    readonly maxUnattendedSteps: number;
+}
+export declare const autonomyStrategy: AdaptationStrategy<AutonomyConfig>;
 //# sourceMappingURL=strategies.d.ts.map

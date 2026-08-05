@@ -218,4 +218,46 @@ export const interactionForgivenessStrategy = {
         return FORGIVENESS_CONFIGS[getEnergyLevel(level).value];
     },
 };
+const AUTONOMY_CONFIGS = freezeObject({
+    100: freezeObject({
+        confidenceThreshold: 0.6,
+        allowGeneratedContent: true,
+        maxUnattendedSteps: 8,
+    }),
+    75: freezeObject({
+        confidenceThreshold: 0.7,
+        allowGeneratedContent: true,
+        maxUnattendedSteps: 5,
+    }),
+    50: freezeObject({
+        confidenceThreshold: 0.8,
+        allowGeneratedContent: true,
+        maxUnattendedSteps: 3,
+    }),
+    25: freezeObject({
+        confidenceThreshold: 0.9,
+        allowGeneratedContent: false,
+        maxUnattendedSteps: 1,
+    }),
+    // Rest: one certain, templated step at most. Not zero — an automated action
+    // the user has standing consent for (an out-of-office reply is the classic)
+    // is safest at rest precisely because it stops improvising.
+    0: freezeObject({
+        confidenceThreshold: 1,
+        allowGeneratedContent: false,
+        maxUnattendedSteps: 1,
+    }),
+});
+export const autonomyStrategy = {
+    name: 'autonomy',
+    describe(level) {
+        const def = getEnergyLevel(level);
+        const config = AUTONOMY_CONFIGS[def.value];
+        const content = config.allowGeneratedContent ? 'generated content allowed' : 'templates only';
+        return `${def.label}: acts unattended at ${Math.round(config.confidenceThreshold * 100)}% confidence, ${content}, up to ${config.maxUnattendedSteps} chained step${config.maxUnattendedSteps === 1 ? '' : 's'}`;
+    },
+    resolve(level) {
+        return AUTONOMY_CONFIGS[getEnergyLevel(level).value];
+    },
+};
 //# sourceMappingURL=strategies.js.map

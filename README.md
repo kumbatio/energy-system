@@ -32,6 +32,10 @@ This library gives applications a structured way to adapt to energy state instea
   - Task complexity guidance
   - Interaction forgiveness (undo windows, destructive-action confirmation)
   - Energy-aware deferral ordering
+  - Autonomy (how much automation may do unattended)
+- **Inbound demand admission**: an energy-resolved policy for arrivals that ask
+  something of the user — reach them now, acknowledge and queue, or queue
+  silently (`demandAdmissionStrategy`, `resolveDemandOutcome`)
 - **Presence annotation**: declare which energy levels a component/view belongs
   to (`defineEnergyPresence`, `presenceAtOrAbove`, `<EnergyGate>`, `data-energy-min`)
 - **Focus sessions**: time-boxed suppression windows with auto-expiry and break nudges
@@ -254,6 +258,93 @@ const { defaultPresetId, orderedPresetIds } = engine.resolve(deferralStrategy)
 const resurfaceAt = resolveDeferral(presets, defaultPresetId) // epoch ms
 ```
 
+## Inbound demand and autonomy
+
+**Inbound demand** is anything arriving from outside that asks for the user's
+attention or action: an email, a document comment, a review request, a task
+assignment, a collaboration invite.
+
+Every triage system in general use is organised around properties of the
+_message_ — who sent it, how urgent it claims to be, what category it fits.
+None is organised around the state of the _recipient_, which is the thing that
+actually decides whether an arrival is a small task or a crushing weight. This
+is that variable, applied to the queue.
+
+`demandAdmissionStrategy` resolves the policy; `resolveDemandOutcome` applies
+it. Both are pure. The library performs no effects here — acknowledging an
+originator means sending mail, posting a comment, or updating a status chip
+depending on the app, and those are irreversible in ways an in-process runtime
+cannot make transactional. The orchestration, with its ordering, retries, and
+deduplication, belongs to the app.
+
+```ts
+import {
+  autonomyStrategy,
+  deferralStrategy,
+  demandAdmissionStrategy,
+  resolveDemandOutcome,
+} from '@kumbatio/energy-system'
+
+const outcome = resolveDemandOutcome(
+  engine.resolve(demandAdmissionStrategy),
+  engine.resolve(autonomyStrategy),
+  {
+    originatorTier: 'unknown', // 'exempt' | 'known' | 'unknown', assigned by your app
+    bearsObligation: true, // does this ask something of the user?
+    confidence: 0.9, // how sure are you? a deterministic rule reports 1
+  },
+)
+
+switch (outcome.admission) {
+  case 'live':
+    return inbox.deliver(message)
+  case 'acknowledge':
+    // One act, never two. An acknowledgment without a capture is a promise
+    // nobody kept; a capture without an acknowledgment leaves the originator in
+    // silence. Capture first — it is the reversible half.
+    await tasks.capture(message, engine.resolve(deferralStrategy).defaultPresetId)
+    return replies.acknowledge(message, outcome.acknowledgment)
+  case 'silent':
+    return tasks.capture(message, engine.resolve(deferralStrategy).defaultPresetId)
+}
+```
+
+Two rules are worth stating outright, because each blocks a specific failure:
+
+1. **The exempt tier is never handled by machine.** At every level, an exempt
+   originator is admitted live. This is also what defuses the gaming risk: an
+   originator who learns an acknowledgment means "deprioritised" and escalates
+   elsewhere only succeeds if their escalation is one the user cannot ignore —
+   which is what makes them exempt.
+2. **Acknowledgments report state, never intent.** "Received and queued,
+   current response horizon early next week" is a fact. "I'll get back to you
+   soon" is a promise the user's Tuesday self has to keep. The horizon comes
+   from `deferralStrategy`, so the queue and the acknowledgment cannot disagree.
+
+Disclosure is the app's job in the app's own medium — an `Auto-Submitted:
+auto-replied` header, an "auto-queued" badge, a system-attributed status. An
+automated action toward a third party must be identifiable as automated.
+
+### Autonomy
+
+`autonomyStrategy` is the mirror of `interactionForgivenessStrategy`:
+forgiveness protects against the _user's_ mistakes at low energy, autonomy
+against the _agent's_. It is useful to any consumer with agentic surfaces, with
+or without demand admission.
+
+```ts
+const { confidenceThreshold, allowGeneratedContent, maxUnattendedSteps } =
+  engine.resolve(autonomyStrategy)
+```
+
+What narrows as energy falls is _discretion_, not action. At rest the
+confidence threshold is `1`, which admits only certainty — rule-based actions,
+never a judgment call — and `maxUnattendedSteps` is `1`. Automation may still
+take a single, certain, template-only step, which is exactly the shape of an
+out-of-office reply. It may not chain steps or improvise wording. The system
+acts for the user precisely when they are least able to supervise it, so the
+worst day is the wrong day for it to get creative.
+
 ## Quick start (DOM)
 
 ```ts
@@ -308,7 +399,8 @@ animating presence changes should do the same.
 - `mapToNearestDiscreteLevel(value, levels, fallback)`
 - `mapToNearestEnergyLevel(value)`
 - Strategies: `uiVisibilityStrategy`, `notificationStrategy`,
-  `taskComplexityStrategy`, `interactionForgivenessStrategy`, `deferralStrategy`
+  `taskComplexityStrategy`, `interactionForgivenessStrategy`, `deferralStrategy`,
+  `autonomyStrategy`, `demandAdmissionStrategy`
 - Presence: `defineEnergyPresence(spec)`, `presenceAtOrAbove(min, below?)`,
   `presenceAtOrBelow(max, above?)`, `resolveEnergyPresence(map, level)`,
   `isPresenceVisible(presence)`, `isEnergyPresence(value)`,
@@ -320,6 +412,8 @@ animating presence changes should do the same.
   `isNotificationPriority(value)`
 - Deferral: `createDeferralPresets(options?)`, `resolveDeferral(presets, id, now?)`,
   `DEFERRAL_PRESET_IDS`
+- Demand admission: `resolveDemandOutcome(config, autonomy, demand)`,
+  `isOriginatorTier(value)`
 - Types: `EnergyLevel`, `EnergyState`, `EnergyPresence`, `EnergyPresenceMap`,
   `AdaptationStrategy`, `FocusSession`, `NotificationDelivery`, etc.
 
@@ -442,7 +536,7 @@ adapters (e.g., SQLite-backed desktop stores) should live in consuming apps.
 ## Who uses this
 
 - **[Anasa](https://anasa.md)** — Kumbatio's local-first writing and thinking workspace, in public alpha. Runs its entire adaptive shell on the engine: custom settings-backed persistence, energy-gated AI surfaces, notification filtering, and task-complexity guidance.
-- **[Meltemi](https://meltemi.app)** — an email client in private beta, built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, and interaction forgiveness — integrated without the React adapter.
+- **[Meltemi](https://meltemi.app)** — an email client in private beta from [entro314 labs](https://github.com/entro314-labs) (the studio behind Kumbatio), built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, and interaction forgiveness — integrated without the React adapter.
 - **[kumbat.io](https://kumbat.io)** — the site itself runs on this model; change the energy level there and watch the interface adapt.
 
 The integration patterns these apps proved out are documented in the [Production Patterns guide](https://docs.kumbat.io/docs/energy-system/guides/production-patterns). If you ship something with `energy-system`, tell us: [hello@kumbat.io](mailto:hello@kumbat.io).

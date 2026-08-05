@@ -284,3 +284,75 @@ export const interactionForgivenessStrategy: AdaptationStrategy<InteractionForgi
     return FORGIVENESS_CONFIGS[getEnergyLevel(level).value]
   },
 }
+
+// ── Autonomy Strategy ──
+
+/**
+ * How much latitude automation has to act for the user without asking.
+ *
+ * The mirror of `interactionForgivenessStrategy`: forgiveness protects against
+ * the *user's* mistakes at low energy, autonomy against the *agent's*. The
+ * system acts on the user's behalf precisely when they are least able to
+ * supervise it, so the worst day is the wrong day for it to improvise.
+ *
+ * What narrows as energy falls is *discretion*, not action. At rest the
+ * automation may still take a single, certain, template-only step — an
+ * out-of-office reply is exactly that shape — but it may not chain steps,
+ * compose novel wording, or act on a judgment call.
+ */
+export interface AutonomyConfig {
+  /**
+   * Minimum confidence (0–1) an automated decision needs before acting
+   * unattended. `1` admits only certainty, which in practice means rule-based
+   * actions and never a judgment call.
+   */
+  readonly confidenceThreshold: number
+  /** Whether automation may compose novel wording, or only fill fixed templates. */
+  readonly allowGeneratedContent: boolean
+  /** How many automated steps may chain before control returns to the user. */
+  readonly maxUnattendedSteps: number
+}
+
+const AUTONOMY_CONFIGS = freezeObject({
+  100: freezeObject({
+    confidenceThreshold: 0.6,
+    allowGeneratedContent: true,
+    maxUnattendedSteps: 8,
+  }),
+  75: freezeObject({
+    confidenceThreshold: 0.7,
+    allowGeneratedContent: true,
+    maxUnattendedSteps: 5,
+  }),
+  50: freezeObject({
+    confidenceThreshold: 0.8,
+    allowGeneratedContent: true,
+    maxUnattendedSteps: 3,
+  }),
+  25: freezeObject({
+    confidenceThreshold: 0.9,
+    allowGeneratedContent: false,
+    maxUnattendedSteps: 1,
+  }),
+  // Rest: one certain, templated step at most. Not zero — an automated action
+  // the user has standing consent for (an out-of-office reply is the classic)
+  // is safest at rest precisely because it stops improvising.
+  0: freezeObject({
+    confidenceThreshold: 1,
+    allowGeneratedContent: false,
+    maxUnattendedSteps: 1,
+  }),
+}) satisfies Readonly<Record<EnergyLevel, Readonly<AutonomyConfig>>>
+
+export const autonomyStrategy: AdaptationStrategy<AutonomyConfig> = {
+  name: 'autonomy',
+  describe(level) {
+    const def = getEnergyLevel(level)
+    const config = AUTONOMY_CONFIGS[def.value]
+    const content = config.allowGeneratedContent ? 'generated content allowed' : 'templates only'
+    return `${def.label}: acts unattended at ${Math.round(config.confidenceThreshold * 100)}% confidence, ${content}, up to ${config.maxUnattendedSteps} chained step${config.maxUnattendedSteps === 1 ? '' : 's'}`
+  },
+  resolve(level) {
+    return AUTONOMY_CONFIGS[getEnergyLevel(level).value]
+  },
+}

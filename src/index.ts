@@ -51,12 +51,14 @@ export { createEnergyEngine } from './engine.js'
 
 // Built-in strategies
 export type {
+  AutonomyConfig,
   InteractionForgivenessConfig,
   NotificationConfig,
   TaskComplexityConfig,
   UIVisibilityConfig,
 } from './strategies.js'
 export {
+  autonomyStrategy,
   interactionForgivenessStrategy,
   notificationStrategy,
   taskComplexityStrategy,
@@ -95,6 +97,19 @@ export {
   deferralStrategy,
   resolveDeferral,
 } from './defer.js'
+
+// Inbound demand admission (energy-resolved policy for obligation-bearing arrivals)
+export type {
+  AcknowledgmentDetail,
+  DemandAcknowledgment,
+  DemandAdmission,
+  DemandAdmissionConfig,
+  DemandInput,
+  DemandOutcome,
+  DemandOutcomeReason,
+  OriginatorTier,
+} from './demand.js'
+export { demandAdmissionStrategy, isOriginatorTier, resolveDemandOutcome } from './demand.js'
 
 // Notification gate (runtime enforcement of NotificationConfig)
 export type {

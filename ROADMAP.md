@@ -42,6 +42,25 @@ deferred; focus suppression that never auto-expired).
       confirmation, autosave cadence scaled inversely with energy)
 - [x] `prefers-reduced-motion` handling for the stylesheet's own transitions
 
+## Shipped (v0.6) — Autonomy and inbound demand
+
+The recipient's capacity applied to the queue that ignores it. Every triage
+system in general use is organised around properties of the message; this is
+the same question asked about the receiver. Policy only, and pure: the effects
+an acknowledgment implies are irreversible in ways an in-process runtime cannot
+make transactional, so the orchestration stays with the consuming app until a
+second consumer proves what the shared machinery actually is.
+
+- [x] Autonomy strategy: `AutonomyConfig`/`autonomyStrategy` — confidence
+      threshold, generated-content permission, and unattended step budget,
+      narrowing as energy falls. The mirror of interaction forgiveness:
+      forgiveness protects against the user's errors, autonomy against the
+      agent's
+- [x] Inbound demand admission: `demandAdmissionStrategy` and the pure
+      `resolveDemandOutcome`, with originator tiers, the exempt-tier invariant,
+      and rule-4 escalation (an uncertain classification queues silently rather
+      than acting)
+
 ## M2 — Documentation for real adoption
 
 - [ ] Docs readable at energy `25`: short pages, one concept each, optional depth
@@ -51,7 +70,7 @@ deferred; focus suppression that never auto-expired).
 ## M3 — Reference integration
 
 - [x] Migrate [kumbat.io](https://kumbat.io) from its inline energy provider to this package — the site becomes the living integration test
-- [x] Case study: what adaptation strategies survived contact with real use — [Production Patterns](https://docs.kumbat.io/docs/energy-system/guides/production-patterns), drawn from [Anasa](https://anasa.md) (public alpha) and [Meltemi](https://meltemi.app) (private beta, built outside Kumbatio)
+- [x] Case study: what adaptation strategies survived contact with real use — [Production Patterns](https://docs.kumbat.io/docs/energy-system/guides/production-patterns), drawn from [Anasa](https://anasa.md) (public alpha) and [Meltemi](https://meltemi.app) (private beta, entro314 labs — built outside the Kumbatio product line)
 
 ## M4 — v1.0 stable
 

@@ -5,9 +5,10 @@ export { createExternalLevelCompatibility, cycleDiscreteLevel, mapToNearestDiscr
 // Derived metrics
 export { getEnergyMetrics } from './metrics.js';
 export { createEnergyEngine } from './engine.js';
-export { interactionForgivenessStrategy, notificationStrategy, taskComplexityStrategy, uiVisibilityStrategy, } from './strategies.js';
+export { autonomyStrategy, interactionForgivenessStrategy, notificationStrategy, taskComplexityStrategy, uiVisibilityStrategy, } from './strategies.js';
 export { createPresenceStrategy, defineEnergyPresence, isEnergyPresence, isPresenceVisible, presenceAtOrAbove, presenceAtOrBelow, resolveEnergyPresence, } from './presence.js';
 export { createFocusSessionController, isSessionExpired, sessionRemainingMs } from './session.js';
 export { DEFERRAL_PRESET_IDS, createDeferralPresets, deferralStrategy, resolveDeferral, } from './defer.js';
+export { demandAdmissionStrategy, isOriginatorTier, resolveDemandOutcome } from './demand.js';
 export { createNotificationGate, isNotificationPriority, resolveNotificationOutcome, } from './gate.js';
 //# sourceMappingURL=index.js.map

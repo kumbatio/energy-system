@@ -6,14 +6,16 @@ export { createExternalLevelCompatibility, cycleDiscreteLevel, mapToNearestDiscr
 export { getEnergyMetrics } from './metrics.js';
 export type { EnergyEngine, EnergyEngineOptions } from './engine.js';
 export { createEnergyEngine } from './engine.js';
-export type { InteractionForgivenessConfig, NotificationConfig, TaskComplexityConfig, UIVisibilityConfig, } from './strategies.js';
-export { interactionForgivenessStrategy, notificationStrategy, taskComplexityStrategy, uiVisibilityStrategy, } from './strategies.js';
+export type { AutonomyConfig, InteractionForgivenessConfig, NotificationConfig, TaskComplexityConfig, UIVisibilityConfig, } from './strategies.js';
+export { autonomyStrategy, interactionForgivenessStrategy, notificationStrategy, taskComplexityStrategy, uiVisibilityStrategy, } from './strategies.js';
 export type { EnergyPresenceSpec } from './presence.js';
 export { createPresenceStrategy, defineEnergyPresence, isEnergyPresence, isPresenceVisible, presenceAtOrAbove, presenceAtOrBelow, resolveEnergyPresence, } from './presence.js';
 export type { FocusSession, FocusSessionController, FocusSessionControllerOptions, FocusSessionEvent, FocusSessionListener, FocusSuppressible, StartFocusSessionOptions, } from './session.js';
 export { createFocusSessionController, isSessionExpired, sessionRemainingMs } from './session.js';
 export type { DeferralConfig, DeferralPreset, DeferralPresetOptions } from './defer.js';
 export { DEFERRAL_PRESET_IDS, createDeferralPresets, deferralStrategy, resolveDeferral, } from './defer.js';
+export type { AcknowledgmentDetail, DemandAcknowledgment, DemandAdmission, DemandAdmissionConfig, DemandInput, DemandOutcome, DemandOutcomeReason, OriginatorTier, } from './demand.js';
+export { demandAdmissionStrategy, isOriginatorTier, resolveDemandOutcome } from './demand.js';
 export type { EnergyNotification, GateScheduler, NotificationChannels, NotificationDelivery, NotificationDeliveryReason, NotificationGate, NotificationGateOptions, NotificationPriority, PublishOutcome, } from './gate.js';
 export { createNotificationGate, isNotificationPriority, resolveNotificationOutcome, } from './gate.js';
 //# sourceMappingURL=index.d.ts.map
