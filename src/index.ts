@@ -42,6 +42,9 @@ export {
   mapToNearestEnergyLevel,
 } from './compat.js'
 
+// State reconciliation (which of two states for the same user wins)
+export { isPreferredEnergyState } from './reconcile.js'
+
 // Derived metrics
 export { getEnergyMetrics } from './metrics.js'
 

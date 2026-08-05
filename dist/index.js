@@ -2,6 +2,8 @@ export { ENERGY_LEVEL_VALUES, ENERGY_PRESENCE_VALUES, ENERGY_SOURCE_VALUES } fro
 // Level definitions and pure functions
 export { UNPRODUCED_ORIGIN, UNPRODUCED_TIMESTAMP, createEnergyOrigin, createEnergyState, cycleEnergyLevel, getEnergyLevel, getEnergyLevels, isEnergyLevel, isEnergySource, isHigherEnergy, isUnproducedState, } from './levels.js';
 export { createExternalLevelCompatibility, cycleDiscreteLevel, mapToNearestDiscreteLevel, mapToNearestEnergyLevel, } from './compat.js';
+// State reconciliation (which of two states for the same user wins)
+export { isPreferredEnergyState } from './reconcile.js';
 // Derived metrics
 export { getEnergyMetrics } from './metrics.js';
 export { createEnergyEngine } from './engine.js';

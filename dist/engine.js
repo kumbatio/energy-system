@@ -1,4 +1,5 @@
 import { UNPRODUCED_ORIGIN, UNPRODUCED_TIMESTAMP, createEnergyOrigin, createEnergyState, cycleEnergyLevel, isEnergyLevel, isEnergySource, } from './levels.js';
+import { isPreferredEnergyState } from './reconcile.js';
 function logEngineError(message, err) {
     console.error(`[energy-system] ${message}`, err);
 }
@@ -18,36 +19,6 @@ function isSameState(a, b) {
         a.source === b.source &&
         a.revision === b.revision &&
         a.origin === b.origin);
-}
-function getSourcePriority(source) {
-    switch (source) {
-        case 'manual':
-            return 3;
-        case 'scheduled':
-            return 2;
-        case 'inferred':
-            return 1;
-    }
-}
-function isPreferredExternalState(candidate, current) {
-    if (candidate.timestamp !== current.timestamp) {
-        return candidate.timestamp > current.timestamp;
-    }
-    if (candidate.revision !== current.revision) {
-        return candidate.revision > current.revision;
-    }
-    if (candidate.source !== current.source) {
-        return getSourcePriority(candidate.source) > getSourcePriority(current.source);
-    }
-    if (candidate.origin !== current.origin) {
-        return candidate.origin > current.origin;
-    }
-    // A producer must not reuse an identity for different state. Keep a final
-    // deterministic fallback so malformed duplicate identities still converge.
-    if (candidate.level !== current.level) {
-        return candidate.level > current.level;
-    }
-    return false;
 }
 function normalizeState(candidate, nowMs, maxFutureSkewMs) {
     if (!isEnergyLevel(candidate.level)) {
@@ -239,7 +210,7 @@ export function createEnergyEngine(options = {}) {
                         logEngineError('Ignoring invalid observed energy state', err);
                         return;
                     }
-                    if (!isPreferredExternalState(normalized, state))
+                    if (!isPreferredEnergyState(normalized, state))
                         return;
                     applyState(normalized);
                 });
@@ -313,7 +284,7 @@ export function createEnergyEngine(options = {}) {
             }
             if (isSameState(normalized, state))
                 return;
-            if (hydrateStartVersion === stateVersion || isPreferredExternalState(normalized, state)) {
+            if (hydrateStartVersion === stateVersion || isPreferredEnergyState(normalized, state)) {
                 applyState(normalized);
             }
         },

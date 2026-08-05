@@ -513,10 +513,53 @@ The engine orders concurrent writes by timestamp, logical revision, source prior
 origin. This gives every context the same deterministic winner even when two writes share a wall
 clock timestamp. Local writes advance the logical revision when the clock does not advance.
 
+The rule is exported as `isPreferredEnergyState(candidate, current)` and specified normatively in
+[SPEC.md §4](./SPEC.md). It is the hardest part of the model to reimplement correctly, so it is
+readable, testable, and covered by conformance vectors on its own rather than buried in the engine.
+
 `setLevel()` updates in-memory subscribers synchronously. Persistence runs in the background with
 bounded exponential backoff. Call `await engine.flush()` when a workflow must wait for durable
 storage before reporting completion. An initial `flush()` waits for hydration before writing the
 default state, and rejects rather than overwriting unread storage if that hydration read failed.
+
+## Specification and conformance
+
+The model is specified independently of this implementation.
+
+- **[SPEC.md](./SPEC.md)** — the normative model: levels, state, reconciliation, the strategy
+  contract, autonomy, inbound demand, the runtime invariants, and the accessibility requirements.
+  Language-independent, RFC 2119 wording.
+- **[spec/energy-state.schema.json](./spec/energy-state.schema.json)** — the interchange format, so
+  two processes (or two languages) can share one person's energy state.
+- **[conformance.json](./conformance.json)** — every table and every decision above, as vectors.
+  Ships in the package.
+
+```ts
+import conformance from '@kumbatio/energy-system/conformance.json' with { type: 'json' }
+```
+
+An implementation in another language passes by loading the vectors and replaying them; this
+package's own `test/conformance.test.ts` does exactly that and is a reasonable model to copy. The
+file is generated from the built library, so the vectors cannot drift from the behavior they
+describe — and a stale `conformance.json` fails the build.
+
+Vectors cover the pure surface: tables, and functions of their arguments alone. The stateful
+guarantees — defer-never-drop, session auto-expiry, persistence ordering — are normative in SPEC.md
+and checked by this package's suite, because no vector can express _and it must never drop one_.
+
+## Stability
+
+`1.0.0` is an API freeze. From here the package follows semver strictly, and for this package that
+means more than the type signatures:
+
+- **A shipped strategy table's values are API.** Changing what `notificationStrategy` returns at
+  level 50 changes how every consumer behaves, so it is a major-version change — and a change to
+  [SPEC.md](./SPEC.md), not just to this library.
+- **The reconciliation rule is API.** Two implementations that disagree about it cannot share state.
+- **The conformance vectors are the contract in machine-readable form.** Within a major version,
+  existing vectors do not change meaning; new sections and new vectors may be added.
+- Prose from `describe()` is _not_ covered. Wording is a product decision and may change in a patch.
+- Adding a strategy, an option with a default, or a new export is a minor release.
 
 ## Development
 
@@ -536,7 +579,7 @@ adapters (e.g., SQLite-backed desktop stores) should live in consuming apps.
 ## Who uses this
 
 - **[Anasa](https://anasa.md)** — Kumbatio's local-first writing and thinking workspace, in public alpha. Runs its entire adaptive shell on the engine: custom settings-backed persistence, energy-gated AI surfaces, notification filtering, and task-complexity guidance.
-- **[Meltemi](https://meltemi.app)** — an email client in private beta from [entro314 labs](https://github.com/entro314-labs) (the studio behind Kumbatio), built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, and interaction forgiveness — integrated without the React adapter.
+- **[Meltemi](https://meltemi.app)** — an email client in private beta from [entro314 labs](https://github.com/entro314-labs) (the studio behind Kumbatio), built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, interaction forgiveness, and demand admission — integrated without the React adapter. Its demand binding is the reference one: originator tiers come from its VIP list, obligation is classified from RFC 3834 header evidence and its own sender lanes, acknowledgments go out as `Auto-Submitted: auto-replied` auto-replies, and the capture is a snooze to the horizon `deferralStrategy` picked.
 - **[kumbat.io](https://kumbat.io)** — the site itself runs on this model; change the energy level there and watch the interface adapt.
 
 The integration patterns these apps proved out are documented in the [Production Patterns guide](https://docs.kumbat.io/docs/energy-system/guides/production-patterns). If you ship something with `energy-system`, tell us: [hello@kumbat.io](mailto:hello@kumbat.io).

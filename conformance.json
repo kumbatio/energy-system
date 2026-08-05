@@ -1,0 +1,3176 @@
+{
+  "$schema": "./spec/conformance.schema.json",
+  "version": "1.0.0",
+  "timezone": "UTC",
+  "note": "Generated from the built library by scripts/extract-conformance.ts. See SPEC.md for the normative rules these vectors encode, including the runtime invariants that no vector can express.",
+  "levels": [
+    {
+      "value": 100,
+      "key": "peak",
+      "label": "Peak",
+      "description": "High capacity. Planning, complex decisions, creative work.",
+      "cognitiveProfile": {
+        "decisionCapacity": "high",
+        "focusDuration": "extended",
+        "taskComplexity": "complex",
+        "interruptionTolerance": "high"
+      }
+    },
+    {
+      "value": 75,
+      "key": "active",
+      "label": "Active",
+      "description": "Good capacity. Focused execution, problem-solving.",
+      "cognitiveProfile": {
+        "decisionCapacity": "moderate",
+        "focusDuration": "moderate",
+        "taskComplexity": "moderate",
+        "interruptionTolerance": "moderate"
+      }
+    },
+    {
+      "value": 50,
+      "key": "steady",
+      "label": "Steady",
+      "description": "Moderate capacity. Routine tasks, familiar work.",
+      "cognitiveProfile": {
+        "decisionCapacity": "low",
+        "focusDuration": "short",
+        "taskComplexity": "routine",
+        "interruptionTolerance": "low"
+      }
+    },
+    {
+      "value": 25,
+      "key": "low",
+      "label": "Low",
+      "description": "Limited capacity. Simple tasks, review, light work.",
+      "cognitiveProfile": {
+        "decisionCapacity": "minimal",
+        "focusDuration": "minimal",
+        "taskComplexity": "simple",
+        "interruptionTolerance": "minimal"
+      }
+    },
+    {
+      "value": 0,
+      "key": "rest",
+      "label": "Rest",
+      "description": "Depleted. Consumption only — reading, reflecting.",
+      "cognitiveProfile": {
+        "decisionCapacity": "none",
+        "focusDuration": "none",
+        "taskComplexity": "consumption",
+        "interruptionTolerance": "none"
+      }
+    }
+  ],
+  "cycle": [
+    {
+      "from": 100,
+      "to": 75
+    },
+    {
+      "from": 75,
+      "to": 50
+    },
+    {
+      "from": 50,
+      "to": 25
+    },
+    {
+      "from": 25,
+      "to": 0
+    },
+    {
+      "from": 0,
+      "to": 100
+    }
+  ],
+  "strategies": {
+    "ui-visibility": {
+      "0": {
+        "sidebar": false,
+        "tabBar": false,
+        "statusBar": false,
+        "toolbar": false,
+        "chromeOpacity": 0.05,
+        "chromeOpacityHover": 0.8,
+        "contentMaxWidth": "75ch",
+        "contentFontScale": 1.1,
+        "readOnlyCursor": true
+      },
+      "25": {
+        "sidebar": false,
+        "tabBar": false,
+        "statusBar": false,
+        "toolbar": true,
+        "chromeOpacity": 0.1,
+        "chromeOpacityHover": 1,
+        "contentMaxWidth": "80ch",
+        "contentFontScale": 1.05,
+        "readOnlyCursor": false
+      },
+      "50": {
+        "sidebar": true,
+        "tabBar": true,
+        "statusBar": true,
+        "toolbar": true,
+        "chromeOpacity": 0.4,
+        "chromeOpacityHover": 1,
+        "contentMaxWidth": "90ch",
+        "contentFontScale": 1,
+        "readOnlyCursor": false
+      },
+      "75": {
+        "sidebar": true,
+        "tabBar": true,
+        "statusBar": true,
+        "toolbar": true,
+        "chromeOpacity": 0.7,
+        "chromeOpacityHover": 1,
+        "contentMaxWidth": "none",
+        "contentFontScale": 1,
+        "readOnlyCursor": false
+      },
+      "100": {
+        "sidebar": true,
+        "tabBar": true,
+        "statusBar": true,
+        "toolbar": true,
+        "chromeOpacity": 1,
+        "chromeOpacityHover": 1,
+        "contentMaxWidth": "none",
+        "contentFontScale": 1,
+        "readOnlyCursor": false
+      }
+    },
+    "notifications": {
+      "0": {
+        "allowVisual": false,
+        "allowSound": false,
+        "allowVibration": false,
+        "batchInterval": 0,
+        "priorityThreshold": "none"
+      },
+      "25": {
+        "allowVisual": true,
+        "allowSound": false,
+        "allowVibration": false,
+        "batchInterval": 900000,
+        "priorityThreshold": "critical"
+      },
+      "50": {
+        "allowVisual": true,
+        "allowSound": false,
+        "allowVibration": false,
+        "batchInterval": 300000,
+        "priorityThreshold": "high"
+      },
+      "75": {
+        "allowVisual": true,
+        "allowSound": true,
+        "allowVibration": false,
+        "batchInterval": 0,
+        "priorityThreshold": "all"
+      },
+      "100": {
+        "allowVisual": true,
+        "allowSound": true,
+        "allowVibration": true,
+        "batchInterval": 0,
+        "priorityThreshold": "all"
+      }
+    },
+    "task-complexity": {
+      "0": {
+        "maxComplexity": "consumption",
+        "suggestBreaks": false,
+        "breakIntervalMinutes": 0
+      },
+      "25": {
+        "maxComplexity": "simple",
+        "suggestBreaks": true,
+        "breakIntervalMinutes": 25
+      },
+      "50": {
+        "maxComplexity": "routine",
+        "suggestBreaks": true,
+        "breakIntervalMinutes": 45
+      },
+      "75": {
+        "maxComplexity": "moderate",
+        "suggestBreaks": false,
+        "breakIntervalMinutes": 0
+      },
+      "100": {
+        "maxComplexity": "complex",
+        "suggestBreaks": false,
+        "breakIntervalMinutes": 0
+      }
+    },
+    "interaction-forgiveness": {
+      "0": {
+        "undoWindowMs": 20000,
+        "confirmDestructive": true,
+        "autosaveIntervalMs": 15000
+      },
+      "25": {
+        "undoWindowMs": 15000,
+        "confirmDestructive": true,
+        "autosaveIntervalMs": 20000
+      },
+      "50": {
+        "undoWindowMs": 10000,
+        "confirmDestructive": true,
+        "autosaveIntervalMs": 30000
+      },
+      "75": {
+        "undoWindowMs": 8000,
+        "confirmDestructive": false,
+        "autosaveIntervalMs": 45000
+      },
+      "100": {
+        "undoWindowMs": 5000,
+        "confirmDestructive": false,
+        "autosaveIntervalMs": 60000
+      }
+    },
+    "deferral": {
+      "0": {
+        "orderedPresetIds": [
+          "tomorrow-morning",
+          "next-monday",
+          "next-workday",
+          "this-evening",
+          "in-1-hour"
+        ],
+        "defaultPresetId": "tomorrow-morning"
+      },
+      "25": {
+        "orderedPresetIds": [
+          "tomorrow-morning",
+          "next-workday",
+          "this-evening",
+          "next-monday",
+          "in-1-hour"
+        ],
+        "defaultPresetId": "tomorrow-morning"
+      },
+      "50": {
+        "orderedPresetIds": [
+          "this-evening",
+          "tomorrow-morning",
+          "in-1-hour",
+          "next-workday",
+          "next-monday"
+        ],
+        "defaultPresetId": "this-evening"
+      },
+      "75": {
+        "orderedPresetIds": [
+          "in-1-hour",
+          "this-evening",
+          "tomorrow-morning",
+          "next-workday",
+          "next-monday"
+        ],
+        "defaultPresetId": "in-1-hour"
+      },
+      "100": {
+        "orderedPresetIds": [
+          "in-1-hour",
+          "this-evening",
+          "tomorrow-morning",
+          "next-workday",
+          "next-monday"
+        ],
+        "defaultPresetId": "in-1-hour"
+      }
+    },
+    "autonomy": {
+      "0": {
+        "confidenceThreshold": 1,
+        "allowGeneratedContent": false,
+        "maxUnattendedSteps": 1
+      },
+      "25": {
+        "confidenceThreshold": 0.9,
+        "allowGeneratedContent": false,
+        "maxUnattendedSteps": 1
+      },
+      "50": {
+        "confidenceThreshold": 0.8,
+        "allowGeneratedContent": true,
+        "maxUnattendedSteps": 3
+      },
+      "75": {
+        "confidenceThreshold": 0.7,
+        "allowGeneratedContent": true,
+        "maxUnattendedSteps": 5
+      },
+      "100": {
+        "confidenceThreshold": 0.6,
+        "allowGeneratedContent": true,
+        "maxUnattendedSteps": 8
+      }
+    },
+    "demand-admission": {
+      "0": {
+        "originatorThreshold": "exempt",
+        "acknowledge": true,
+        "acknowledgmentDetail": "minimal"
+      },
+      "25": {
+        "originatorThreshold": "exempt",
+        "acknowledge": true,
+        "acknowledgmentDetail": "brief"
+      },
+      "50": {
+        "originatorThreshold": "exempt",
+        "acknowledge": true,
+        "acknowledgmentDetail": "full"
+      },
+      "75": {
+        "originatorThreshold": "known",
+        "acknowledge": true,
+        "acknowledgmentDetail": "full"
+      },
+      "100": {
+        "originatorThreshold": "all",
+        "acknowledge": false,
+        "acknowledgmentDetail": "full"
+      }
+    }
+  },
+  "presence": {
+    "atOrAbove": {
+      "0": {
+        "0": "visible",
+        "25": "visible",
+        "50": "visible",
+        "75": "visible",
+        "100": "visible"
+      },
+      "25": {
+        "0": "hidden",
+        "25": "visible",
+        "50": "visible",
+        "75": "visible",
+        "100": "visible"
+      },
+      "50": {
+        "0": "hidden",
+        "25": "hidden",
+        "50": "visible",
+        "75": "visible",
+        "100": "visible"
+      },
+      "75": {
+        "0": "hidden",
+        "25": "hidden",
+        "50": "hidden",
+        "75": "visible",
+        "100": "visible"
+      },
+      "100": {
+        "0": "hidden",
+        "25": "hidden",
+        "50": "hidden",
+        "75": "hidden",
+        "100": "visible"
+      }
+    },
+    "atOrAboveMuted": {
+      "0": {
+        "0": "visible",
+        "25": "visible",
+        "50": "visible",
+        "75": "visible",
+        "100": "visible"
+      },
+      "25": {
+        "0": "muted",
+        "25": "visible",
+        "50": "visible",
+        "75": "visible",
+        "100": "visible"
+      },
+      "50": {
+        "0": "muted",
+        "25": "muted",
+        "50": "visible",
+        "75": "visible",
+        "100": "visible"
+      },
+      "75": {
+        "0": "muted",
+        "25": "muted",
+        "50": "muted",
+        "75": "visible",
+        "100": "visible"
+      },
+      "100": {
+        "0": "muted",
+        "25": "muted",
+        "50": "muted",
+        "75": "muted",
+        "100": "visible"
+      }
+    },
+    "atOrBelow": {
+      "0": {
+        "0": "visible",
+        "25": "hidden",
+        "50": "hidden",
+        "75": "hidden",
+        "100": "hidden"
+      },
+      "25": {
+        "0": "visible",
+        "25": "visible",
+        "50": "hidden",
+        "75": "hidden",
+        "100": "hidden"
+      },
+      "50": {
+        "0": "visible",
+        "25": "visible",
+        "50": "visible",
+        "75": "hidden",
+        "100": "hidden"
+      },
+      "75": {
+        "0": "visible",
+        "25": "visible",
+        "50": "visible",
+        "75": "visible",
+        "100": "hidden"
+      },
+      "100": {
+        "0": "visible",
+        "25": "visible",
+        "50": "visible",
+        "75": "visible",
+        "100": "visible"
+      }
+    }
+  },
+  "decisions": {
+    "notification": [
+      {
+        "level": 100,
+        "priority": "normal",
+        "suppressed": false,
+        "outcome": "delivered"
+      },
+      {
+        "level": 100,
+        "priority": "normal",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 100,
+        "priority": "high",
+        "suppressed": false,
+        "outcome": "delivered"
+      },
+      {
+        "level": 100,
+        "priority": "high",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 100,
+        "priority": "critical",
+        "suppressed": false,
+        "outcome": "delivered"
+      },
+      {
+        "level": 100,
+        "priority": "critical",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 75,
+        "priority": "normal",
+        "suppressed": false,
+        "outcome": "delivered"
+      },
+      {
+        "level": 75,
+        "priority": "normal",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 75,
+        "priority": "high",
+        "suppressed": false,
+        "outcome": "delivered"
+      },
+      {
+        "level": 75,
+        "priority": "high",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 75,
+        "priority": "critical",
+        "suppressed": false,
+        "outcome": "delivered"
+      },
+      {
+        "level": 75,
+        "priority": "critical",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 50,
+        "priority": "normal",
+        "suppressed": false,
+        "outcome": "deferred"
+      },
+      {
+        "level": 50,
+        "priority": "normal",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 50,
+        "priority": "high",
+        "suppressed": false,
+        "outcome": "batched"
+      },
+      {
+        "level": 50,
+        "priority": "high",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 50,
+        "priority": "critical",
+        "suppressed": false,
+        "outcome": "batched"
+      },
+      {
+        "level": 50,
+        "priority": "critical",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 25,
+        "priority": "normal",
+        "suppressed": false,
+        "outcome": "deferred"
+      },
+      {
+        "level": 25,
+        "priority": "normal",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 25,
+        "priority": "high",
+        "suppressed": false,
+        "outcome": "deferred"
+      },
+      {
+        "level": 25,
+        "priority": "high",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 25,
+        "priority": "critical",
+        "suppressed": false,
+        "outcome": "batched"
+      },
+      {
+        "level": 25,
+        "priority": "critical",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 0,
+        "priority": "normal",
+        "suppressed": false,
+        "outcome": "deferred"
+      },
+      {
+        "level": 0,
+        "priority": "normal",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 0,
+        "priority": "high",
+        "suppressed": false,
+        "outcome": "deferred"
+      },
+      {
+        "level": 0,
+        "priority": "high",
+        "suppressed": true,
+        "outcome": "deferred"
+      },
+      {
+        "level": 0,
+        "priority": "critical",
+        "suppressed": false,
+        "outcome": "deferred"
+      },
+      {
+        "level": 0,
+        "priority": "critical",
+        "suppressed": true,
+        "outcome": "deferred"
+      }
+    ],
+    "demand": [
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 100,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "tier-admitted"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 75,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "full",
+            "allowGeneratedContent": true
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 50,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "brief",
+            "allowGeneratedContent": false
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "brief",
+            "allowGeneratedContent": false
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "brief",
+            "allowGeneratedContent": false
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "brief",
+            "allowGeneratedContent": false
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 25,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "exempt",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "exempt-originator"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "minimal",
+            "allowGeneratedContent": false
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "known",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "silent",
+          "acknowledgment": null,
+          "reason": "below-confidence"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": true,
+        "confidence": 1,
+        "outcome": {
+          "admission": "acknowledge",
+          "acknowledgment": {
+            "detail": "minimal",
+            "allowGeneratedContent": false
+          },
+          "reason": "acknowledged"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.5,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.6,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.7,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.8,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 0.9,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      },
+      {
+        "level": 0,
+        "originatorTier": "unknown",
+        "bearsObligation": false,
+        "confidence": 1,
+        "outcome": {
+          "admission": "live",
+          "acknowledgment": null,
+          "reason": "no-obligation"
+        }
+      }
+    ]
+  },
+  "deferral": {
+    "morningHour": 9,
+    "eveningHour": 18,
+    "references": [
+      {
+        "label": "wednesday morning, before the evening hour",
+        "iso": "2026-08-05T08:30:00.000Z",
+        "epochMs": 1785918600000,
+        "resolved": {
+          "in-1-hour": {
+            "epochMs": 1785922200000,
+            "iso": "2026-08-05T09:30:00.000Z"
+          },
+          "this-evening": {
+            "epochMs": 1785952800000,
+            "iso": "2026-08-05T18:00:00.000Z"
+          },
+          "tomorrow-morning": {
+            "epochMs": 1786006800000,
+            "iso": "2026-08-06T09:00:00.000Z"
+          },
+          "next-workday": {
+            "epochMs": 1786006800000,
+            "iso": "2026-08-06T09:00:00.000Z"
+          },
+          "next-monday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          }
+        }
+      },
+      {
+        "label": "wednesday evening, after the evening hour",
+        "iso": "2026-08-05T21:00:00.000Z",
+        "epochMs": 1785963600000,
+        "resolved": {
+          "in-1-hour": {
+            "epochMs": 1785967200000,
+            "iso": "2026-08-05T22:00:00.000Z"
+          },
+          "this-evening": {
+            "epochMs": 1786039200000,
+            "iso": "2026-08-06T18:00:00.000Z"
+          },
+          "tomorrow-morning": {
+            "epochMs": 1786006800000,
+            "iso": "2026-08-06T09:00:00.000Z"
+          },
+          "next-workday": {
+            "epochMs": 1786006800000,
+            "iso": "2026-08-06T09:00:00.000Z"
+          },
+          "next-monday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          }
+        }
+      },
+      {
+        "label": "friday afternoon (next workday crosses the weekend)",
+        "iso": "2026-08-07T15:00:00.000Z",
+        "epochMs": 1786114800000,
+        "resolved": {
+          "in-1-hour": {
+            "epochMs": 1786118400000,
+            "iso": "2026-08-07T16:00:00.000Z"
+          },
+          "this-evening": {
+            "epochMs": 1786125600000,
+            "iso": "2026-08-07T18:00:00.000Z"
+          },
+          "tomorrow-morning": {
+            "epochMs": 1786179600000,
+            "iso": "2026-08-08T09:00:00.000Z"
+          },
+          "next-workday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          },
+          "next-monday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          }
+        }
+      },
+      {
+        "label": "saturday (already the weekend)",
+        "iso": "2026-08-08T11:00:00.000Z",
+        "epochMs": 1786186800000,
+        "resolved": {
+          "in-1-hour": {
+            "epochMs": 1786190400000,
+            "iso": "2026-08-08T12:00:00.000Z"
+          },
+          "this-evening": {
+            "epochMs": 1786212000000,
+            "iso": "2026-08-08T18:00:00.000Z"
+          },
+          "tomorrow-morning": {
+            "epochMs": 1786266000000,
+            "iso": "2026-08-09T09:00:00.000Z"
+          },
+          "next-workday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          },
+          "next-monday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          }
+        }
+      },
+      {
+        "label": "sunday late (next workday is tomorrow)",
+        "iso": "2026-08-09T23:30:00.000Z",
+        "epochMs": 1786318200000,
+        "resolved": {
+          "in-1-hour": {
+            "epochMs": 1786321800000,
+            "iso": "2026-08-10T00:30:00.000Z"
+          },
+          "this-evening": {
+            "epochMs": 1786384800000,
+            "iso": "2026-08-10T18:00:00.000Z"
+          },
+          "tomorrow-morning": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          },
+          "next-workday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          },
+          "next-monday": {
+            "epochMs": 1786352400000,
+            "iso": "2026-08-10T09:00:00.000Z"
+          }
+        }
+      },
+      {
+        "label": "monday (next monday is a week out)",
+        "iso": "2026-08-10T10:00:00.000Z",
+        "epochMs": 1786356000000,
+        "resolved": {
+          "in-1-hour": {
+            "epochMs": 1786359600000,
+            "iso": "2026-08-10T11:00:00.000Z"
+          },
+          "this-evening": {
+            "epochMs": 1786384800000,
+            "iso": "2026-08-10T18:00:00.000Z"
+          },
+          "tomorrow-morning": {
+            "epochMs": 1786438800000,
+            "iso": "2026-08-11T09:00:00.000Z"
+          },
+          "next-workday": {
+            "epochMs": 1786438800000,
+            "iso": "2026-08-11T09:00:00.000Z"
+          },
+          "next-monday": {
+            "epochMs": 1786957200000,
+            "iso": "2026-08-17T09:00:00.000Z"
+          }
+        }
+      }
+    ]
+  },
+  "reconciliation": {
+    "sourcePriority": {
+      "manual": 3,
+      "scheduled": 2,
+      "inferred": 1
+    },
+    "pairs": [
+      {
+        "rule": "later timestamp wins",
+        "candidate": {
+          "level": 50,
+          "timestamp": 2000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "expected": true,
+        "expectedReversed": false
+      },
+      {
+        "rule": "earlier timestamp loses, whatever else it carries",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 99,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 2000000,
+          "source": "inferred",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "expected": false,
+        "expectedReversed": true
+      },
+      {
+        "rule": "same timestamp: higher revision wins",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 2,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 1,
+          "origin": "origin-a"
+        },
+        "expected": true,
+        "expectedReversed": false
+      },
+      {
+        "rule": "same timestamp and revision: manual outranks scheduled",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "scheduled",
+          "revision": 0,
+          "origin": "origin-b"
+        },
+        "expected": true,
+        "expectedReversed": false
+      },
+      {
+        "rule": "same timestamp and revision: scheduled outranks inferred",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "scheduled",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "inferred",
+          "revision": 0,
+          "origin": "origin-b"
+        },
+        "expected": true,
+        "expectedReversed": false
+      },
+      {
+        "rule": "inferred never overwrites manual on a tie",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "inferred",
+          "revision": 0,
+          "origin": "origin-z"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "expected": false,
+        "expectedReversed": true
+      },
+      {
+        "rule": "everything else tied: higher origin string wins",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-b"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "expected": true,
+        "expectedReversed": false
+      },
+      {
+        "rule": "identical states are not a change",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 50,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "expected": false,
+        "expectedReversed": false
+      },
+      {
+        "rule": "backstop: one identity reused for two levels still converges",
+        "candidate": {
+          "level": 75,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 25,
+          "timestamp": 1000000,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "expected": true,
+        "expectedReversed": false
+      },
+      {
+        "rule": "any produced state beats the unproduced sentinel",
+        "candidate": {
+          "level": 50,
+          "timestamp": 1,
+          "source": "manual",
+          "revision": 0,
+          "origin": "origin-a"
+        },
+        "current": {
+          "level": 100,
+          "timestamp": 0,
+          "source": "manual",
+          "revision": 0,
+          "origin": "0-initial"
+        },
+        "expected": true,
+        "expectedReversed": false
+      }
+    ]
+  },
+  "metrics": [
+    {
+      "level": 100,
+      "stateTimestamp": 1785929400000,
+      "now": 1785931200000,
+      "metrics": {
+        "stateAgeMs": 1800000,
+        "stateAgeMinutes": 30,
+        "expectedProductivityWindowMinutes": 120,
+        "suggestedBreakIntervalMinutes": 90,
+        "recommendedTaskComplexity": "complex",
+        "sustainable": false
+      }
+    },
+    {
+      "level": 75,
+      "stateTimestamp": 1785929400000,
+      "now": 1785931200000,
+      "metrics": {
+        "stateAgeMs": 1800000,
+        "stateAgeMinutes": 30,
+        "expectedProductivityWindowMinutes": 90,
+        "suggestedBreakIntervalMinutes": 60,
+        "recommendedTaskComplexity": "moderate",
+        "sustainable": true
+      }
+    },
+    {
+      "level": 50,
+      "stateTimestamp": 1785929400000,
+      "now": 1785931200000,
+      "metrics": {
+        "stateAgeMs": 1800000,
+        "stateAgeMinutes": 30,
+        "expectedProductivityWindowMinutes": 45,
+        "suggestedBreakIntervalMinutes": 45,
+        "recommendedTaskComplexity": "routine",
+        "sustainable": true,
+        "recoveryHintMinutes": 10
+      }
+    },
+    {
+      "level": 25,
+      "stateTimestamp": 1785929400000,
+      "now": 1785931200000,
+      "metrics": {
+        "stateAgeMs": 1800000,
+        "stateAgeMinutes": 30,
+        "expectedProductivityWindowMinutes": 25,
+        "suggestedBreakIntervalMinutes": 25,
+        "recommendedTaskComplexity": "simple",
+        "sustainable": true,
+        "recoveryHintMinutes": 20
+      }
+    },
+    {
+      "level": 0,
+      "stateTimestamp": 1785929400000,
+      "now": 1785931200000,
+      "metrics": {
+        "stateAgeMs": 1800000,
+        "stateAgeMinutes": 30,
+        "expectedProductivityWindowMinutes": 0,
+        "suggestedBreakIntervalMinutes": 0,
+        "recommendedTaskComplexity": "consumption",
+        "sustainable": false,
+        "recoveryHintMinutes": 30
+      }
+    }
+  ],
+  "externalLevelMapping": [
+    {
+      "input": -20,
+      "level": 0
+    },
+    {
+      "input": 0,
+      "level": 0
+    },
+    {
+      "input": 5,
+      "level": 0
+    },
+    {
+      "input": 12.5,
+      "level": 25
+    },
+    {
+      "input": 13,
+      "level": 25
+    },
+    {
+      "input": 25,
+      "level": 25
+    },
+    {
+      "input": 37.5,
+      "level": 50
+    },
+    {
+      "input": 38,
+      "level": 50
+    },
+    {
+      "input": 50,
+      "level": 50
+    },
+    {
+      "input": 62.5,
+      "level": 75
+    },
+    {
+      "input": 63,
+      "level": 75
+    },
+    {
+      "input": 75,
+      "level": 75
+    },
+    {
+      "input": 87.5,
+      "level": 100
+    },
+    {
+      "input": 88,
+      "level": 100
+    },
+    {
+      "input": 100,
+      "level": 100
+    },
+    {
+      "input": 140,
+      "level": 100
+    }
+  ]
+}

@@ -18,6 +18,10 @@
  * applyEnergyLevel() sets the same properties as inline styles, which take
  * precedence but resolve to identical values, so the JS and CSS-only paths
  * always agree.
+ *
+ * The single exception is the accessibility block at the end of this file, which
+ * declares `!important` deliberately so a user's contrast preference outranks
+ * both paths. See the comment there.
  */
 
 /* ── Custom properties per level (mirror of uiVisibilityStrategy) ── */
@@ -129,6 +133,8 @@
   opacity: var(--energy-chrome-opacity-hover, 0.8);
 }
 
+/* `font-size` scales relative to the parent, so this expects ONE .energy-content
+ * per tree. Nesting them compounds the scale (1.1 inside 1.1 is 1.21). */
 [data-energy-level='0'] .energy-content {
   max-width: var(--energy-content-max-width, 75ch);
   margin-inline: auto;
@@ -138,6 +144,10 @@
   cursor: default !important;
 }
 
+/* A cursor is a HINT, and one only a pointer user receives. It changes nothing
+ * about what is focusable or clickable, so an app that means "read only" at Rest
+ * must also disable the controls — otherwise a keyboard user gets no signal at
+ * all and a pointer user gets a signal that turns out to be false. */
 [data-energy-level='0'] .energy-content * {
   cursor: default !important;
 }
@@ -200,5 +210,72 @@
 @media (prefers-reduced-motion: reduce) {
   [data-energy-level] .energy-chrome {
     transition: none;
+  }
+}
+
+/* ── Contrast obligations ──
+ *
+ * Be honest about what the resting values are: chrome sits at 10% opacity at
+ * level 25 and 5% at level 0, and neither meets WCAG 1.4.11 (Non-text Contrast,
+ * 3:1 for UI components) in its resting state. That is a deliberate design
+ * default for a receding interface, not a conformance claim — and it is why
+ * every value here is a custom property an app can raise in one line.
+ *
+ * Two populations must not be left to do that themselves:
+ *
+ * `prefers-contrast: more` is a person explicitly asking the OS for more
+ * contrast. Fading their chrome to 5% is answering the opposite of the question.
+ * Chrome still recedes with energy, but never below a legible floor.
+ *
+ * `forced-colors: active` (Windows High Contrast and friends) overrides colors
+ * but NOT opacity, so faded chrome stays faded while everything around it snaps
+ * to a system palette — the fade is no longer a soft de-emphasis, it is the only
+ * thing still hiding content. Opacity comes off entirely.
+ *
+ * Both blocks declare `!important`, which is load-bearing rather than a shortcut.
+ * `applyEnergyLevel()` writes these same custom properties as INLINE styles, and
+ * an inline declaration outranks an ordinary rule — so without this, the JS path
+ * would silently defeat the user's stated contrast preference while the CSS-only
+ * path honoured it. An important author declaration beats a normal inline one,
+ * which is exactly the ordering wanted here: a preference the person set outranks
+ * a value the program computed. */
+@media (prefers-contrast: more) {
+  [data-energy-level='75'] {
+    --energy-chrome-opacity: 0.9 !important;
+  }
+
+  [data-energy-level='50'] {
+    --energy-chrome-opacity: 0.8 !important;
+  }
+
+  [data-energy-level='25'] {
+    --energy-chrome-opacity: 0.7 !important;
+  }
+
+  [data-energy-level='0'] {
+    --energy-chrome-opacity: 0.7 !important;
+    --energy-chrome-opacity-hover: 1 !important;
+  }
+
+  [data-energy-level] {
+    --energy-muted-opacity: 0.85 !important;
+  }
+}
+
+@media (forced-colors: active) {
+  [data-energy-level] {
+    --energy-chrome-opacity: 1 !important;
+    --energy-chrome-opacity-hover: 1 !important;
+    --energy-muted-opacity: 1 !important;
+  }
+
+  [data-energy-level] .energy-chrome {
+    opacity: 1 !important;
+  }
+
+  /* `hidden` presence stays hidden: it is display, not contrast, and the
+   * element is meant to be absent from the tree at this level. */
+  [data-energy-presence='muted'] {
+    opacity: 1 !important;
   }
 }

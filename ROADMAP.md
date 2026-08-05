@@ -72,16 +72,40 @@ second consumer proves what the shared machinery actually is.
 - [x] Migrate [kumbat.io](https://kumbat.io) from its inline energy provider to this package — the site becomes the living integration test
 - [x] Case study: what adaptation strategies survived contact with real use — [Production Patterns](https://docs.kumbat.io/docs/energy-system/guides/production-patterns), drawn from [Anasa](https://anasa.md) (public alpha) and [Meltemi](https://meltemi.app) (private beta, entro314 labs — built outside the Kumbatio product line)
 
-## M4 — v1.0 stable
+## Shipped (v1.0) — Specification, conformance, and the API freeze
 
-- [ ] API freeze, semver commitment
-- [ ] Accessibility review of shipped patterns (incl. `prefers-reduced-motion` interplay)
-- [ ] Test coverage across every level transition and strategy composition
+The model is now specified independently of this implementation, so an
+implementation in another language is an implementation of the same model rather
+than a port of this one. That was the prerequisite for every port anyone might
+later want, and it is worth more than any single port would have been.
+
+- [x] [SPEC.md](./SPEC.md): the normative, language-independent model — levels,
+      state, reconciliation, the strategy contract, autonomy, inbound demand, the
+      runtime invariants, and the accessibility requirements
+- [x] [`spec/energy-state.schema.json`](./spec/energy-state.schema.json): the
+      interchange format for sharing one person's state across processes/languages
+- [x] [`conformance.json`](./conformance.json): 252 vectors + every strategy
+      table, generated on each build and shipped in the package; a stale file
+      fails the build
+- [x] `isPreferredEnergyState` exported — the reconciliation rule was internal,
+      and it is the hardest thing to reimplement correctly
+- [x] API freeze and semver commitment, in which a shipped table's VALUES are
+      API — see the Stability section of the README
+- [x] Accessibility review of the shipped patterns: `prefers-contrast: more` and
+      `forced-colors: active` handling, honest documentation of where the resting
+      opacities stand against WCAG 1.4.11, and the requirements written into
+      SPEC.md §10 so they bind ports too
+- [x] Coverage across all 20 level transitions in both directions, strategy
+      composition, and the model's directional invariants
 
 ## M5 — Beyond the current adapters
 
 - [ ] Web-component / vanilla examples
 - [ ] Additional framework adapter, chosen by adopter demand — open an issue to vote
+- [ ] A first non-JavaScript implementation, when a real consumer needs one. The
+      spec and vectors are what make that cheap, and the bet is that the first
+      genuine demand is server-side rather than another UI framework — that is
+      where the energy models which did NOT adopt this one already live.
 
 ## Continuously
 

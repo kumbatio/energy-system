@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kumbat.io/spec/energy-state.schema.json",
+  "title": "EnergyState",
+  "description": "One producer's point-in-time claim about a person's cognitive capacity. This is the interchange format: the shape an implementation writes to shared storage, sends over a wire, or hands to another process. Two implementations that agree on this schema and on the reconciliation rule in SPEC.md converge on the same current state without further coordination.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["level", "timestamp", "source", "revision", "origin"],
+  "properties": {
+    "level": {
+      "description": "The declared capacity. Five discrete values, never a continuum: a slider invites precision nobody has about their own state, and five is the most a depleted person should have to choose between.",
+      "type": "integer",
+      "enum": [0, 25, 50, 75, 100]
+    },
+    "timestamp": {
+      "description": "When this state was produced, in milliseconds since the Unix epoch. The primary ordering key. 0 is reserved for the unproduced sentinel (see SPEC.md).",
+      "type": "integer",
+      "minimum": 0
+    },
+    "source": {
+      "description": "How the level was arrived at. Load-bearing during reconciliation: manual outranks scheduled outranks inferred, so nothing the system worked out on its own overwrites what the person said.",
+      "type": "string",
+      "enum": ["manual", "scheduled", "inferred"]
+    },
+    "revision": {
+      "description": "Logical sequence number among states sharing one timestamp. Two writes inside a clock tick are not simultaneous, and this is what keeps them ordered.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "origin": {
+      "description": "Stable identity of the producer — an engine instance, a device, a process. Must be unique per producer and stable across that producer's writes. The final tiebreaker compares it lexicographically, so a producer that reuses one identity for different state breaks convergence.",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "examples": [
+    {
+      "level": 50,
+      "timestamp": 1786060800000,
+      "source": "manual",
+      "revision": 0,
+      "origin": "a4f1c2e8-0f3b-4a91-9f2d-6c1b2e5d8a70"
+    },
+    {
+      "level": 100,
+      "timestamp": 0,
+      "source": "manual",
+      "revision": 0,
+      "origin": "0-initial"
+    }
+  ]
+}

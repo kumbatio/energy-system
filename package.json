@@ -1,6 +1,6 @@
 {
   "name": "@kumbatio/energy-system",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
@@ -8,6 +8,10 @@
     "dist",
     "src/energy.css",
     "api-surface.json",
+    "conformance.json",
+    "spec",
+    "SPEC.md",
+    "CHANGELOG.md",
     "README.md"
   ],
   "type": "module",
@@ -35,13 +39,15 @@
     },
     "./css": "./src/energy.css",
     "./api-surface.json": "./api-surface.json",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./conformance.json": "./conformance.json",
+    "./spec/energy-state.schema.json": "./spec/energy-state.schema.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && pnpm run api:surface",
+    "build": "tsc -p tsconfig.build.json && pnpm run api:surface && pnpm run conformance",
     "api:surface": "tsx scripts/extract-api-surface.ts",
     "check-types": "tsc --noEmit -p tsconfig.json",
     "test": "pnpm run build && node --test --import tsx",
@@ -53,7 +59,8 @@
     "lint": "oxlint --import-plugin --type-aware --type-check --vitest-plugin .",
     "lint:fix": "oxlint --import-plugin --type-aware --type-check --vitest-plugin --fix . && oxfmt --write .",
     "lint:fix-unsafe": "oxlint --import-plugin --type-aware --type-check --vitest-plugin --fix --fix-suggestions --fix-dangerously . && oxfmt --write .",
-    "check:fix-suggestions": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions . && oxfmt --write ."
+    "check:fix-suggestions": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions . && oxfmt --write .",
+    "conformance": "TZ=UTC tsx scripts/extract-conformance.ts"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.11.1",

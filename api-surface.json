@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0",
+  "version": "1.0.0",
   "entryPoints": [
     {
       "specifier": "@kumbatio/energy-system",
@@ -34,6 +34,7 @@
         "isHigherEnergy",
         "isNotificationPriority",
         "isOriginatorTier",
+        "isPreferredEnergyState",
         "isPresenceVisible",
         "isSessionExpired",
         "isUnproducedState",
