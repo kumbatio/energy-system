@@ -12,11 +12,17 @@ change to [SPEC.md](./SPEC.md), not only to this library. The same is true of th
 reconciliation rule, which two implementations must agree on to share state at
 all. Prose returned by `describe()` is not covered; wording is a product decision.
 
-## [Unreleased]
+## [2.0.0]
 
-Corrections to `1.0.0`. No type signature changed, but two of these change
-runtime behavior and one narrows an install range — see the note at the top of
-this file on why that is more than a patch for this package.
+Corrections to `1.0.0`. No type signature changed, which is exactly why this is
+a major: two of these change runtime behavior and one narrows an install range,
+and for this package behavior is API — see the note at the top of this file.
+
+Upgrading from `1.x`: the breaks are `react`/`@types/react` below 19.2 (which
+never worked with the React entry point), persisted or exchanged states carrying
+properties outside the published schema (previously trimmed in silence, now
+rejected), and any code depending on a batched notification being delivered
+after suppression started or after energy fell below its threshold.
 
 ### Fixed
 

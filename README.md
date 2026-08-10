@@ -597,8 +597,8 @@ and checked by this package's suite, because no vector can express _and it must 
 
 ## Stability
 
-`1.0.0` is an API freeze. From here the package follows semver strictly, and for this package that
-means more than the type signatures:
+The API has been frozen since `1.0.0`. The package follows semver strictly, and for this package
+that means more than the type signatures:
 
 - **A shipped strategy table's values are API.** Changing what `notificationStrategy` returns at
   level 50 changes how every consumer behaves, so it is a major-version change — and a change to
