@@ -72,7 +72,7 @@
     "oxlint-tsgolint": "^7.0.2001",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tsx": "^4.23.7",
+    "tsx": "^4.23.8",
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
