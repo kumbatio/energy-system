@@ -1,6 +1,6 @@
 {
   "$schema": "./spec/conformance.schema.json",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "timezone": "UTC",
   "note": "Generated from the built library by scripts/extract-conformance.ts. See SPEC.md for the normative rules these vectors encode, including the runtime invariants that no vector can express.",
   "levels": [

@@ -1,4 +1,4 @@
-import { createEnergyState, isEnergyLevel, isEnergySource } from './levels.js'
+import { parseExternalEnergyState } from './levels.js'
 import type { EnergyPersistence, EnergyState } from './types.js'
 
 /*
@@ -19,37 +19,16 @@ function parsePersistedState(source: string, raw: string | null): EnergyState | 
     return null
   }
 
-  if (typeof parsed !== 'object' || parsed === null || !('level' in parsed)) {
-    console.error(
-      `[energy-system] Discarding persisted energy state with unexpected shape (${source})`,
-    )
-    return null
-  }
-
-  const obj = parsed as Record<string, unknown>
-  if (
-    !isEnergyLevel(obj['level']) ||
-    !isEnergySource(obj['source']) ||
-    typeof obj['timestamp'] !== 'number' ||
-    typeof obj['revision'] !== 'number' ||
-    typeof obj['origin'] !== 'string'
-  ) {
-    console.error(`[energy-system] Discarding malformed persisted energy state (${source})`)
-    return null
-  }
-
   try {
-    return createEnergyState(
-      obj['level'],
-      obj['source'],
-      obj['timestamp'],
-      obj['revision'],
-      obj['origin'],
-    )
+    // Shape, key set and field invariants are all one boundary rule, enforced
+    // to the letter of spec/energy-state.schema.json — including its
+    // `additionalProperties: false`. Storage written by a newer or foreign
+    // producer is rejected, not quietly trimmed to fit.
+    return parseExternalEnergyState(parsed)
   } catch (err: unknown) {
-    // Field-level invariants (negative timestamp, non-integer revision, blank
-    // origin) are enforced by createEnergyState, not by the checks above.
-    console.error(`[energy-system] Discarding invalid persisted energy state (${source})`, err)
+    // Distinct from the unparseable case above: the bytes were JSON, the
+    // content was not an EnergyState. The thrown error carries which rule broke.
+    console.error(`[energy-system] Discarding malformed persisted energy state (${source})`, err)
     return null
   }
 }
@@ -109,16 +88,7 @@ export function localStoragePersistence(key = 'energy-state'): EnergyPersistence
  * Useful for tests, SSR, or ephemeral sessions.
  */
 export function memoryPersistence(initial?: EnergyState): EnergyPersistence {
-  let stored =
-    initial === undefined
-      ? null
-      : createEnergyState(
-          initial.level,
-          initial.source,
-          initial.timestamp,
-          initial.revision,
-          initial.origin,
-        )
+  let stored = initial === undefined ? null : parseExternalEnergyState(initial)
   const listeners = new Set<(state: EnergyState) => void>()
 
   return {
@@ -126,15 +96,13 @@ export function memoryPersistence(initial?: EnergyState): EnergyPersistence {
       return stored
     },
     async save(state: EnergyState): Promise<void> {
-      stored = createEnergyState(
-        state.level,
-        state.source,
-        state.timestamp,
-        state.revision,
-        state.origin,
-      )
+      // Re-parsed rather than stored by reference: this adapter is the one
+      // observers read back from, so what it hands out must satisfy the
+      // interchange contract exactly, whoever called save().
+      const next = parseExternalEnergyState(state)
+      stored = next
       for (const listener of listeners) {
-        listener(stored)
+        listener(next)
       }
     },
     observe(onState) {

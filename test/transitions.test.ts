@@ -345,10 +345,17 @@ void test('a gated notification is released by any transition that admits it', (
     const admittedAfter =
       resolveNotificationOutcome(notificationStrategy.resolve(to), 'high', false) !== 'deferred'
 
-    if (outcome === 'deferred') {
-      assert.equal(surfaced, admittedAfter ? 1 : 0, `${label}: deferred intent went missing`)
+    if (outcome === 'delivered') {
+      // Already surfaced before the transition; a later level cannot recall it.
+      assert.equal(surfaced, 1, `${label}: an immediate intent was not delivered once`)
     } else {
-      assert.equal(surfaced, 1, `${label}: a delivered intent was not delivered once`)
+      // Still held when energy moved — batched and deferred alike are judged by
+      // the policy in force at delivery, not the one in force at publish.
+      assert.equal(
+        surfaced,
+        admittedAfter ? 1 : 0,
+        `${label}: held intent ignored the destination level's policy`,
+      )
     }
 
     gate.dispose()

@@ -26,7 +26,10 @@
  * else.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
+
+import type { ErrorObject } from 'ajv'
+import { Ajv2020 } from 'ajv/dist/2020.js'
 
 import {
   DEFERRAL_PRESET_IDS,
@@ -58,6 +61,7 @@ import type {
   NotificationPriority,
   OriginatorTier,
 } from '../src/index.ts'
+import { emitArtifact, isCheckRun } from './emit-artifact.ts'
 
 const ROOT = new URL('../', import.meta.url)
 
@@ -342,8 +346,38 @@ const conformance = {
   externalLevelMapping: compatibilityVectors(),
 }
 
+/*
+ * Validate the vectors against their own published schema BEFORE emitting.
+ *
+ * conformance.json ships with a `$schema` pointer, which is a promise to every
+ * port that loads it: this file has the shape that document describes. A
+ * pointer nothing checks is worse than no pointer — it invites a reader to
+ * trust a guarantee no one is keeping. Both schemas are registered together,
+ * so the reconciliation vectors are validated against the same EnergyState
+ * definition external producers write to.
+ */
+function validateAgainstSchema(candidate: unknown): void {
+  const ajv = new Ajv2020({ allErrors: true, strict: true })
+  const readSchema = (name: string): object =>
+    JSON.parse(readFileSync(new URL(`spec/${name}`, ROOT), 'utf8')) as object
+
+  ajv.addSchema(readSchema('energy-state.schema.json'))
+  const validate = ajv.compile(readSchema('conformance.schema.json'))
+
+  if (!validate(candidate)) {
+    const problems = (validate.errors ?? [])
+      .map((error: ErrorObject) => `  ${error.instancePath || '/'}: ${error.message ?? 'invalid'}`)
+      .join('\n')
+    throw new Error(
+      `Generated conformance vectors do not satisfy spec/conformance.schema.json:\n${problems}`,
+    )
+  }
+}
+
+validateAgainstSchema(conformance)
+
 const target = new URL('conformance.json', ROOT)
-writeFileSync(target, `${JSON.stringify(conformance, null, 2)}\n`)
+const targetPath = emitArtifact(target, `${JSON.stringify(conformance, null, 2)}\n`)
 
 const vectorCount =
   conformance.decisions.notification.length +
@@ -355,7 +389,7 @@ const vectorCount =
   conformance.cycle.length
 
 console.log(
-  `[energy-system] conformance.json: ${vectorCount} vectors + ${
+  `[energy-system] conformance.json ${isCheckRun ? 'verified' : 'written'}: ${vectorCount} vectors + ${
     Object.keys(conformance.strategies).length
-  } strategy tables (v${version}) -> ${target.pathname}`,
+  } strategy tables (v${version}) -> ${targetPath}`,
 )

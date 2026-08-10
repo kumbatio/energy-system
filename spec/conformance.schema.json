@@ -1,0 +1,395 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kumbat.io/spec/conformance.schema.json",
+  "title": "EnergyConformance",
+  "description": "The shape of conformance.json: the executable half of SPEC.md. A port in any language passes by loading that file and asserting its own output against each vector. This schema is what lets that port know the file it loaded is the file it expects — vectors that silently changed shape are worse than vectors that failed to load. scripts/extract-conformance.ts validates its own output against this schema before writing, so the two cannot drift apart unnoticed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "timezone",
+    "note",
+    "levels",
+    "cycle",
+    "strategies",
+    "presence",
+    "decisions",
+    "deferral",
+    "reconciliation",
+    "metrics",
+    "externalLevelMapping"
+  ],
+  "$defs": {
+    "level": {
+      "description": "The five discrete capacities. Never a continuum.",
+      "type": "integer",
+      "enum": [0, 25, 50, 75, 100]
+    },
+    "presence": {
+      "description": "What a projected element does at a level. `unmounted` is a host/adapter choice rather than a table value, so it does not appear in these vectors.",
+      "type": "string",
+      "enum": ["visible", "muted", "hidden", "unmounted"]
+    },
+    "strategyTable": {
+      "description": "One strategy's resolved config at every level. Keys are strings because JSON object keys are strings, and all five must be present: a gap in a port's table falls through silently at exactly the level it mishandles.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["0", "25", "50", "75", "100"],
+      "properties": {
+        "0": { "type": "object", "minProperties": 1 },
+        "25": { "type": "object", "minProperties": 1 },
+        "50": { "type": "object", "minProperties": 1 },
+        "75": { "type": "object", "minProperties": 1 },
+        "100": { "type": "object", "minProperties": 1 }
+      }
+    },
+    "presenceRow": {
+      "description": "What each level resolves to for one helper threshold.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["0", "25", "50", "75", "100"],
+      "properties": {
+        "0": { "$ref": "#/$defs/presence" },
+        "25": { "$ref": "#/$defs/presence" },
+        "50": { "$ref": "#/$defs/presence" },
+        "75": { "$ref": "#/$defs/presence" },
+        "100": { "$ref": "#/$defs/presence" }
+      }
+    },
+    "presenceTable": {
+      "description": "Keyed by the helper's threshold level, then by the current level.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["0", "25", "50", "75", "100"],
+      "properties": {
+        "0": { "$ref": "#/$defs/presenceRow" },
+        "25": { "$ref": "#/$defs/presenceRow" },
+        "50": { "$ref": "#/$defs/presenceRow" },
+        "75": { "$ref": "#/$defs/presenceRow" },
+        "100": { "$ref": "#/$defs/presenceRow" }
+      }
+    },
+    "instant": {
+      "description": "An epoch-millisecond instant paired with its ISO rendering, so a port can compare either without re-deriving one from the other.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["epochMs", "iso"],
+      "properties": {
+        "epochMs": { "type": "integer", "minimum": 0 },
+        "iso": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        }
+      }
+    }
+  },
+  "properties": {
+    "$schema": {
+      "description": "Reference to this schema, relative to the package root so it resolves inside the published tarball as well as in the repository.",
+      "type": "string",
+      "const": "./spec/conformance.schema.json"
+    },
+    "version": {
+      "description": "The package version these vectors were generated from. Always equal to api-surface.json's version.",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+"
+    },
+    "timezone": {
+      "description": "The zone the deferral vectors were computed in. The presets are local-time by design, so the vectors only mean anything alongside the zone that produced them.",
+      "const": "UTC"
+    },
+    "note": { "type": "string", "minLength": 1 },
+
+    "levels": {
+      "description": "Level definitions, including the cognitive profile a port must reproduce.",
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["value", "key", "label", "description", "cognitiveProfile"],
+        "properties": {
+          "value": { "$ref": "#/$defs/level" },
+          "key": { "type": "string", "minLength": 1 },
+          "label": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "cognitiveProfile": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decisionCapacity",
+              "focusDuration",
+              "taskComplexity",
+              "interruptionTolerance"
+            ],
+            "properties": {
+              "decisionCapacity": { "type": "string", "minLength": 1 },
+              "focusDuration": { "type": "string", "minLength": 1 },
+              "taskComplexity": { "type": "string", "minLength": 1 },
+              "interruptionTolerance": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+
+    "cycle": {
+      "description": "100 -> 75 -> 50 -> 25 -> 0 -> 100.",
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to"],
+        "properties": {
+          "from": { "$ref": "#/$defs/level" },
+          "to": { "$ref": "#/$defs/level" }
+        }
+      }
+    },
+
+    "strategies": {
+      "description": "Every built-in strategy's resolved config at every level. Config shapes differ per strategy; their field-level meaning is fixed by SPEC.md and re-asserted by replaying each table through the public API in test/conformance.test.ts.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ui-visibility",
+        "notifications",
+        "task-complexity",
+        "interaction-forgiveness",
+        "deferral",
+        "autonomy",
+        "demand-admission"
+      ],
+      "properties": {
+        "ui-visibility": { "$ref": "#/$defs/strategyTable" },
+        "notifications": { "$ref": "#/$defs/strategyTable" },
+        "task-complexity": { "$ref": "#/$defs/strategyTable" },
+        "interaction-forgiveness": { "$ref": "#/$defs/strategyTable" },
+        "deferral": { "$ref": "#/$defs/strategyTable" },
+        "autonomy": { "$ref": "#/$defs/strategyTable" },
+        "demand-admission": { "$ref": "#/$defs/strategyTable" }
+      }
+    },
+
+    "presence": {
+      "description": "Presence helpers, which are pure maps over the level set.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["atOrAbove", "atOrAboveMuted", "atOrBelow"],
+      "properties": {
+        "atOrAbove": { "$ref": "#/$defs/presenceTable" },
+        "atOrAboveMuted": { "$ref": "#/$defs/presenceTable" },
+        "atOrBelow": { "$ref": "#/$defs/presenceTable" }
+      }
+    },
+
+    "decisions": {
+      "description": "The full decision matrix of both pure gating functions.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["notification", "demand"],
+      "properties": {
+        "notification": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["level", "priority", "suppressed", "outcome"],
+            "properties": {
+              "level": { "$ref": "#/$defs/level" },
+              "priority": { "type": "string", "enum": ["normal", "high", "critical"] },
+              "suppressed": { "type": "boolean" },
+              "outcome": { "type": "string", "enum": ["delivered", "batched", "deferred"] }
+            }
+          }
+        },
+        "demand": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["level", "originatorTier", "bearsObligation", "confidence", "outcome"],
+            "properties": {
+              "level": { "$ref": "#/$defs/level" },
+              "originatorTier": { "type": "string", "enum": ["exempt", "known", "unknown"] },
+              "bearsObligation": { "type": "boolean" },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+              "outcome": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["admission", "acknowledgment", "reason"],
+                "properties": {
+                  "admission": { "type": "string", "enum": ["live", "acknowledge", "silent"] },
+                  "acknowledgment": {
+                    "description": "null when the policy admits or drops without acknowledging.",
+                    "type": ["object", "null"],
+                    "additionalProperties": false,
+                    "required": ["detail", "allowGeneratedContent"],
+                    "properties": {
+                      "detail": { "type": "string", "enum": ["full", "brief", "minimal"] },
+                      "allowGeneratedContent": { "type": "boolean" }
+                    }
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "exempt-originator",
+                      "tier-admitted",
+                      "acknowledged",
+                      "no-obligation",
+                      "below-confidence"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "deferral": {
+      "description": "Deferral arithmetic, resolved against fixed reference instants. Local-time by design, hence the `timezone` field above.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["morningHour", "eveningHour", "references"],
+      "properties": {
+        "morningHour": { "type": "integer", "minimum": 0, "maximum": 23 },
+        "eveningHour": { "type": "integer", "minimum": 0, "maximum": 23 },
+        "references": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "iso", "epochMs", "resolved"],
+            "properties": {
+              "label": { "type": "string", "minLength": 1 },
+              "iso": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+              },
+              "epochMs": { "type": "integer", "minimum": 0 },
+              "resolved": {
+                "description": "Every shipped preset, resolved against this reference instant.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "in-1-hour",
+                  "this-evening",
+                  "tomorrow-morning",
+                  "next-workday",
+                  "next-monday"
+                ],
+                "properties": {
+                  "in-1-hour": { "$ref": "#/$defs/instant" },
+                  "this-evening": { "$ref": "#/$defs/instant" },
+                  "tomorrow-morning": { "$ref": "#/$defs/instant" },
+                  "next-workday": { "$ref": "#/$defs/instant" },
+                  "next-monday": { "$ref": "#/$defs/instant" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "reconciliation": {
+      "description": "The ordering rule two independent producers converge on. Each pair is stated in both directions: a rule that is not antisymmetric does not converge.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourcePriority", "pairs"],
+      "properties": {
+        "sourcePriority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["manual", "scheduled", "inferred"],
+          "properties": {
+            "manual": { "const": 3 },
+            "scheduled": { "const": 2 },
+            "inferred": { "const": 1 }
+          }
+        },
+        "pairs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["rule", "candidate", "current", "expected", "expectedReversed"],
+            "properties": {
+              "rule": { "type": "string", "minLength": 1 },
+              "candidate": { "$ref": "https://kumbat.io/spec/energy-state.schema.json" },
+              "current": { "$ref": "https://kumbat.io/spec/energy-state.schema.json" },
+              "expected": { "type": "boolean" },
+              "expectedReversed": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+
+    "metrics": {
+      "description": "Derived metrics at a fixed state age, so a port checks its arithmetic rather than its clock.",
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["level", "stateTimestamp", "now", "metrics"],
+        "properties": {
+          "level": { "$ref": "#/$defs/level" },
+          "stateTimestamp": { "type": "integer", "minimum": 0 },
+          "now": { "type": "integer", "minimum": 0 },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "stateAgeMs",
+              "stateAgeMinutes",
+              "expectedProductivityWindowMinutes",
+              "suggestedBreakIntervalMinutes",
+              "recommendedTaskComplexity",
+              "sustainable"
+            ],
+            "properties": {
+              "stateAgeMs": { "type": "integer", "minimum": 0 },
+              "stateAgeMinutes": { "type": "integer", "minimum": 0 },
+              "expectedProductivityWindowMinutes": { "type": "integer", "minimum": 0 },
+              "suggestedBreakIntervalMinutes": { "type": "integer", "minimum": 0 },
+              "recommendedTaskComplexity": { "type": "string", "minLength": 1 },
+              "sustainable": { "type": "boolean" },
+              "recoveryHintMinutes": {
+                "description": "Present only at the levels that have a recovery hint (50 and below); absent, not null, where there is nothing to suggest.",
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "externalLevelMapping": {
+      "description": "Percentages an external model might hand over, including both midpoints — 12.5 and 37.5 sit exactly between two levels, which is where rounding implementations disagree.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["input", "level"],
+        "properties": {
+          "input": { "type": "number" },
+          "level": { "$ref": "#/$defs/level" }
+        }
+      }
+    }
+  }
+}

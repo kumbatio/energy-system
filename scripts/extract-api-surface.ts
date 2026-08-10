@@ -11,8 +11,9 @@
  * they are read from the emitted declarations.
  */
 
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { readFileSync, readdirSync } from 'node:fs'
+
+import { emitArtifact, isCheckRun } from './emit-artifact.ts'
 
 interface EntryPointSurface {
   /** Bare specifier a consumer imports this entry point by. */
@@ -106,8 +107,10 @@ function collectInterfaceMembers(
     }
 
     // Only direct members count; nested object literals belong to their parent.
+    // `<` is in the terminator set for generic methods (`resolve<T>(...)`);
+    // without it a method's own type parameters hide it from the freeze.
     if (depth === 1) {
-      const member = /^\s{4}(?:readonly )?(\w+)\??[?:(]/.exec(line)
+      const member = /^\s{4}(?:readonly )?(\w+)\??[?:(<]/.exec(line)
       if (member?.[1]) members[current]?.push(member[1])
     }
 
@@ -164,13 +167,31 @@ async function buildSurface(): Promise<ApiSurface> {
 }
 
 const surface = await buildSurface()
-const outputPath = new URL('api-surface.json', ROOT)
-writeFileSync(outputPath, `${JSON.stringify(surface, null, 2)}\n`)
+
+/*
+ * The frozen surface is only a contract if it is complete. This is the one
+ * member the parser used to miss — `resolve<T>()` opens with its own type
+ * parameter rather than `(`, so a terminator set without `<` dropped it — and
+ * a member absent from the artifact is a member nobody notices removing.
+ */
+const engineMembers = surface.members['EnergyEngine'] ?? []
+for (const required of ['resolve', 'getState', 'setLevel', 'subscribe', 'dispose']) {
+  if (!engineMembers.includes(required)) {
+    throw new Error(
+      `api-surface.json would omit EnergyEngine.${required} — the declaration parser is not seeing it`,
+    )
+  }
+}
+
+const outputPath = emitArtifact(
+  new URL('api-surface.json', ROOT),
+  `${JSON.stringify(surface, null, 2)}\n`,
+)
 
 const total = surface.entryPoints.reduce(
   (sum, entry) => sum + entry.values.length + entry.types.length,
   0,
 )
 console.log(
-  `[energy-system] api-surface.json: ${String(total)} exports across ${String(surface.entryPoints.length)} entry points (v${surface.version}) -> ${fileURLToPath(outputPath)}`,
+  `[energy-system] api-surface.json ${isCheckRun ? 'verified' : 'written'}: ${String(total)} exports across ${String(surface.entryPoints.length)} entry points (v${surface.version}) -> ${outputPath}`,
 )

@@ -298,6 +298,141 @@ void test('gate batches at 50, defers below threshold, and releases on energy ri
   gate.dispose()
 })
 
+/*
+ * A batch window is a wait, not a decision that has already been made. Energy
+ * and suppression both move while one is open, and the gate's whole purpose is
+ * that the policy in force at DELIVERY governs — otherwise an intent admitted
+ * at Steady arrives in the middle of a focus session, or lands at Rest with
+ * every channel switched off.
+ */
+void test('an open batch is re-judged when suppression starts', () => {
+  const timeline = createFakeTimeline()
+  const engine = createEnergyEngine({ initialLevel: 50, clock: timeline.clock })
+  const deliveries: NotificationDelivery[] = []
+  const gate = createNotificationGate(engine, {
+    onDeliver: (delivery) => deliveries.push(delivery),
+    clock: timeline.clock,
+    scheduler: timeline.scheduler,
+  })
+
+  assert.equal(gate.publish({ priority: 'high', payload: 'a' }), 'batched')
+  gate.setSuppressed(true)
+  assert.deepEqual(gate.pendingCount(), { batched: 0, deferred: 1 })
+
+  // The window closing while suppressed must surface nothing.
+  timeline.advance(60 * 60_000)
+  assert.equal(deliveries.length, 0)
+
+  gate.setSuppressed(false)
+  assert.equal(deliveries.length, 1)
+  assert.equal(deliveries[0]?.reason, 'released')
+  assert.equal(deliveries[0]?.notifications[0]?.payload, 'a')
+  assert.deepEqual(gate.pendingCount(), { batched: 0, deferred: 0 })
+  gate.dispose()
+})
+
+void test('an open batch is re-judged when energy falls below its threshold', () => {
+  const timeline = createFakeTimeline()
+  const engine = createEnergyEngine({ initialLevel: 50, clock: timeline.clock })
+  const deliveries: NotificationDelivery[] = []
+  const gate = createNotificationGate(engine, {
+    onDeliver: (delivery) => deliveries.push(delivery),
+    clock: timeline.clock,
+    scheduler: timeline.scheduler,
+  })
+
+  assert.equal(gate.publish({ priority: 'high', payload: 'a' }), 'batched')
+  engine.setLevel(0)
+
+  // Rest silences everything: the intent is held, not surfaced with dead channels.
+  assert.deepEqual(gate.pendingCount(), { batched: 0, deferred: 1 })
+  timeline.advance(60 * 60_000)
+  gate.flush()
+  assert.equal(deliveries.length, 0)
+
+  engine.setLevel(100)
+  assert.equal(deliveries.length, 1)
+  assert.equal(deliveries[0]?.reason, 'released')
+  assert.deepEqual(deliveries[0]?.channels, { visual: true, sound: true, vibration: true })
+  gate.dispose()
+})
+
+void test('flush respects active suppression instead of overriding it', () => {
+  const timeline = createFakeTimeline()
+  const engine = createEnergyEngine({ initialLevel: 50, clock: timeline.clock })
+  const deliveries: NotificationDelivery[] = []
+  const gate = createNotificationGate(engine, {
+    onDeliver: (delivery) => deliveries.push(delivery),
+    clock: timeline.clock,
+    scheduler: timeline.scheduler,
+  })
+
+  assert.equal(gate.publish({ priority: 'high', payload: 'a' }), 'batched')
+  gate.setSuppressed(true)
+  gate.flush()
+
+  // flush() shortens the wait; it is not an escape hatch from the policy.
+  assert.equal(deliveries.length, 0)
+  assert.deepEqual(gate.pendingCount(), { batched: 0, deferred: 1 })
+  gate.dispose()
+})
+
+void test('a lengthened batch interval moves the deadline without restarting the wait', () => {
+  const timeline = createFakeTimeline()
+  const engine = createEnergyEngine({ initialLevel: 50, clock: timeline.clock })
+  const deliveries: NotificationDelivery[] = []
+  const gate = createNotificationGate(engine, {
+    onDeliver: (delivery) => deliveries.push(delivery),
+    clock: timeline.clock,
+    scheduler: timeline.scheduler,
+  })
+
+  // 50 batches every 5min; 25 batches every 15min. The window is anchored to
+  // when it opened, so four minutes already served still count against the
+  // longer interval rather than being thrown away.
+  assert.equal(gate.publish({ priority: 'critical', payload: 'a' }), 'batched')
+  timeline.advance(4 * 60_000)
+  engine.setLevel(25)
+  assert.deepEqual(gate.pendingCount(), { batched: 1, deferred: 0 })
+
+  timeline.advance(10 * 60_000)
+  assert.equal(deliveries.length, 0, 'delivered before the longer window elapsed')
+
+  timeline.advance(60_000)
+  assert.equal(deliveries.length, 1)
+  assert.equal(deliveries[0]?.reason, 'batch')
+  assert.equal(deliveries[0]?.level, 25)
+  gate.dispose()
+})
+
+void test('a held intent is surfaced exactly once across repeated reclassification', () => {
+  const timeline = createFakeTimeline()
+  const engine = createEnergyEngine({ initialLevel: 50, clock: timeline.clock })
+  const seen: EnergyNotification[] = []
+  const gate = createNotificationGate(engine, {
+    onDeliver: (delivery) => seen.push(...delivery.notifications),
+    clock: timeline.clock,
+    scheduler: timeline.scheduler,
+  })
+
+  gate.publish({ priority: 'high', payload: 'once' })
+
+  // Churn the policy in both directions before letting it out.
+  for (const level of [0, 50, 25, 0, 50] as const) {
+    engine.setLevel(level)
+    gate.setSuppressed(true)
+    gate.setSuppressed(false)
+    gate.flush()
+  }
+
+  engine.setLevel(100)
+  timeline.advance(60 * 60_000)
+  gate.flush()
+  gate.dispose()
+
+  assert.equal(seen.filter((notification) => notification.payload === 'once').length, 1)
+})
+
 void test('gate suppression defers everything and lifting it releases the queue', () => {
   const timeline = createFakeTimeline()
   const engine = createEnergyEngine({ initialLevel: 100, clock: timeline.clock })

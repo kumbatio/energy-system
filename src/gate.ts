@@ -13,6 +13,11 @@ import type { AdaptationStrategy, EnergyLevel } from './types.js'
  * reminders that came due while suppressed): the gate NEVER silently drops a
  * notification. Anything not deliverable now is deferred and released when
  * energy rises, suppression lifts, or the gate is disposed.
+ *
+ * Its mirror image matters just as much: a notification classified when it was
+ * published must not be delivered under a policy that would now refuse it.
+ * Energy and suppression both move inside an open batch window, so every held
+ * intent is re-classified whenever either changes.
  */
 
 function logGateError(message: string, err: unknown): void {
@@ -173,6 +178,15 @@ export function createNotificationGate(
   let batch: EnergyNotification[] = []
   let deferred: EnergyNotification[] = []
   let batchTimer: unknown
+  let batchTimerIntervalMs: number | undefined
+  /*
+   * When the currently open batch window started. The window is anchored here
+   * rather than to the timer, so a config change that lengthens `batchInterval`
+   * moves the deadline relative to the *opening* of the batch instead of
+   * restarting the wait. Energy oscillating across a threshold would otherwise
+   * re-arm the timer forever and starve the batch.
+   */
+  let batchOpenedAt: number | undefined
 
   function currentConfig(): NotificationConfig {
     return strategy.resolve(engine.getState().level)
@@ -212,50 +226,98 @@ export function createNotificationGate(
       scheduler.clearTimeout(batchTimer)
       batchTimer = undefined
     }
+    batchTimerIntervalMs = undefined
+  }
+
+  /**
+   * Arm (or re-arm) the batch timer for the interval the active config asks
+   * for. A window already running at that interval is left alone so its
+   * elapsed time survives unrelated transitions.
+   */
+  function armBatchTimer(intervalMs: number): void {
+    if (batchTimer !== undefined && batchTimerIntervalMs === intervalMs) return
+
+    clearBatchTimer()
+    batchTimerIntervalMs = intervalMs
+    const dueInMs = Math.max(0, (batchOpenedAt ?? now()) + intervalMs - now())
+    batchTimer = scheduler.setTimeout(() => {
+      batchTimer = undefined
+      batchTimerIntervalMs = undefined
+      deliverBatch()
+    }, dueInMs)
+  }
+
+  /**
+   * Re-evaluate EVERYTHING the gate is holding against the config and
+   * suppression flag in force right now.
+   *
+   * Classification happens when an intent is published, but both energy and
+   * suppression move while a batch window is open. Without this pass a
+   * notification batched at Focus is delivered after a focus session starts,
+   * and one batched at Focus is surfaced at Rest with every channel disabled —
+   * the gate's own policy, applied to the wrong moment.
+   *
+   * Batched intents the current policy no longer admits are demoted to
+   * deferred; deferred intents it now admits are released immediately (not
+   * re-batched: they already waited once, and a second window would compound
+   * the delay). Nothing is dropped in either direction.
+   */
+  function reconcilePending(): void {
+    if (disposed) return
+
+    const config = currentConfig()
+
+    if (batch.length > 0) {
+      const stillBatched: EnergyNotification[] = []
+      for (const notification of batch) {
+        if (resolveNotificationOutcome(config, notification.priority, suppressed) === 'deferred') {
+          deferred.push(notification)
+        } else {
+          stillBatched.push(notification)
+        }
+      }
+      batch = stillBatched
+    }
+
+    const released: EnergyNotification[] = []
+    if (deferred.length > 0) {
+      const stillDeferred: EnergyNotification[] = []
+      for (const notification of deferred) {
+        if (resolveNotificationOutcome(config, notification.priority, suppressed) === 'deferred') {
+          stillDeferred.push(notification)
+        } else {
+          released.push(notification)
+        }
+      }
+      deferred = stillDeferred
+    }
+
+    if (batch.length === 0) {
+      clearBatchTimer()
+      batchOpenedAt = undefined
+    } else {
+      armBatchTimer(config.batchInterval)
+    }
+
+    // Delivered last, with the queues already settled: `onDeliver` is host code
+    // and may publish, suppress or flush re-entrantly.
+    deliver(released, 'released')
   }
 
   function deliverBatch(): void {
+    // Flushing a window is not an override of the active policy — only of the
+    // wait. Anything no longer admissible leaves through `deferred` instead.
+    reconcilePending()
     clearBatchTimer()
     if (batch.length === 0) return
     const toDeliver = batch
     batch = []
+    batchOpenedAt = undefined
     deliver(toDeliver, 'batch')
   }
 
-  function scheduleBatch(intervalMs: number): void {
-    if (batchTimer !== undefined) return
-    batchTimer = scheduler.setTimeout(() => {
-      batchTimer = undefined
-      deliverBatch()
-    }, intervalMs)
-  }
-
-  /**
-   * Re-evaluate the deferred queue against the active config. Anything no
-   * longer deferred is released immediately (not re-batched: these intents
-   * already waited once, adding a second batch delay would compound it).
-   */
-  function releaseEligibleDeferred(): void {
-    if (disposed || deferred.length === 0) return
-
-    const config = currentConfig()
-    const stillDeferred: EnergyNotification[] = []
-    const released: EnergyNotification[] = []
-
-    for (const notification of deferred) {
-      if (resolveNotificationOutcome(config, notification.priority, suppressed) === 'deferred') {
-        stillDeferred.push(notification)
-      } else {
-        released.push(notification)
-      }
-    }
-
-    deferred = stillDeferred
-    deliver(released, 'released')
-  }
-
   const unsubscribe = engine.subscribe(() => {
-    releaseEligibleDeferred()
+    reconcilePending()
   })
 
   return {
@@ -283,8 +345,9 @@ export function createNotificationGate(
           deliver([notification], 'immediate')
           break
         case 'batched':
+          batchOpenedAt ??= notification.createdAt
           batch.push(notification)
-          scheduleBatch(config.batchInterval)
+          armBatchTimer(config.batchInterval)
           break
         case 'deferred':
           deferred.push(notification)
@@ -298,9 +361,9 @@ export function createNotificationGate(
       if (disposed) return
       if (suppressed === next) return
       suppressed = next
-      if (!suppressed) {
-        releaseEligibleDeferred()
-      }
+      // Both directions matter: entering suppression must pull an open batch
+      // back out of delivery, not just stop admitting new intents.
+      reconcilePending()
     },
 
     isSuppressed() {
@@ -313,8 +376,9 @@ export function createNotificationGate(
 
     flush() {
       if (disposed) return
+      // Reconciles first, so flushing under suppression or a lower energy
+      // level defers the open batch rather than forcing it out.
       deliverBatch()
-      releaseEligibleDeferred()
     },
 
     dispose() {
@@ -326,6 +390,7 @@ export function createNotificationGate(
       const pending = [...batch, ...deferred]
       batch = []
       deferred = []
+      batchOpenedAt = undefined
       deliver(pending, 'released')
 
       disposed = true

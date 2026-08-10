@@ -546,6 +546,148 @@ void test('state metadata is validated instead of being repaired', () => {
   assert.throws(() => createEnergyState(25, 'manual', 1, 0, ''), /Invalid energy origin/)
 })
 
+/*
+ * The runtime and spec/energy-state.schema.json are one contract, not two that
+ * happen to agree. Anything the schema rejects must be rejected here too:
+ * a state this implementation accepts but cannot legally publish is a
+ * divergence that only shows up once two implementations exchange it.
+ */
+void test('a state the published schema rejects is rejected at runtime too', () => {
+  // integer, per the schema's "type": "integer" on timestamp
+  assert.throws(() => createEnergyState(25, 'manual', 1.5), /Invalid energy timestamp/)
+  assert.throws(
+    () => createEnergyState(25, 'manual', Number.MAX_SAFE_INTEGER + 2),
+    /Invalid energy timestamp/,
+  )
+  assert.throws(() => createEnergyState(25, 'manual', -1), /Invalid energy timestamp/)
+  assert.throws(() => createEnergyState(25, 'manual', 1, 1.5), /Invalid energy revision/)
+})
+
+void test('persisted state is held to the exact key set the schema permits', async () => {
+  const valid = {
+    level: 75,
+    timestamp: 1_786_060_800_000,
+    source: 'manual',
+    revision: 3,
+    origin: 'producer-a',
+  }
+
+  const cases: ReadonlyArray<{ label: string; stored: unknown }> = [
+    { label: 'extra property', stored: { ...valid, extra: true } },
+    { label: 'missing origin', stored: { ...valid, origin: undefined } },
+    { label: 'fractional timestamp', stored: { ...valid, timestamp: 1.5 } },
+    { label: 'negative timestamp', stored: { ...valid, timestamp: -1 } },
+    { label: 'unsafe revision', stored: { ...valid, revision: Number.MAX_SAFE_INTEGER + 2 } },
+    { label: 'blank origin', stored: { ...valid, origin: '   ' } },
+    { label: 'wrong-typed level', stored: { ...valid, level: '75' } },
+    { label: 'array', stored: [valid] },
+    { label: 'null', stored: null },
+  ]
+
+  const store = new Map<string, string>()
+  const original = globalThis.localStorage
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value),
+      removeItem: (key: string) => store.delete(key),
+      clear: () => {
+        store.clear()
+      },
+      key: () => null,
+      length: 0,
+    },
+  })
+
+  const errors: string[] = []
+  const consoleError = console.error
+  console.error = (...args: unknown[]) => errors.push(args.map(String).join(' '))
+
+  try {
+    const persistence = localStoragePersistence('schema-test')
+
+    for (const { label, stored } of cases) {
+      store.set('schema-test', JSON.stringify(stored))
+      assert.equal(await persistence.load(), null, label)
+    }
+
+    store.set('schema-test', JSON.stringify(valid))
+    assert.deepEqual(await persistence.load(), valid, 'a conforming state must still load')
+  } finally {
+    console.error = consoleError
+    if (original === undefined) {
+      Reflect.deleteProperty(globalThis, 'localStorage')
+    } else {
+      Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: original })
+    }
+  }
+
+  assert.equal(errors.length, cases.length, 'every rejection must be reported, not silent')
+})
+
+void test('an observed state carrying unknown properties is not silently trimmed', () => {
+  let emit: ((state: EnergyState) => void) | undefined
+  const engine = createEnergyEngine({
+    initialLevel: 100,
+    clock: () => 10_000,
+    persistence: {
+      async load() {
+        return null
+      },
+      async save() {},
+      observe(onState) {
+        emit = onState
+        return () => {}
+      },
+    },
+  })
+
+  const consoleError = console.error
+  const errors: string[] = []
+  console.error = (...args: unknown[]) => errors.push(args.map(String).join(' '))
+
+  try {
+    emit?.({
+      level: 25,
+      timestamp: 9000,
+      source: 'manual',
+      revision: 1,
+      origin: 'other-tab',
+      extra: 'from a newer producer',
+    } as unknown as EnergyState)
+  } finally {
+    console.error = consoleError
+  }
+
+  assert.equal(engine.getState().level, 100, 'a non-conforming observation must not win')
+  assert.match(errors.join(' '), /unknown properties: extra/)
+  engine.dispose()
+})
+
+void test('a configured originId does not masquerade as a produced state', () => {
+  const engine = createEnergyEngine({
+    initialLevel: 75,
+    originId: 'device-a',
+    clock: () => 60_000,
+  })
+
+  // SPEC.md §3.2: the untouched default MUST stay distinguishable from a real
+  // state. Stamping a real producer identity on it makes metrics read the
+  // sentinel timestamp as a level chosen at the epoch.
+  const initial = engine.getState()
+  assert.equal(initial.origin, '0-initial')
+  assert.equal(initial.timestamp, 0)
+  assert.equal(isUnproducedState(initial), true)
+  assert.equal(getEnergyMetrics(initial, 60_000).stateAgeMs, 0)
+
+  // The configured identity still owns everything this engine actually produces.
+  engine.setLevel(50)
+  assert.equal(engine.getState().origin, 'device-a')
+  assert.equal(isUnproducedState(engine.getState()), false)
+  engine.dispose()
+})
+
 void test('re-entrant updates are delivered to every listener in FIFO transition order', () => {
   const engine = createEnergyEngine({
     initialLevel: 100,

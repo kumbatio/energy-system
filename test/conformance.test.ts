@@ -18,10 +18,10 @@ import type { EnergyLevel, EnergyState } from '../src/index.ts'
  * worth something if two things hold: they match the library that produced them,
  * and a consumer reading them gets the same answers the library gives.
  *
- * The first is a drift guard — regenerate and compare, the same discipline
- * `api-surface.json` is held to. The second is a round-trip: replay a sample of
- * the vectors THROUGH the public API, so the file is proven to be a description
- * of behavior rather than a snapshot of one afternoon.
+ * The first is a drift guard — recompute and compare without writing, the same
+ * discipline `api-surface.json` is held to below. The second is a round-trip:
+ * replay a sample of the vectors THROUGH the public API, so the file is proven
+ * to be a description of behavior rather than a snapshot of one afternoon.
  */
 
 const ROOT = new URL('../', import.meta.url)
@@ -62,20 +62,79 @@ function readCommitted(): Conformance {
   return JSON.parse(readFileSync(new URL('conformance.json', ROOT), 'utf8')) as Conformance
 }
 
+/*
+ * `--check` computes the artifact and compares it to the committed file
+ * WITHOUT writing. That distinction is the whole guard: this test used to
+ * regenerate first and compare the result to itself, which passed no matter
+ * what was committed. Generation now belongs to `pnpm run build` alone, so
+ * `pnpm test` never rewrites what it is about to check.
+ */
 void test('the committed vectors match the library that generates them', () => {
   const before = readFileSync(new URL('conformance.json', ROOT), 'utf8')
 
-  execFileSync('node', ['--import', 'tsx', 'scripts/extract-conformance.ts'], {
+  execFileSync('node', ['--import', 'tsx', 'scripts/extract-conformance.ts', '--check'], {
     cwd: ROOT.pathname,
     env: { ...process.env, TZ: 'UTC' },
     stdio: 'pipe',
   })
 
-  const after = readFileSync(new URL('conformance.json', ROOT), 'utf8')
   assert.equal(
-    after,
+    readFileSync(new URL('conformance.json', ROOT), 'utf8'),
     before,
-    'conformance.json is stale — run `pnpm run conformance` and commit the result',
+    'a --check run must not rewrite the artifact it is verifying',
+  )
+})
+
+void test('the committed API surface matches the declarations that generate it', () => {
+  const before = readFileSync(new URL('api-surface.json', ROOT), 'utf8')
+
+  execFileSync('node', ['--import', 'tsx', 'scripts/extract-api-surface.ts', '--check'], {
+    cwd: ROOT.pathname,
+    stdio: 'pipe',
+  })
+
+  assert.equal(
+    readFileSync(new URL('api-surface.json', ROOT), 'utf8'),
+    before,
+    'a --check run must not rewrite the artifact it is verifying',
+  )
+})
+
+void test('the frozen API surface includes generic members', () => {
+  const surface = JSON.parse(readFileSync(new URL('api-surface.json', ROOT), 'utf8')) as {
+    members: Record<string, string[]>
+  }
+
+  // `resolve<T>()` opens with its own type parameter rather than `(`, which is
+  // exactly the shape the declaration parser used to skip. A public method
+  // missing from the freeze is a method nobody notices removing.
+  assert.ok(
+    surface.members['EnergyEngine']?.includes('resolve'),
+    'EnergyEngine.resolve is missing from api-surface.json',
+  )
+})
+
+void test('the vectors declare a schema that ships alongside them', () => {
+  const conformance = readCommitted() as unknown as { $schema: string }
+  const reference = conformance.$schema
+
+  assert.equal(reference, './spec/conformance.schema.json')
+
+  // Resolved from the package root, which is where the reference is anchored
+  // for both this repository and the published tarball.
+  const schema = JSON.parse(readFileSync(new URL(reference, ROOT), 'utf8')) as {
+    $id: string
+    properties: Record<string, unknown>
+  }
+  assert.equal(schema.$id, 'https://kumbat.io/spec/conformance.schema.json')
+
+  const pkg = JSON.parse(readFileSync(new URL('package.json', ROOT), 'utf8')) as {
+    exports: Record<string, unknown>
+  }
+  assert.equal(
+    pkg.exports['./spec/conformance.schema.json'],
+    './spec/conformance.schema.json',
+    'a consumer cannot follow the reference unless the schema is an export',
   )
 })
 

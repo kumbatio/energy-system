@@ -4,8 +4,7 @@ import {
   createEnergyOrigin,
   createEnergyState,
   cycleEnergyLevel,
-  isEnergyLevel,
-  isEnergySource,
+  parseExternalEnergyState,
 } from './levels.js'
 import { isPreferredEnergyState } from './reconcile.js'
 import type {
@@ -103,32 +102,26 @@ function isSameState(a: EnergyState, b: EnergyState): boolean {
   )
 }
 
+/**
+ * Validate state that arrived from outside this engine. `candidate` is typed
+ * as `EnergyState`, but it crossed a process, tab or storage boundary to get
+ * here, so nothing about its runtime shape is guaranteed — it is parsed
+ * against the published schema before anything else looks at it.
+ */
 function normalizeState(
   candidate: EnergyState,
   nowMs: number,
   maxFutureSkewMs: number,
 ): EnergyState {
-  if (!isEnergyLevel(candidate.level)) {
-    throw new Error(`Invalid energy level from persistence: ${String(candidate.level)}`)
-  }
+  const parsed = parseExternalEnergyState(candidate)
 
-  if (!isEnergySource(candidate.source)) {
-    throw new Error(`Invalid energy source from persistence: ${String(candidate.source)}`)
-  }
-
-  if (candidate.timestamp - nowMs > maxFutureSkewMs) {
+  if (parsed.timestamp - nowMs > maxFutureSkewMs) {
     throw new Error(
-      `Energy state timestamp ${String(candidate.timestamp)} exceeds local clock by more than ${String(maxFutureSkewMs)}ms`,
+      `Energy state timestamp ${String(parsed.timestamp)} exceeds local clock by more than ${String(maxFutureSkewMs)}ms`,
     )
   }
 
-  return createEnergyState(
-    candidate.level,
-    candidate.source,
-    candidate.timestamp,
-    candidate.revision,
-    candidate.origin,
-  )
+  return parsed
 }
 
 export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEngine {
@@ -172,13 +165,19 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
    * React render (which is what every provider does) stays prerender-safe. Both sentinels sort
    * below any real value, so the first persisted, observed or user-set state replaces this
    * unconditionally.
+   *
+   * The origin is ALWAYS the sentinel, never `options.originId`. SPEC.md §3.2 requires the
+   * untouched default to stay distinguishable from a real state, and `isUnproducedState()` tests
+   * exactly this pair — stamping a configured producer identity here turns "nobody has chosen
+   * yet" into a state that looks chosen, which reads downstream as a level set at the epoch.
+   * The configured identity belongs to the first state this engine actually produces.
    */
   let state: EnergyState = createEnergyState(
     initialLevel,
     'manual',
     UNPRODUCED_TIMESTAMP,
     0,
-    options.originId ?? UNPRODUCED_ORIGIN,
+    UNPRODUCED_ORIGIN,
   )
   // Version 0 is the initial in-memory state, not proof that a persistence
   // adapter has durably stored it. Starting below the version domain keeps

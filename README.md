@@ -5,6 +5,48 @@ Framework-agnostic TypeScript library for building **energy-aware applications**
 Instead of adapting software to clock time, adapt behavior to current cognitive capacity.
 `energy-system` models energy as explicit state and resolves strategies from that state.
 
+## At a glance
+
+A library about low capacity should be readable at low capacity. Everything you
+need to use it is here; the rest of this file is reference.
+
+```bash
+pnpm add @kumbatio/energy-system
+```
+
+```ts
+import { createEnergyEngine, uiVisibilityStrategy } from '@kumbatio/energy-system'
+
+const engine = createEnergyEngine({ initialLevel: 75 })
+
+engine.setLevel(25) // the person says they are running low
+engine.resolve(uiVisibilityStrategy) // -> what the UI should do about it
+```
+
+React:
+
+```tsx
+import { EnergyProvider, useEnergy } from '@kumbatio/energy-system/react'
+
+const { state, setLevel } = useEnergy()
+```
+
+| If you want to                     | Go to                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| Set and read energy                | [Quick start (core)](#quick-start-core)                                                     |
+| Use it in React                    | [Quick start (React)](#quick-start-react)                                                   |
+| Style by level in CSS              | [CSS usage](#css-usage)                                                                     |
+| Show or hide by level              | [Presence annotation](#presence-annotation-which-energy-states-does-this-element-belong-to) |
+| Time-box work, hold notifications  | [Focus sessions and the notification gate](#focus-sessions-and-the-notification-gate)       |
+| Offer "not now"                    | [Deferral](#deferral-not-now)                                                               |
+| Decide what may interrupt          | [Inbound demand and autonomy](#inbound-demand-and-autonomy)                                 |
+| Keep state across reloads and tabs | [Persistence and reconciliation](#persistence-and-reconciliation)                           |
+| Look up an export                  | [API map](#api-map)                                                                         |
+| Port this to another language      | [Specification and conformance](#specification-and-conformance)                             |
+
+Five levels, and they never change: `100` Peak, `75` Active, `50` Steady,
+`25` Low, `0` Rest.
+
 ## Why this exists
 
 Most tooling assumes equal capacity across a day. Real-world cognitive energy is variable and non-linear.
@@ -533,15 +575,21 @@ The model is specified independently of this implementation.
   two processes (or two languages) can share one person's energy state.
 - **[conformance.json](./conformance.json)** — every table and every decision above, as vectors.
   Ships in the package.
+- **[spec/conformance.schema.json](./spec/conformance.schema.json)** — the shape of that vector
+  file, so a port can tell a file it can trust from one whose structure moved under it. Ships too,
+  and the generator validates its own output against it.
 
 ```ts
 import conformance from '@kumbatio/energy-system/conformance.json' with { type: 'json' }
 ```
 
 An implementation in another language passes by loading the vectors and replaying them; this
-package's own `test/conformance.test.ts` does exactly that and is a reasonable model to copy. The
-file is generated from the built library, so the vectors cannot drift from the behavior they
-describe — and a stale `conformance.json` fails the build.
+package's own `test/conformance.test.ts` does exactly that and is a reasonable model to copy.
+
+The file is generated from the built library, so the vectors cannot drift from the behavior they
+describe. `pnpm run build` regenerates it; `pnpm test` recomputes it and fails if what is committed
+differs, without rewriting anything. The two are deliberately separate — a check that regenerates
+first is comparing a file to itself.
 
 Vectors cover the pure surface: tables, and functions of their arguments alone. The stateful
 guarantees — defer-never-drop, session auto-expiry, persistence ordering — are normative in SPEC.md
@@ -564,12 +612,23 @@ means more than the type signatures:
 ## Development
 
 ```bash
+pnpm run validate   # format, lint, types, tests, packaging — what CI runs
+```
+
+Individually:
+
+```bash
 pnpm run check-types
 pnpm run lint
-pnpm test
-pnpm run build
+pnpm test           # compiles, then CHECKS the generated artifacts
+pnpm run build      # compiles, then REGENERATES them
 pnpm run pack:dry-run
 ```
+
+`build` is the only thing that writes `api-surface.json` and `conformance.json`.
+If a change to the library moves either, `pnpm test` fails and tells you to run
+`pnpm run build` and commit the result — that is the intended loop, not a
+warning to work around.
 
 ## Notes
 

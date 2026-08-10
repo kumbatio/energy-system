@@ -182,7 +182,10 @@ export function createEnergyState(
     throw new Error(`Invalid energy source: ${String(source)}`)
   }
 
-  if (!Number.isFinite(timestamp) || timestamp < 0) {
+  // Integer, matching `spec/energy-state.schema.json`. A fractional timestamp
+  // is not representable in the interchange format, so accepting one here
+  // produces a state this implementation can hold but cannot legally publish.
+  if (!Number.isSafeInteger(timestamp) || timestamp < 0) {
     throw new Error(`Invalid energy timestamp: ${String(timestamp)}`)
   }
 
@@ -201,4 +204,66 @@ export function createEnergyState(
     revision,
     origin,
   })
+}
+
+/** The exact key set `spec/energy-state.schema.json` permits. */
+const ENERGY_STATE_KEYS: readonly string[] = ['level', 'timestamp', 'source', 'revision', 'origin']
+
+/**
+ * Parse a value that came from OUTSIDE this engine — persisted JSON, a
+ * cross-context observation, a wire message — into an `EnergyState`.
+ *
+ * This is the interchange boundary, so it enforces the published JSON Schema
+ * exactly rather than approximately: `additionalProperties: false` means an
+ * object carrying an unknown key is not an `EnergyState`, and silently
+ * stripping the key would let two implementations disagree about what they
+ * just exchanged while both believe they conformed.
+ *
+ * Throws with a specific reason; callers decide whether that is fatal or a
+ * discard. Not exported from the package: the boundaries that need it are all
+ * inside this library, and the schema is what external producers validate
+ * against.
+ */
+export function parseExternalEnergyState(value: unknown): EnergyState {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error(`Energy state must be an object, received: ${String(value)}`)
+  }
+
+  const keys = Object.keys(value)
+  const unknownKeys = keys.filter((key) => !ENERGY_STATE_KEYS.includes(key))
+  if (unknownKeys.length > 0) {
+    throw new Error(`Energy state has unknown properties: ${unknownKeys.join(', ')}`)
+  }
+
+  const missingKeys = ENERGY_STATE_KEYS.filter((key) => !keys.includes(key))
+  if (missingKeys.length > 0) {
+    throw new Error(`Energy state is missing properties: ${missingKeys.join(', ')}`)
+  }
+
+  const record = value as Record<string, unknown>
+  if (!isEnergyLevel(record['level'])) {
+    throw new Error(`Invalid energy level: ${String(record['level'])}`)
+  }
+  if (!isEnergySource(record['source'])) {
+    throw new Error(`Invalid energy source: ${String(record['source'])}`)
+  }
+  if (typeof record['timestamp'] !== 'number') {
+    throw new TypeError(`Invalid energy timestamp: ${String(record['timestamp'])}`)
+  }
+  if (typeof record['revision'] !== 'number') {
+    throw new TypeError(`Invalid energy revision: ${String(record['revision'])}`)
+  }
+  if (typeof record['origin'] !== 'string') {
+    throw new TypeError(`Invalid energy origin: ${String(record['origin'])}`)
+  }
+
+  // Field-level invariants (integer/range/blank-origin) belong to the one
+  // constructor that enforces them for internally produced states too.
+  return createEnergyState(
+    record['level'],
+    record['source'],
+    record['timestamp'],
+    record['revision'],
+    record['origin'],
+  )
 }

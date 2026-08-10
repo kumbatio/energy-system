@@ -1,6 +1,6 @@
 {
   "name": "@kumbatio/energy-system",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
@@ -41,43 +41,48 @@
     "./api-surface.json": "./api-surface.json",
     "./package.json": "./package.json",
     "./conformance.json": "./conformance.json",
-    "./spec/energy-state.schema.json": "./spec/energy-state.schema.json"
+    "./spec/energy-state.schema.json": "./spec/energy-state.schema.json",
+    "./spec/conformance.schema.json": "./spec/conformance.schema.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && pnpm run api:surface && pnpm run conformance",
+    "build:ts": "tsc -p tsconfig.build.json",
+    "build": "pnpm run build:ts && pnpm run api:surface && pnpm run conformance",
     "api:surface": "tsx scripts/extract-api-surface.ts",
+    "api:surface:check": "tsx scripts/extract-api-surface.ts --check",
     "check-types": "tsc --noEmit -p tsconfig.json",
-    "test": "pnpm run build && node --test --import tsx",
+    "test": "pnpm run build:ts && node --test --import tsx",
     "validate": "pnpm run format:check && pnpm run lint && pnpm run check-types && pnpm run test && pnpm run pack:dry-run",
     "prepack": "pnpm run format:check && pnpm run lint && pnpm run check-types && pnpm run test",
-    "pack:dry-run": "npm pack --dry-run",
+    "pack:dry-run": "pnpm pack --dry-run",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "lint": "oxlint --import-plugin --type-aware --type-check --vitest-plugin .",
     "lint:fix": "oxlint --import-plugin --type-aware --type-check --vitest-plugin --fix . && oxfmt --write .",
     "lint:fix-unsafe": "oxlint --import-plugin --type-aware --type-check --vitest-plugin --fix --fix-suggestions --fix-dangerously . && oxfmt --write .",
     "check:fix-suggestions": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions . && oxfmt --write .",
-    "conformance": "TZ=UTC tsx scripts/extract-conformance.ts"
+    "conformance": "TZ=UTC tsx scripts/extract-conformance.ts",
+    "conformance:check": "TZ=UTC tsx scripts/extract-conformance.ts --check"
   },
   "devDependencies": {
-    "@happy-dom/global-registrator": "^20.11.1",
-    "@types/node": "^26.1.2",
+    "@happy-dom/global-registrator": "^20.11.2",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "ajv": "8.20.0",
     "oxfmt": "0.62.0",
     "oxlint": "1.77.0",
     "oxlint-tsgolint": "^7.0.2001",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tsx": "^4.23.8",
+    "tsx": "^4.23.12",
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
-    "@types/react": ">=19",
-    "react": ">=19"
+    "@types/react": ">=19.2.0",
+    "react": ">=19.2.0"
   },
   "peerDependenciesMeta": {
     "@types/react": {
@@ -90,5 +95,5 @@
   "engines": {
     "node": ">=24.19.0"
   },
-  "packageManager": "pnpm@11.20.0"
+  "packageManager": "pnpm@11.21.0"
 }

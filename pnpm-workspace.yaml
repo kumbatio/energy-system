@@ -1,5 +1,16 @@
 allowBuilds:
   esbuild: true
-minimumReleaseAgeExclude:
-  - ws@8.21.1
+
+# The release-age gate is off by choice, not by neglect.
+#
+# This package's version policy is deliberately bleeding-edge: dev tooling
+# tracks latest, including same-day publishes (oxlint, oxfmt, tsx). pnpm's
+# default cutoff rejects exactly those, so leaving it on would mean carrying a
+# per-package exception list that needs editing on most upgrades — a gate
+# nobody can satisfy gets disabled in a hurry rather than tuned.
+#
+# The trade is real: a compromised release is caught later here than it would
+# be with the gate on. What backstops it instead is a zero-runtime-dependency
+# package (nothing shipped to consumers can be affected), a committed lockfile,
+# and `pnpm audit` in the validation run.
 minimumReleaseAge: 0

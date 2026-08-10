@@ -12,6 +12,67 @@ change to [SPEC.md](./SPEC.md), not only to this library. The same is true of th
 reconciliation rule, which two implementations must agree on to share state at
 all. Prose returned by `describe()` is not covered; wording is a product decision.
 
+## [Unreleased]
+
+Corrections to `1.0.0`. No type signature changed, but two of these change
+runtime behavior and one narrows an install range — see the note at the top of
+this file on why that is more than a patch for this package.
+
+### Fixed
+
+- **The notification gate re-judges everything it is holding when energy or
+  suppression changes.** A notification was classified once, when published,
+  and an open batch window was then delivered under whatever policy happened to
+  be in force later. So an intent admitted at Steady arrived in the middle of a
+  focus session, and one batched at Steady was surfaced at Rest with every
+  channel disabled. `flush()` bypassed active suppression the same way.
+  Batched intents the current policy no longer admits are now moved to the
+  deferred queue instead, and released when something admits them. The batch
+  deadline is anchored to when the window opened, so a config change moves the
+  deadline rather than restarting the wait.
+- **External state is validated against the published JSON Schema exactly.**
+  `createEnergyState()` accepted fractional timestamps, which
+  [spec/energy-state.schema.json](./spec/energy-state.schema.json) does not
+  allow, and persisted state carrying unknown properties was silently trimmed
+  to fit rather than rejected — so two implementations could exchange a state
+  and disagree about what they had exchanged. Persistence loads, cross-context
+  observations and `memoryPersistence` now share one strict boundary parser.
+- **A configured `originId` no longer corrupts the unproduced sentinel.**
+  Construction stamped the configured producer identity onto the untouched
+  default state, which SPEC.md §3.2 requires to stay distinguishable from a
+  real one. `isUnproducedState()` returned `false` for it and
+  `getEnergyMetrics()` reported an age measured from the epoch. The sentinel is
+  now always `origin: "0-initial"`; the configured identity owns the first
+  state the engine actually produces.
+- **`api-surface.json` includes `EnergyEngine.resolve()`.** The declaration
+  parser did not recognise generic members, so a public method was missing from
+  the frozen surface — and a method absent from the freeze is a method nobody
+  notices removing.
+
+### Changed
+
+- **React peer range is now `>=19.2.0`** for both `react` and `@types/react`.
+  The React entry point imports `<Activity>`, added in React 19.2, so the
+  previous `>=19` advertised a compatibility that throws on first render under
+  19.0 and 19.1.
+- **Generated artifacts are checked, not regenerated, during validation.**
+  `pnpm test` used to run the full build first, so the drift guard compared
+  `conformance.json` against a copy it had just written — it could not fail,
+  whatever was committed. Generation now belongs to `pnpm run build`; both
+  generators take `--check`, and both artifacts are verified by the suite.
+
+### Added
+
+- **[spec/conformance.schema.json](./spec/conformance.schema.json)** — the
+  schema `conformance.json` has always pointed at via `$schema` and which did
+  not exist. The generator now validates its own output against it before
+  emitting, and it is exported from the package so the relative reference
+  resolves for consumers.
+- Packaged-consumer tests: the suite packs a tarball, unpacks it, and asserts
+  that every `exports` target is present, that all four entry points import,
+  that the conformance `$schema` reference resolves from the package root, and
+  that the React peer floor matches the APIs the entry point imports.
+
 ## [1.0.0]
 
 The API is frozen. Everything below documents what that commitment now covers.
