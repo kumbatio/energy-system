@@ -12,6 +12,17 @@ change to [SPEC.md](./SPEC.md), not only to this library. The same is true of th
 reconciliation rule, which two implementations must agree on to share state at
 all. Prose returned by `describe()` is not covered; wording is a product decision.
 
+## [Unreleased]
+
+### Changed
+
+- **The Rest level description now opens with "Recovery." instead of
+  "Depleted."** Level-description prose is product copy, not semver-covered API
+  (see the note at the top of this file). "Depleted" implies damage, which
+  conflicts with the Neutral State Language principle the level copy is
+  supposed to embody: describe what the person can do at a level, not what they
+  cannot. [SPEC.md](./SPEC.md) §3.1 and `conformance.json` updated to match.
+
 ## [2.0.0]
 
 Corrections to `1.0.0`. No type signature changed, which is exactly why this is

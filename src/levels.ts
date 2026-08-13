@@ -118,7 +118,7 @@ const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
     value: 0,
     key: 'rest',
     label: 'Rest',
-    description: 'Depleted. Consumption only \u2014 reading, reflecting.',
+    description: 'Recovery. Consumption only \u2014 reading, reflecting.',
     cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'none',
       focusDuration: 'none',

@@ -48,7 +48,7 @@ The model has exactly **five** levels, and they are discrete.
 | `75`  | `active` | Active | Good capacity. Focused execution, problem-solving.         |
 | `50`  | `steady` | Steady | Moderate capacity. Routine tasks, familiar work.           |
 | `25`  | `low`    | Low    | Limited capacity. Simple tasks, review, light work.        |
-| `0`   | `rest`   | Rest   | Depleted. Consumption only — reading, reflecting.          |
+| `0`   | `rest`   | Rest   | Recovery. Consumption only — reading, reflecting.          |
 
 An implementation **MUST** use exactly these five values and **MUST NOT** admit
 intermediate ones. This is a design commitment, not an arbitrary limit: a
