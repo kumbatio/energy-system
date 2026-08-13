@@ -21,7 +21,7 @@ function parsePersistedState(source: string, raw: string | null): EnergyState | 
 
   try {
     // Shape, key set and field invariants are all one boundary rule, enforced
-    // to the letter of spec/energy-state.schema.json — including its
+    // to the letter of spec/energy-state.schema.json - including its
     // `additionalProperties: false`. Storage written by a newer or foreign
     // producer is rejected, not quietly trimmed to fit.
     return parseExternalEnergyState(parsed)

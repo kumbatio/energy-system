@@ -7,7 +7,7 @@ and from `1.0.0` this project adheres to [Semantic Versioning](https://semver.or
 
 For this package, semver covers more than type signatures. **A shipped strategy
 table's values are API**: changing what `notificationStrategy` returns at level
-50 changes how every consumer behaves, so it is a major-version change — and a
+50 changes how every consumer behaves, so it is a major-version change - and a
 change to [SPEC.md](./SPEC.md), not only to this library. The same is true of the
 reconciliation rule, which two implementations must agree on to share state at
 all. Prose returned by `describe()` is not covered; wording is a product decision.
@@ -27,7 +27,7 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 Corrections to `1.0.0`. No type signature changed, which is exactly why this is
 a major: two of these change runtime behavior and one narrows an install range,
-and for this package behavior is API — see the note at the top of this file.
+and for this package behavior is API - see the note at the top of this file.
 
 Upgrading from `1.x`: the breaks are `react`/`@types/react` below 19.2 (which
 never worked with the React entry point), persisted or exchanged states carrying
@@ -51,7 +51,7 @@ after suppression started or after energy fell below its threshold.
   `createEnergyState()` accepted fractional timestamps, which
   [spec/energy-state.schema.json](./spec/energy-state.schema.json) does not
   allow, and persisted state carrying unknown properties was silently trimmed
-  to fit rather than rejected — so two implementations could exchange a state
+  to fit rather than rejected - so two implementations could exchange a state
   and disagree about what they had exchanged. Persistence loads, cross-context
   observations and `memoryPersistence` now share one strict boundary parser.
 - **A configured `originId` no longer corrupts the unproduced sentinel.**
@@ -63,7 +63,7 @@ after suppression started or after energy fell below its threshold.
   state the engine actually produces.
 - **`api-surface.json` includes `EnergyEngine.resolve()`.** The declaration
   parser did not recognise generic members, so a public method was missing from
-  the frozen surface — and a method absent from the freeze is a method nobody
+  the frozen surface - and a method absent from the freeze is a method nobody
   notices removing.
 
 ### Changed
@@ -74,13 +74,13 @@ after suppression started or after energy fell below its threshold.
   19.0 and 19.1.
 - **Generated artifacts are checked, not regenerated, during validation.**
   `pnpm test` used to run the full build first, so the drift guard compared
-  `conformance.json` against a copy it had just written — it could not fail,
+  `conformance.json` against a copy it had just written - it could not fail,
   whatever was committed. Generation now belongs to `pnpm run build`; both
   generators take `--check`, and both artifacts are verified by the suite.
 
 ### Added
 
-- **[spec/conformance.schema.json](./spec/conformance.schema.json)** — the
+- **[spec/conformance.schema.json](./spec/conformance.schema.json)** - the
   schema `conformance.json` has always pointed at via `$schema` and which did
   not exist. The generator now validates its own output against it before
   emitting, and it is exported from the package so the relative reference
@@ -96,20 +96,20 @@ The API is frozen. Everything below documents what that commitment now covers.
 
 ### Added
 
-- **[SPEC.md](./SPEC.md)** — the model specified independently of this
+- **[SPEC.md](./SPEC.md)** - the model specified independently of this
   implementation: levels, energy state, reconciliation, the strategy contract,
   autonomy, inbound demand, the runtime invariants, and the accessibility
   requirements. Language-independent and RFC 2119-worded, so an implementation in
   another language is an implementation of the same model rather than a port of
   this one.
-- **[spec/energy-state.schema.json](./spec/energy-state.schema.json)** — the
+- **[spec/energy-state.schema.json](./spec/energy-state.schema.json)** - the
   interchange format. Sharing one person's energy state across processes or
   languages is a wire-format problem, and this is the wire format.
-- **[conformance.json](./conformance.json)** — 252 vectors plus every strategy
+- **[conformance.json](./conformance.json)** - 252 vectors plus every strategy
   table, generated from the built library on each build and shipped in the
   package. An implementation passes by loading and replaying them; a stale file
   fails this package's own build.
-- `isPreferredEnergyState(candidate, current)` — the reconciliation rule, which
+- `isPreferredEnergyState(candidate, current)` - the reconciliation rule, which
   was internal to the engine. It is the hardest part of the model to reimplement
   correctly, so it is now readable, testable, and covered by vectors on its own.
 - Accessibility handling in the reference stylesheet for
@@ -118,7 +118,7 @@ The API is frozen. Everything below documents what that commitment now covers.
   properties inline, and a preference the person set must outrank a value the
   program computed.
 - Coverage across every one of the 20 level transitions, in both directions, and
-  across strategy composition — including the model's directional invariants
+  across strategy composition - including the model's directional invariants
   (protection never decreases and automation never gains discretion as capacity
   falls), which a future edit to one table would otherwise break silently.
 
@@ -135,13 +135,13 @@ The API is frozen. Everything below documents what that commitment now covers.
 
 ### Added
 
-- `autonomyStrategy` / `AutonomyConfig` — what automation may do unattended:
+- `autonomyStrategy` / `AutonomyConfig` - what automation may do unattended:
   confidence threshold, whether wording may be composed, and how many steps may
   chain. The mirror of interaction forgiveness, which protects against the
   _user's_ mistakes at low energy where this protects against the _agent's_.
   What narrows as energy falls is discretion, not action: at Rest the threshold
   is 1, admitting only certainty, and a single templated step is still allowed.
-- `demandAdmissionStrategy` and the pure `resolveDemandOutcome` — an
+- `demandAdmissionStrategy` and the pure `resolveDemandOutcome` - an
   energy-resolved policy for arrivals that ask something of the person: reach
   them now, acknowledge and queue, or queue silently. Originator tiers, the
   exempt-tier invariant, and escalation to silence when a classification is not
@@ -158,7 +158,7 @@ The API is frozen. Everything below documents what that commitment now covers.
 ## [0.4.0]
 
 Patterns studied in a field ADHD app and reimplemented as first-class, tested
-primitives — including guarantees against the two failure modes observed in the
+primitives - including guarantees against the two failure modes observed in the
 wild: suppressed reminders destroyed instead of deferred, and focus suppression
 that never auto-expired.
 

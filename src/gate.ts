@@ -4,7 +4,7 @@ import type { NotificationConfig } from './strategies.js'
 import type { AdaptationStrategy, EnergyLevel } from './types.js'
 
 /**
- * Notification gate — the runtime that ENFORCES `NotificationConfig` instead
+ * Notification gate - the runtime that ENFORCES `NotificationConfig` instead
  * of leaving it as guidance. Apps publish notification intents through the
  * gate; the gate resolves the current energy level's config and decides
  * whether each intent is delivered now, batched, or deferred.
@@ -140,7 +140,7 @@ export interface NotificationGate {
   flush(): void
   /**
    * Release resources. Pending notifications are delivered as a final
-   * 'released' delivery first — a disposed gate never swallows intents.
+   * 'released' delivery first - a disposed gate never swallows intents.
    */
   dispose(): void
 }
@@ -254,7 +254,7 @@ export function createNotificationGate(
    * Classification happens when an intent is published, but both energy and
    * suppression move while a batch window is open. Without this pass a
    * notification batched at Focus is delivered after a focus session starts,
-   * and one batched at Focus is surfaced at Rest with every channel disabled —
+   * and one batched at Focus is surfaced at Rest with every channel disabled -
    * the gate's own policy, applied to the wrong moment.
    *
    * Batched intents the current policy no longer admits are demoted to
@@ -305,7 +305,7 @@ export function createNotificationGate(
   }
 
   function deliverBatch(): void {
-    // Flushing a window is not an override of the active policy — only of the
+    // Flushing a window is not an override of the active policy - only of the
     // wait. Anything no longer admissible leaves through `deferred` instead.
     reconcilePending()
     clearBatchTimer()

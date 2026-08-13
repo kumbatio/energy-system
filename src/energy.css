@@ -146,7 +146,7 @@
 
 /* A cursor is a HINT, and one only a pointer user receives. It changes nothing
  * about what is focusable or clickable, so an app that means "read only" at Rest
- * must also disable the controls — otherwise a keyboard user gets no signal at
+ * must also disable the controls - otherwise a keyboard user gets no signal at
  * all and a pointer user gets a signal that turns out to be false. */
 [data-energy-level='0'] .energy-content * {
   cursor: default !important;
@@ -156,8 +156,8 @@
  *
  * Annotate any element with the energy range it belongs to:
  *
- *   <div data-energy-min="75">AI chat — needs 75+ energy</div>
- *   <div data-energy-max="25">Recovery hint — low energy only</div>
+ *   <div data-energy-min="75">AI chat - needs 75+ energy</div>
+ *   <div data-energy-max="25">Recovery hint - low energy only</div>
  *
  * The element hides automatically whenever the root's data-energy-level
  * falls outside its declared range. This mirrors the JS presence API
@@ -218,7 +218,7 @@
  * Be honest about what the resting values are: chrome sits at 10% opacity at
  * level 25 and 5% at level 0, and neither meets WCAG 1.4.11 (Non-text Contrast,
  * 3:1 for UI components) in its resting state. That is a deliberate design
- * default for a receding interface, not a conformance claim — and it is why
+ * default for a receding interface, not a conformance claim - and it is why
  * every value here is a custom property an app can raise in one line.
  *
  * Two populations must not be left to do that themselves:
@@ -229,12 +229,12 @@
  *
  * `forced-colors: active` (Windows High Contrast and friends) overrides colors
  * but NOT opacity, so faded chrome stays faded while everything around it snaps
- * to a system palette — the fade is no longer a soft de-emphasis, it is the only
+ * to a system palette - the fade is no longer a soft de-emphasis, it is the only
  * thing still hiding content. Opacity comes off entirely.
  *
  * Both blocks declare `!important`, which is load-bearing rather than a shortcut.
  * `applyEnergyLevel()` writes these same custom properties as INLINE styles, and
- * an inline declaration outranks an ordinary rule — so without this, the JS path
+ * an inline declaration outranks an ordinary rule - so without this, the JS path
  * would silently defeat the user's stated contrast preference while the CSS-only
  * path honoured it. An important author declaration beats a normal inline one,
  * which is exactly the ordering wanted here: a preference the person set outranks

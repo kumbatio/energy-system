@@ -124,7 +124,7 @@ void test('detail and generation narrow on independent axes', () => {
   assert.deepEqual(atRest, { detail: 'minimal', allowGeneratedContent: false })
 })
 
-void test('the acknowledgment survives at rest — the social debt still clears', () => {
+void test('the acknowledgment survives at rest - the social debt still clears', () => {
   const outcome = outcomeAt(0, obligation('unknown'))
   assert.equal(outcome.admission, 'acknowledge')
   assert.equal(outcome.reason, 'acknowledged')

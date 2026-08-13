@@ -1,4 +1,4 @@
-# The Energy Model — Specification
+# The Energy Model - Specification
 
 **Version 1 · normative · language-independent**
 
@@ -6,7 +6,7 @@ This document specifies the energy model: what an energy state is, how two of
 them are ordered when they meet, and what each of the five levels means for the
 behaviors built on top. `@kumbatio/energy-system` is the reference
 implementation, not the definition. Anything that implements what is written
-here — in Swift, Kotlin, Rust, Python, Go, or another JavaScript library — is an
+here - in Swift, Kotlin, Rust, Python, Go, or another JavaScript library - is an
 implementation of the same model, and states produced by one may be read by
 another.
 
@@ -23,7 +23,7 @@ Key words follow RFC 2119: **MUST**, **MUST NOT**, **SHOULD**, **MAY**.
 ## 1. Why this exists as a spec at all
 
 The claim the model makes is not "here is a nice API". It is that **capacity is
-first-class application state** — as real as the current user or the current
+first-class application state** - as real as the current user or the current
 document, and as deserving of a stable representation.
 
 That claim only pays off if one person's energy state can be shared by
@@ -48,7 +48,7 @@ The model has exactly **five** levels, and they are discrete.
 | `75`  | `active` | Active | Good capacity. Focused execution, problem-solving.         |
 | `50`  | `steady` | Steady | Moderate capacity. Routine tasks, familiar work.           |
 | `25`  | `low`    | Low    | Limited capacity. Simple tasks, review, light work.        |
-| `0`   | `rest`   | Rest   | Recovery. Consumption only — reading, reflecting.          |
+| `0`   | `rest`   | Rest   | Recovery. Consumption only - reading, reflecting.          |
 
 An implementation **MUST** use exactly these five values and **MUST NOT** admit
 intermediate ones. This is a design commitment, not an arbitrary limit: a
@@ -56,8 +56,8 @@ continuous slider asks for precision nobody has about their own state, and it
 turns a one-second act into a judgement call at exactly the moment judgement is
 expensive. Five is also few enough to cycle through with one key.
 
-Each level carries a **cognitive profile** — `decisionCapacity`,
-`focusDuration`, `taskComplexity`, `interruptionTolerance` — enumerated in the
+Each level carries a **cognitive profile** - `decisionCapacity`,
+`focusDuration`, `taskComplexity`, `interruptionTolerance` - enumerated in the
 vectors under `levels`. Implementations **MUST** reproduce these values;
 consumers branch on them.
 
@@ -95,9 +95,9 @@ this with whatever their language offers.
 
 `source` is not decoration; §4 gives it authority.
 
-- `manual` — the person set it. **The default, and the trust anchor.**
-- `scheduled` — a rule the person configured applied it (a calendar, a time of day).
-- `inferred` — the system worked it out from behavior.
+- `manual` - the person set it. **The default, and the trust anchor.**
+- `scheduled` - a rule the person configured applied it (a calendar, a time of day).
+- `inferred` - the system worked it out from behavior.
 
 An implementation **MUST** support `manual`. Inference **MAY** be offered but
 **MUST** be opt-in, and a system that infers **SHOULD** present the result as a
@@ -125,7 +125,7 @@ some frameworks fail the build on outright.
 An implementation that accepts states from outside itself **SHOULD** reject any
 whose `timestamp` exceeds local time by more than a bounded skew budget. Without
 it, one context with a badly-set clock wins every comparison until real time
-catches up to its timestamp — which may be years.
+catches up to its timestamp - which may be years.
 
 The reference default is **5 minutes**. The budget **SHOULD** be configurable,
 including "accept anything finite" for controlled environments.
@@ -146,17 +146,17 @@ different values depending on timing, so two contexts disagree permanently.
 Given a `candidate` and a `current`, the candidate replaces the current if and
 only if the first differing key below favours it:
 
-1. **`timestamp`** — greater wins.
-2. **`revision`** — greater wins.
-3. **`source`** — `manual` (3) > `scheduled` (2) > `inferred` (1).
-4. **`origin`** — greater by lexicographic comparison of the string.
+1. **`timestamp`** - greater wins.
+2. **`revision`** - greater wins.
+3. **`source`** - `manual` (3) > `scheduled` (2) > `inferred` (1).
+4. **`origin`** - greater by lexicographic comparison of the string.
 
 If all four are equal, the states are equal: the candidate **MUST NOT** replace
 the current, and no change **MUST** be reported.
 
 Key 4 is arbitrary and deliberately so. When two producers write the same
 instant, the same revision, and the same class of source, there is no principled
-winner — and an arbitrary rule every context computes _identically_ beats a coin
+winner - and an arbitrary rule every context computes _identically_ beats a coin
 flip each context tosses separately. Convergence is the property that matters.
 
 An implementation **MUST** additionally treat a `level` difference as a
@@ -205,7 +205,7 @@ not every host has deferral or automation. Whatever it provides **MUST** match
 the vectors exactly.
 
 Implementations **MAY** ship additional strategies and **SHOULD** allow
-consumers to supply their own — the type is a contract, not a closed set.
+consumers to supply their own - the type is a contract, not a closed set.
 
 ### 5.1 Human-readable descriptions
 
@@ -242,8 +242,8 @@ come from fixed templates), and `maxUnattendedSteps` (how many automated steps
 may chain before control returns).
 
 The rule the numbers encode: **what narrows as energy falls is discretion, not
-action.** At Rest the threshold is `1`, admitting only certainty — rule-based
-decisions, never judgement calls — with one step and no composition. Automation
+action.** At Rest the threshold is `1`, admitting only certainty - rule-based
+decisions, never judgement calls - with one step and no composition. Automation
 **MAY** still take a single certain templated action there; an out-of-office
 reply is exactly that shape, and it is _safest_ at Rest precisely because it has
 stopped improvising.
@@ -261,7 +261,7 @@ attention or action: an email, a comment, a review request, an assignment, an
 invitation.
 
 This is where the model earns its keep. Every triage system in general use is
-organised around properties of the _message_ — who sent it, what it claims about
+organised around properties of the _message_ - who sent it, what it claims about
 its own urgency, what category it fits. None is organised around the state of
 the _recipient_, which is what actually decides whether an arrival is a small
 task or a crushing weight.
@@ -291,11 +291,11 @@ The decision is pure. Acting on it is not, and four rules bound what acting may
 look like. An implementation performing these effects **MUST** observe them.
 
 1. **Acknowledgment and capture are one act.** An acknowledgment without a
-   captured obligation is a promise nobody kept — strictly worse than silence,
+   captured obligation is a promise nobody kept - strictly worse than silence,
    because it converts ambient guilt into explicit written debt. A capture
    without an acknowledgment leaves the originator in silence, which is the
-   problem being solved. Where the two cannot be made atomic — and across a
-   network they cannot — the capture **MUST** be performed first, because it is
+   problem being solved. Where the two cannot be made atomic - and across a
+   network they cannot - the capture **MUST** be performed first, because it is
    the reversible half, and **MUST** be rolled back if the acknowledgment fails.
 2. **Acknowledgments state, never promise.** "Received and queued, current
    response horizon Thursday" is a fact. "I'll get back to you soon" is a
@@ -303,7 +303,7 @@ look like. An implementation performing these effects **MUST** observe them.
    NOT** emit commitments. The horizon **SHOULD** come from the deferral
    strategy, so the queue and the acknowledgment cannot disagree.
 3. **Automated action toward a third party MUST be disclosed as automated.** The
-   medium decides the mechanism — `Auto-Submitted: auto-replied` on email
+   medium decides the mechanism - `Auto-Submitted: auto-replied` on email
    (RFC 3834, which also prevents responder loops), a system-attributed badge in
    an app. Undisclosed automation speaking in a person's name is the failure
    this design exists to avoid.
@@ -319,7 +319,7 @@ org chart. The model consumes the tier and does not compute it.
 The exempt tier is also what defuses the obvious gaming risk. An originator who
 learns that an acknowledgment means "deprioritised" and escalates through
 another channel only succeeds if their escalation is one the person cannot
-ignore — which is what would have made them exempt in the first place.
+ignore - which is what would have made them exempt in the first place.
 
 ---
 
@@ -327,7 +327,7 @@ ignore — which is what would have made them exempt in the first place.
 
 Some requirements cannot be expressed as a vector, because they are about
 sequences rather than functions. They are normative regardless, and they are the
-requirements most often got wrong — each is here because it was observed failing
+requirements most often got wrong - each is here because it was observed failing
 in a shipped product.
 
 ### 9.1 Notification gating
@@ -346,7 +346,7 @@ entirely.
 
 Any suppression window **MUST** expire on its own. Expiry **MUST** be an emitted
 event, not a condition the host is expected to poll, and suppression **MUST** be
-lifted _before_ the end-of-window event is emitted — otherwise the window
+lifted _before_ the end-of-window event is emitted - otherwise the window
 swallows its own completion notice.
 
 _Why:_ focus modes that suppress until manually cleared strand the person on
@@ -354,7 +354,7 @@ exactly the day they forget, and the cost lands on someone who already had none.
 
 ### 9.3 Deferral
 
-Deferral presets **MUST** compute in the person's local time — "tomorrow
+Deferral presets **MUST** compute in the person's local time - "tomorrow
 morning" means their morning. The ordering **SHOULD** follow the level: at low
 capacity the one-tap default resurfaces work _later_, not in an hour, because
 resurfacing into the same depletion helps nobody.
@@ -364,7 +364,7 @@ UTC and an implementation replaying them **MUST** do the same.
 
 ### 9.4 Persistence
 
-Persisted state **MUST** round-trip verbatim — every field, not just the level.
+Persisted state **MUST** round-trip verbatim - every field, not just the level.
 An implementation that stores only the level and rebuilds the rest on read
 produces a new `timestamp` and `origin` on every load, which reads as a fresh
 write to §4 and causes contexts to fight.
@@ -430,10 +430,10 @@ this specification, not just to the library.
 
 - **Wording.** Every user-facing string is a product decision.
 - **Visual design.** The reference stylesheet is one interpretation.
-- **How a level is chosen.** A dial, a keystroke, a menu — the model requires
+- **How a level is chosen.** A dial, a keystroke, a menu - the model requires
   only that the person can set it directly.
 - **Classification.** How a host decides that an arrival bears an obligation, or
   what tier an originator is in, is the host's problem entirely. The model
   consumes the answer and the confidence attached to it.
-- **Transport.** How states reach each other — shared storage, IPC, a sync
-  server — is out of scope. The schema and §4 are what make any transport work.
+- **Transport.** How states reach each other - shared storage, IPC, a sync
+  server - is out of scope. The schema and §4 are what make any transport work.

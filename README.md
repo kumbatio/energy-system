@@ -76,7 +76,7 @@ This library gives applications a structured way to adapt to energy state instea
   - Energy-aware deferral ordering
   - Autonomy (how much automation may do unattended)
 - **Inbound demand admission**: an energy-resolved policy for arrivals that ask
-  something of the user — reach them now, acknowledge and queue, or queue
+  something of the user - reach them now, acknowledge and queue, or queue
   silently (`demandAdmissionStrategy`, `resolveDemandOutcome`)
 - **Presence annotation**: declare which energy levels a component/view belongs
   to (`defineEnergyPresence`, `presenceAtOrAbove`, `<EnergyGate>`, `data-energy-min`)
@@ -161,8 +161,8 @@ export function App() {
 ## Presence annotation (which energy states does this element belong to?)
 
 Every component/view can declare the energy levels it participates in. The
-declaration is a plain typed object — one presence (`'visible' | 'muted' |
-'hidden'`) per level — so the same annotation drives React, the engine, or
+declaration is a plain typed object - one presence (`'visible' | 'muted' |
+'hidden'`) per level - so the same annotation drives React, the engine, or
 plain CSS.
 
 ```ts
@@ -218,7 +218,7 @@ capacity dipped. `<EnergyGate>` hides through React 19.2's `<Activity>`:
 component state, DOM and scroll position survive, effects are torn down while
 hidden and re-run on reveal, and hidden content is not server-rendered.
 
-Opt out for subtrees whose cost is worth reclaiming — media, canvases, live
+Opt out for subtrees whose cost is worth reclaiming - media, canvases, live
 connections:
 
 ```tsx
@@ -227,12 +227,12 @@ connections:
 </EnergyGate>
 ```
 
-CSS-only path — annotate elements with the range they belong to and the
+CSS-only path - annotate elements with the range they belong to and the
 stylesheet handles hiding as `data-energy-level` changes:
 
 ```html
-<div data-energy-min="75">AI chat — needs 75+ energy</div>
-<div data-energy-max="25">Recovery hint — low energy only</div>
+<div data-energy-min="75">AI chat - needs 75+ energy</div>
+<div data-energy-max="25">Recovery hint - low energy only</div>
 ```
 
 ## Focus sessions and the notification gate
@@ -284,7 +284,7 @@ Two invariants are guaranteed by construction:
 
 Deferring is an energy statement. Presets are pure `(now) => Date` functions;
 `deferralStrategy` orders them by level so the one-tap default matches
-capacity — at low energy the default is "tomorrow morning", not "in 1 hour".
+capacity - at low energy the default is "tomorrow morning", not "in 1 hour".
 
 ```ts
 import {
@@ -307,13 +307,13 @@ attention or action: an email, a document comment, a review request, a task
 assignment, a collaboration invite.
 
 Every triage system in general use is organised around properties of the
-_message_ — who sent it, how urgent it claims to be, what category it fits.
+_message_ - who sent it, how urgent it claims to be, what category it fits.
 None is organised around the state of the _recipient_, which is the thing that
 actually decides whether an arrival is a small task or a crushing weight. This
 is that variable, applied to the queue.
 
 `demandAdmissionStrategy` resolves the policy; `resolveDemandOutcome` applies
-it. Both are pure. The library performs no effects here — acknowledging an
+it. Both are pure. The library performs no effects here - acknowledging an
 originator means sending mail, posting a comment, or updating a status chip
 depending on the app, and those are irreversible in ways an in-process runtime
 cannot make transactional. The orchestration, with its ordering, retries, and
@@ -343,7 +343,7 @@ switch (outcome.admission) {
   case 'acknowledge':
     // One act, never two. An acknowledgment without a capture is a promise
     // nobody kept; a capture without an acknowledgment leaves the originator in
-    // silence. Capture first — it is the reversible half.
+    // silence. Capture first - it is the reversible half.
     await tasks.capture(message, engine.resolve(deferralStrategy).defaultPresetId)
     return replies.acknowledge(message, outcome.acknowledgment)
   case 'silent':
@@ -356,14 +356,14 @@ Two rules are worth stating outright, because each blocks a specific failure:
 1. **The exempt tier is never handled by machine.** At every level, an exempt
    originator is admitted live. This is also what defuses the gaming risk: an
    originator who learns an acknowledgment means "deprioritised" and escalates
-   elsewhere only succeeds if their escalation is one the user cannot ignore —
+   elsewhere only succeeds if their escalation is one the user cannot ignore -
    which is what makes them exempt.
 2. **Acknowledgments report state, never intent.** "Received and queued,
    current response horizon early next week" is a fact. "I'll get back to you
    soon" is a promise the user's Tuesday self has to keep. The horizon comes
    from `deferralStrategy`, so the queue and the acknowledgment cannot disagree.
 
-Disclosure is the app's job in the app's own medium — an `Auto-Submitted:
+Disclosure is the app's job in the app's own medium - an `Auto-Submitted:
 auto-replied` header, an "auto-queued" badge, a system-attributed status. An
 automated action toward a third party must be identifiable as automated.
 
@@ -380,8 +380,8 @@ const { confidenceThreshold, allowGeneratedContent, maxUnattendedSteps } =
 ```
 
 What narrows as energy falls is _discretion_, not action. At rest the
-confidence threshold is `1`, which admits only certainty — rule-based actions,
-never a judgment call — and `maxUnattendedSteps` is `1`. Automation may still
+confidence threshold is `1`, which admits only certainty - rule-based actions,
+never a judgment call - and `maxUnattendedSteps` is `1`. Automation may still
 take a single, certain, template-only step, which is exactly the shape of an
 out-of-office reply. It may not chain steps or improvise wording. The system
 acts for the user precisely when they are least able to supervise it, so the
@@ -421,9 +421,9 @@ Then use classes like:
 
 And presence attributes:
 
-- `data-energy-min="75"` — element hides whenever the current level is below 75
-- `data-energy-max="25"` — element hides whenever the current level is above 25
-- `data-energy-presence="muted" | "hidden"` — hooks for JS-resolved presence
+- `data-energy-min="75"` - element hides whenever the current level is below 75
+- `data-energy-max="25"` - element hides whenever the current level is above 25
+- `data-energy-presence="muted" | "hidden"` - hooks for JS-resolved presence
   (`--energy-muted-opacity` controls the muted treatment)
 
 The stylesheet honours `prefers-reduced-motion` for its own transitions; apps
@@ -568,14 +568,14 @@ default state, and rejects rather than overwriting unread storage if that hydrat
 
 The model is specified independently of this implementation.
 
-- **[SPEC.md](./SPEC.md)** — the normative model: levels, state, reconciliation, the strategy
+- **[SPEC.md](./SPEC.md)** - the normative model: levels, state, reconciliation, the strategy
   contract, autonomy, inbound demand, the runtime invariants, and the accessibility requirements.
   Language-independent, RFC 2119 wording.
-- **[spec/energy-state.schema.json](./spec/energy-state.schema.json)** — the interchange format, so
+- **[spec/energy-state.schema.json](./spec/energy-state.schema.json)** - the interchange format, so
   two processes (or two languages) can share one person's energy state.
-- **[conformance.json](./conformance.json)** — every table and every decision above, as vectors.
+- **[conformance.json](./conformance.json)** - every table and every decision above, as vectors.
   Ships in the package.
-- **[spec/conformance.schema.json](./spec/conformance.schema.json)** — the shape of that vector
+- **[spec/conformance.schema.json](./spec/conformance.schema.json)** - the shape of that vector
   file, so a port can tell a file it can trust from one whose structure moved under it. Ships too,
   and the generator validates its own output against it.
 
@@ -588,11 +588,11 @@ package's own `test/conformance.test.ts` does exactly that and is a reasonable m
 
 The file is generated from the built library, so the vectors cannot drift from the behavior they
 describe. `pnpm run build` regenerates it; `pnpm test` recomputes it and fails if what is committed
-differs, without rewriting anything. The two are deliberately separate — a check that regenerates
+differs, without rewriting anything. The two are deliberately separate - a check that regenerates
 first is comparing a file to itself.
 
 Vectors cover the pure surface: tables, and functions of their arguments alone. The stateful
-guarantees — defer-never-drop, session auto-expiry, persistence ordering — are normative in SPEC.md
+guarantees - defer-never-drop, session auto-expiry, persistence ordering - are normative in SPEC.md
 and checked by this package's suite, because no vector can express _and it must never drop one_.
 
 ## Stability
@@ -601,7 +601,7 @@ The API has been frozen since `1.0.0`. The package follows semver strictly, and 
 that means more than the type signatures:
 
 - **A shipped strategy table's values are API.** Changing what `notificationStrategy` returns at
-  level 50 changes how every consumer behaves, so it is a major-version change — and a change to
+  level 50 changes how every consumer behaves, so it is a major-version change - and a change to
   [SPEC.md](./SPEC.md), not just to this library.
 - **The reconciliation rule is API.** Two implementations that disagree about it cannot share state.
 - **The conformance vectors are the contract in machine-readable form.** Within a major version,
@@ -612,7 +612,7 @@ that means more than the type signatures:
 ## Development
 
 ```bash
-pnpm run validate   # format, lint, types, tests, packaging — what CI runs
+pnpm run validate   # format, lint, types, tests, packaging - what CI runs
 ```
 
 Individually:
@@ -627,7 +627,7 @@ pnpm run pack:dry-run
 
 `build` is the only thing that writes `api-surface.json` and `conformance.json`.
 If a change to the library moves either, `pnpm test` fails and tells you to run
-`pnpm run build` and commit the result — that is the intended loop, not a
+`pnpm run build` and commit the result - that is the intended loop, not a
 warning to work around.
 
 ## Notes
@@ -637,20 +637,20 @@ adapters (e.g., SQLite-backed desktop stores) should live in consuming apps.
 
 ## Who uses this
 
-- **[Anasa](https://anasa.md)** — Kumbatio's local-first writing and thinking workspace, in public alpha. Runs its entire adaptive shell on the engine: custom settings-backed persistence, energy-gated AI surfaces, notification filtering, and task-complexity guidance.
-- **[Meltemi](https://meltemi.app)** — an email client in private beta from [entro314 labs](https://github.com/entro314-labs) (the studio behind Kumbatio), built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, interaction forgiveness, and demand admission — integrated without the React adapter. Its demand binding is the reference one: originator tiers come from its VIP list, obligation is classified from RFC 3834 header evidence and its own sender lanes, acknowledgments go out as `Auto-Submitted: auto-replied` auto-replies, and the capture is a snooze to the horizon `deferralStrategy` picked.
-- **[kumbat.io](https://kumbat.io)** — the site itself runs on this model; change the energy level there and watch the interface adapt.
+- **[Anasa](https://anasa.md)** - Kumbatio's local-first writing and thinking workspace, in public alpha. Runs its entire adaptive shell on the engine: custom settings-backed persistence, energy-gated AI surfaces, notification filtering, and task-complexity guidance.
+- **[Meltemi](https://meltemi.app)** - an email client in private beta from [entro314 labs](https://github.com/entro314-labs) (the studio behind Kumbatio), built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, interaction forgiveness, and demand admission - integrated without the React adapter. Its demand binding is the reference one: originator tiers come from its VIP list, obligation is classified from RFC 3834 header evidence and its own sender lanes, acknowledgments go out as `Auto-Submitted: auto-replied` auto-replies, and the capture is a snooze to the horizon `deferralStrategy` picked.
+- **[kumbat.io](https://kumbat.io)** - the site itself runs on this model; change the energy level there and watch the interface adapt.
 
 The integration patterns these apps proved out are documented in the [Production Patterns guide](https://docs.kumbat.io/docs/energy-system/guides/production-patterns). If you ship something with `energy-system`, tell us: [hello@kumbat.io](mailto:hello@kumbat.io).
 
 ## Kumbatio
 
-`energy-system` is the infrastructure layer of [Kumbatio](https://kumbat.io) — an ecosystem of open-source, neuroinclusive software built from lived experience with ADHD and depression. The position behind it, in one line: **energy ≠ time**, and software should adapt to real cognitive capacity instead of assuming a default brain.
+`energy-system` is the infrastructure layer of [Kumbatio](https://kumbat.io) - an ecosystem of open-source, neuroinclusive software built from lived experience with ADHD and depression. The position behind it, in one line: **energy ≠ time**, and software should adapt to real cognitive capacity instead of assuming a default brain.
 
-- The full argument: [kumbat.io/manifesto](https://kumbat.io/manifesto) — agree? [Sign it](https://kumbat.io/endorse)
+- The full argument: [kumbat.io/manifesto](https://kumbat.io/manifesto) - agree? [Sign it](https://kumbat.io/endorse)
 - Where this library is going: [ROADMAP.md](./ROADMAP.md)
 - How to help: [CONTRIBUTING.md](./CONTRIBUTING.md)
-- Live demo: [kumbat.io](https://kumbat.io) adapts its entire interface with this model — move the energy control and watch
+- Live demo: [kumbat.io](https://kumbat.io) adapts its entire interface with this model - move the energy control and watch
 
 ## Research
 
@@ -660,11 +660,11 @@ directly; the others give the evidence base, the self-report position, and the
 work-design framework. Badges link the concept DOI, which always resolves to
 the latest version.
 
-1. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915159.svg)](https://doi.org/10.5281/zenodo.21915159) Energy as State, Not Time — the model this library implements
-2. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915161.svg)](https://doi.org/10.5281/zenodo.21915161) The Myth of the Flat Workday — the cognitive-science evidence
-3. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915163.svg)](https://doi.org/10.5281/zenodo.21915163) Self-Report Over Surveillance — why the state is declared, never inferred
-4. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915165.svg)](https://doi.org/10.5281/zenodo.21915165) Capacity-Aware Software Design — the pattern language this library ships
-5. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915167.svg)](https://doi.org/10.5281/zenodo.21915167) Energy > Time — the framework, from individuals to teams
+1. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915159.svg)](https://doi.org/10.5281/zenodo.21915159) Energy as State, Not Time - the model this library implements
+2. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915161.svg)](https://doi.org/10.5281/zenodo.21915161) The Myth of the Flat Workday - the cognitive-science evidence
+3. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915163.svg)](https://doi.org/10.5281/zenodo.21915163) Self-Report Over Surveillance - why the state is declared, never inferred
+4. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915165.svg)](https://doi.org/10.5281/zenodo.21915165) Capacity-Aware Software Design - the pattern language this library ships
+5. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915167.svg)](https://doi.org/10.5281/zenodo.21915167) Energy > Time - the framework, from individuals to teams
 
 To cite the software itself, see [CITATION.cff](./CITATION.cff).
 

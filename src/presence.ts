@@ -81,7 +81,7 @@ export function presenceAtOrAbove(
 }
 
 /**
- * Presence map for elements that only belong at low energy — recovery hints,
+ * Presence map for elements that only belong at low energy - recovery hints,
  * "one thing at a time" affordances. Above `max` the element is `above`
  * ('hidden' by default).
  */

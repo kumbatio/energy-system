@@ -2,7 +2,7 @@ import { getEnergyLevel } from './levels.js'
 import type { AdaptationStrategy, EnergyLevel } from './types.js'
 
 /**
- * Deferral ("snooze") — the "not now" primitive. Deferring an item is an
+ * Deferral ("snooze") - the "not now" primitive. Deferring an item is an
  * energy statement: it declares insufficient capacity for it right now and
  * names when it should resurface. Presets are pure `(now) -> Date` functions;
  * the energy-aware strategy orders them so the default suggestion matches
@@ -56,7 +56,7 @@ function isWeekend(day: Date): boolean {
 }
 
 /**
- * Build the standard deferral presets. Times are computed in local time —
+ * Build the standard deferral presets. Times are computed in local time -
  * "tomorrow morning" means the user's morning.
  */
 export function createDeferralPresets(
@@ -125,7 +125,7 @@ export function createDeferralPresets(
 
 /**
  * Resolve a preset id to a resurface timestamp (epoch ms).
- * Returns null for an unknown id — callers decide whether that is an error.
+ * Returns null for an unknown id - callers decide whether that is an error.
  */
 export function resolveDeferral(
   presets: readonly DeferralPreset[],

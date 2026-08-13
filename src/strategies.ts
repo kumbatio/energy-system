@@ -296,8 +296,8 @@ export const interactionForgivenessStrategy: AdaptationStrategy<InteractionForgi
  * supervise it, so the worst day is the wrong day for it to improvise.
  *
  * What narrows as energy falls is *discretion*, not action. At rest the
- * automation may still take a single, certain, template-only step — an
- * out-of-office reply is exactly that shape — but it may not chain steps,
+ * automation may still take a single, certain, template-only step - an
+ * out-of-office reply is exactly that shape - but it may not chain steps,
  * compose novel wording, or act on a judgment call.
  */
 export interface AutonomyConfig {
@@ -334,7 +334,7 @@ const AUTONOMY_CONFIGS = freezeObject({
     allowGeneratedContent: false,
     maxUnattendedSteps: 1,
   }),
-  // Rest: one certain, templated step at most. Not zero — an automated action
+  // Rest: one certain, templated step at most. Not zero - an automated action
   // the user has standing consent for (an out-of-office reply is the classic)
   // is safest at rest precisely because it stops improvising.
   0: freezeObject({

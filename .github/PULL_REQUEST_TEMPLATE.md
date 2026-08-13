@@ -12,4 +12,4 @@
 
 ---
 
-No urgency expected on review — it happens when capacity allows, usually within days. If you need to step away from this PR at any point, that's fine; just say so (or don't).
+No urgency expected on review - it happens when capacity allows, usually within days. If you need to step away from this PR at any point, that's fine; just say so (or don't).

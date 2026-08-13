@@ -279,7 +279,7 @@ void test('cycleEnergyLevel follows the documented order and recovers from inval
 void test('engine construction reads neither the clock nor the random source', () => {
   /*
    * React providers construct their engine during render. Under a prerender, any clock or random
-   * read during render is an unstable value baked into static output — Next.js Cache Components
+   * read during render is an unstable value baked into static output - Next.js Cache Components
    * fails the build on exactly this. The untouched initial state therefore carries sentinels, and
    * the real timestamp and origin are produced on the first state anyone actually sets.
    */
@@ -393,7 +393,7 @@ void test('state-changing operations after dispose are inert', () => {
 
   assert.equal(engine.getState().level, 75)
   assert.deepEqual(changes, [[100, 75]])
-  // One call, from `setLevel`. Construction deliberately reads no clock — see
+  // One call, from `setLevel`. Construction deliberately reads no clock - see
   // 'engine construction reads neither the clock nor the random source' below.
   assert.equal(clockCalls, 1)
 })

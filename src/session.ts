@@ -4,7 +4,7 @@ import { getEnergyMetrics } from './metrics.js'
 import { taskComplexityStrategy } from './strategies.js'
 
 /**
- * Focus sessions — time-boxed "one thing at a time" windows layered on top of
+ * Focus sessions - time-boxed "one thing at a time" windows layered on top of
  * the energy model. A session is a temporary commitment, not an energy level:
  * it suppresses interruptions for a bounded duration, surfaces break nudges,
  * and ALWAYS ends on time.
@@ -12,7 +12,7 @@ import { taskComplexityStrategy } from './strategies.js'
  * Two invariants come from field evidence (GingerMail shipped the opposite
  * and both were user-hostile):
  *   1. Sessions auto-expire. Expiry is an emitted event, not a predicate the
- *      app must remember to poll — suppression can never outlive the session.
+ *      app must remember to poll - suppression can never outlive the session.
  *   2. Suppression is lifted BEFORE the end event is emitted, so an
  *      end-of-session notification can never be swallowed by the session's
  *      own suppression.
@@ -66,12 +66,12 @@ export interface FocusSessionControllerOptions {
   /**
    * Engine used for energy-aware defaults: session length from the level's
    * expected productivity window, break cadence from the task-complexity
-   * strategy. Optional — without it, defaults are 25 minutes / no breaks.
+   * strategy. Optional - without it, defaults are 25 minutes / no breaks.
    */
   engine?: EnergyEngine
   /**
    * Suppression target (typically a NotificationGate). Suppressed on start,
-   * released on stop/end/dispose — the controller owns the flag for the
+   * released on stop/end/dispose - the controller owns the flag for the
    * session's lifetime, so it can never be left stuck on.
    */
   gate?: FocusSuppressible
@@ -194,7 +194,7 @@ export function createFocusSessionController(
   function defaultDurationMinutes(): number {
     if (!engine) return DEFAULT_SESSION_MINUTES
     const window = getEnergyMetrics(engine.getState(), now()).expectedProductivityWindowMinutes
-    // At rest (0) the metrics window is 0 — an explicit session at rest still
+    // At rest (0) the metrics window is 0 - an explicit session at rest still
     // deserves a real bound rather than an instantly-expiring one.
     return window > 0 ? window : DEFAULT_SESSION_MINUTES
   }

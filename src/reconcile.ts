@@ -1,14 +1,14 @@
 import type { EnergySource, EnergyState } from './types.js'
 
 /**
- * State reconciliation — how two `EnergyState` values that describe the same
+ * State reconciliation - how two `EnergyState` values that describe the same
  * user are ordered when they meet.
  *
  * They meet constantly: a second browser tab writes the shared store, a desktop
  * window and its detached child both hold an engine, a sync layer hands back
  * what another device recorded. Every one of those paths needs the same answer
  * to "which of these two is the current state?", and the answer has to be
- * *deterministic* — not "last write wins by arrival order", which converges on
+ * *deterministic* - not "last write wins by arrival order", which converges on
  * different values depending on network timing.
  *
  * This is the rule, extracted from the engine so it can be read, tested, and
@@ -40,12 +40,12 @@ function sourcePriority(source: EnergySource): number {
  *
  * The comparison walks four keys in order, stopping at the first that differs:
  *
- * 1. **`timestamp`** — later wins. The ordinary case, and the only one most
+ * 1. **`timestamp`** - later wins. The ordinary case, and the only one most
  *    states ever reach.
- * 2. **`revision`** — higher wins. Two writes inside one clock tick are not
+ * 2. **`revision`** - higher wins. Two writes inside one clock tick are not
  *    simultaneous; the producer numbers them so they still order.
- * 3. **`source`** — `manual` > `scheduled` > `inferred`. See `sourcePriority`.
- * 4. **`origin`** — higher string wins. Not meaningful, and deliberately so:
+ * 3. **`source`** - `manual` > `scheduled` > `inferred`. See `sourcePriority`.
+ * 4. **`origin`** - higher string wins. Not meaningful, and deliberately so:
  *    when two producers write the same instant, the same revision, and the same
  *    kind of source, there is no principled winner, and an arbitrary rule every
  *    context computes identically beats a coin flip each context tosses

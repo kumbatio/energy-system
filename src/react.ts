@@ -120,7 +120,7 @@ export interface EnergyProviderProps {
    * Element the level is projected onto. Default: `document.body`.
    *
    * Pass `() => document.documentElement` when the stylesheet keys off
-   * `[data-energy-level]` at the root — resolved inside the effect, so the
+   * `[data-energy-level]` at the root - resolved inside the effect, so the
    * render phase never touches the DOM. Whatever the target, the provider
    * snapshots what was there, layers overlapping providers, and restores the
    * baseline on unmount.
@@ -476,7 +476,7 @@ export function EnergyGate({
    * render, hidden or not. That stability is the whole mechanism: reconciling the
    * same boundary is what carries state across the transition. Rendering Activity
    * only while hidden would swap the element type at that slot and remount the
-   * subtree on reveal — losing exactly the state this is here to keep.
+   * subtree on reveal - losing exactly the state this is here to keep.
    */
   return createElement(
     Fragment,

@@ -6,7 +6,7 @@ allowBuilds:
 # This package's version policy is deliberately bleeding-edge: dev tooling
 # tracks latest, including same-day publishes (oxlint, oxfmt, tsx). pnpm's
 # default cutoff rejects exactly those, so leaving it on would mean carrying a
-# per-package exception list that needs editing on most upgrades — a gate
+# per-package exception list that needs editing on most upgrades - a gate
 # nobody can satisfy gets disabled in a hurry rather than tuned.
 #
 # The trade is real: a compromised release is caught later here than it would

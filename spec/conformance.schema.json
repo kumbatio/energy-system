@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://kumbat.io/spec/conformance.schema.json",
   "title": "EnergyConformance",
-  "description": "The shape of conformance.json: the executable half of SPEC.md. A port in any language passes by loading that file and asserting its own output against each vector. This schema is what lets that port know the file it loaded is the file it expects — vectors that silently changed shape are worse than vectors that failed to load. scripts/extract-conformance.ts validates its own output against this schema before writing, so the two cannot drift apart unnoticed.",
+  "description": "The shape of conformance.json: the executable half of SPEC.md. A port in any language passes by loading that file and asserting its own output against each vector. This schema is what lets that port know the file it loaded is the file it expects - vectors that silently changed shape are worse than vectors that failed to load. scripts/extract-conformance.ts validates its own output against this schema before writing, so the two cannot drift apart unnoticed.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -378,7 +378,7 @@
     },
 
     "externalLevelMapping": {
-      "description": "Percentages an external model might hand over, including both midpoints — 12.5 and 37.5 sit exactly between two levels, which is where rounding implementations disagree.",
+      "description": "Percentages an external model might hand over, including both midpoints - 12.5 and 37.5 sit exactly between two levels, which is where rounding implementations disagree.",
       "type": "array",
       "minItems": 1,
       "items": {

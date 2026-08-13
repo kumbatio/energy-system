@@ -32,7 +32,7 @@ import {
  * resolved one at a time.
  *
  * The unit tests elsewhere check each piece against its own table. What they
- * cannot see is the shape of the whole model — that protection only ever
+ * cannot see is the shape of the whole model - that protection only ever
  * increases as capacity falls, that the runtimes agree with the strategies
  * driving them, and that moving between any two levels is safe in both
  * directions. Those are the properties a future edit to one table would break
@@ -41,7 +41,7 @@ import {
 
 const LEVELS = [100, 75, 50, 25, 0] as const satisfies readonly EnergyLevel[]
 
-/** Every ordered pair of distinct levels — 20 transitions, both directions. */
+/** Every ordered pair of distinct levels - 20 transitions, both directions. */
 const TRANSITIONS: ReadonlyArray<readonly [EnergyLevel, EnergyLevel]> = LEVELS.flatMap((from) =>
   LEVELS.filter((to) => to !== from).map((to) => [from, to] as const),
 )
@@ -339,7 +339,7 @@ void test('a gated notification is released by any transition that admits it', (
 
     // Defer-never-drop, stated as a property rather than one scenario: whatever
     // the gate did with the intent, it exists somewhere afterwards. Whether the
-    // destination level admits it is the strategy's answer, not a guess — asking
+    // destination level admits it is the strategy's answer, not a guess - asking
     // the same pure function the gate asks is what keeps this a test of the
     // runtime rather than a second copy of the table.
     const admittedAfter =
@@ -349,7 +349,7 @@ void test('a gated notification is released by any transition that admits it', (
       // Already surfaced before the transition; a later level cannot recall it.
       assert.equal(surfaced, 1, `${label}: an immediate intent was not delivered once`)
     } else {
-      // Still held when energy moved — batched and deferred alike are judged by
+      // Still held when energy moved - batched and deferred alike are judged by
       // the policy in force at delivery, not the one in force at publish.
       assert.equal(
         surfaced,

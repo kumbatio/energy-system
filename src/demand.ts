@@ -3,7 +3,7 @@ import type { AutonomyConfig } from './strategies.js'
 import type { AdaptationStrategy, EnergyLevel } from './types.js'
 
 /**
- * Inbound demand — anything arriving from outside that asks for the user's
+ * Inbound demand - anything arriving from outside that asks for the user's
  * attention or action: an email, a document comment, a review request, a task
  * assignment, a collaboration invite.
  *
@@ -38,7 +38,7 @@ function freezeObject<T extends object>(value: T): Readonly<T> {
  * - `known`: an established correspondent.
  * - `unknown`: no established relationship.
  *
- * Tier assignment is the app's job — a Screener approval, a contacts list, an
+ * Tier assignment is the app's job - a Screener approval, a contacts list, an
  * org chart. The policy only consumes the tier.
  */
 export type OriginatorTier = 'exempt' | 'known' | 'unknown'
@@ -55,7 +55,7 @@ export function isOriginatorTier(value: unknown): value is OriginatorTier {
  *
  * - `live`: reaches the user now, untouched by this policy.
  * - `acknowledge`: the originator is acknowledged and the obligation is
- *   captured for later. The two are one act — an acknowledgment without a
+ *   captured for later. The two are one act - an acknowledgment without a
  *   capture is a promise nobody kept, a capture without an acknowledgment
  *   leaves the originator in silence.
  * - `silent`: captured for later with no acknowledgment.
@@ -65,7 +65,7 @@ export type DemandAdmission = 'live' | 'acknowledge' | 'silent'
 /** How much an acknowledgment may say */
 export type AcknowledgmentDetail = 'full' | 'brief' | 'minimal'
 
-/** Why the policy reached its decision — for audit trails and explanatory UI */
+/** Why the policy reached its decision - for audit trails and explanatory UI */
 export type DemandOutcomeReason =
   | 'exempt-originator'
   | 'tier-admitted'
@@ -97,8 +97,8 @@ export interface DemandOutcome {
 export interface DemandInput {
   readonly originatorTier: OriginatorTier
   /**
-   * Whether this demand asks something of the user. Informational mail — a
-   * receipt, a newsletter, a build notification — is not this policy's
+   * Whether this demand asks something of the user. Informational mail - a
+   * receipt, a newsletter, a build notification - is not this policy's
    * business and passes through untouched.
    */
   readonly bearsObligation: boolean
@@ -147,8 +147,8 @@ const ADMISSION_CONFIGS = freezeObject({
     acknowledgmentDetail: 'brief',
   }),
   // Rest: the acknowledgment survives, stripped to a fixed template. The
-  // originator's social debt still clears — that is the whole point of the
-  // loop — but nothing is composed on the user's behalf.
+  // originator's social debt still clears - that is the whole point of the
+  // loop - but nothing is composed on the user's behalf.
   0: freezeObject({
     originatorThreshold: 'exempt',
     acknowledge: true,
@@ -195,7 +195,7 @@ function isTierAdmitted(
 
 /**
  * The pure gating decision, extracted so apps can unit-test their demand
- * policy without wiring any effects — the counterpart of
+ * policy without wiring any effects - the counterpart of
  * `resolveNotificationOutcome`.
  *
  * Both configs are required because the two questions are genuinely separate:
@@ -219,7 +219,7 @@ export function resolveDemandOutcome(
   // The inner circle is never handled by machine. This is also what defuses the
   // gaming risk: an originator who learns that an acknowledgment means
   // "deprioritised" and escalates through another channel only succeeds if
-  // their escalation is one the user cannot ignore — which makes them exempt.
+  // their escalation is one the user cannot ignore - which makes them exempt.
   if (demand.originatorTier === 'exempt') {
     return freezeObject({
       admission: 'live',

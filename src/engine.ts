@@ -40,7 +40,7 @@ export interface EnergyEngineOptions {
    * to cross-context updates. Default: true.
    *
    * Pass false when the engine is constructed somewhere that may never be
-   * committed — a React render, most notably — and call `start()` from a
+   * committed - a React render, most notably - and call `start()` from a
    * lifecycle that only runs for trees React kept. Without this, a discarded
    * render leaves an engine nobody will ever dispose, holding a live
    * cross-context observer (a `storage` listener, for the localStorage
@@ -105,7 +105,7 @@ function isSameState(a: EnergyState, b: EnergyState): boolean {
 /**
  * Validate state that arrived from outside this engine. `candidate` is typed
  * as `EnergyState`, but it crossed a process, tab or storage boundary to get
- * here, so nothing about its runtime shape is guaranteed — it is parsed
+ * here, so nothing about its runtime shape is guaranteed - it is parsed
  * against the published schema before anything else looks at it.
  */
 function normalizeState(
@@ -168,7 +168,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
    *
    * The origin is ALWAYS the sentinel, never `options.originId`. SPEC.md §3.2 requires the
    * untouched default to stay distinguishable from a real state, and `isUnproducedState()` tests
-   * exactly this pair — stamping a configured producer identity here turns "nobody has chosen
+   * exactly this pair - stamping a configured producer identity here turns "nobody has chosen
    * yet" into a state that looks chosen, which reads downstream as a level set at the epoch.
    * The configured identity belongs to the first state this engine actually produces.
    */

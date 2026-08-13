@@ -27,7 +27,7 @@ export function createEnergyOrigin(): string {
 }
 
 /*
- * Markers for a state that has never been *produced* — the untouched default an engine starts with,
+ * Markers for a state that has never been *produced* - the untouched default an engine starts with,
  * as opposed to a level anyone actually chose.
  *
  * Both exist so engine construction reads neither the clock nor the random source. React providers
@@ -40,7 +40,7 @@ export function createEnergyOrigin(): string {
 export const UNPRODUCED_ORIGIN = '0-initial'
 export const UNPRODUCED_TIMESTAMP = 0
 
-/** True for the untouched default state — its age and identity are not meaningful. */
+/** True for the untouched default state - its age and identity are not meaningful. */
 export function isUnproducedState(state: Pick<EnergyState, 'timestamp' | 'origin'>): boolean {
   return state.timestamp === UNPRODUCED_TIMESTAMP && state.origin === UNPRODUCED_ORIGIN
 }
@@ -210,8 +210,8 @@ export function createEnergyState(
 const ENERGY_STATE_KEYS: readonly string[] = ['level', 'timestamp', 'source', 'revision', 'origin']
 
 /**
- * Parse a value that came from OUTSIDE this engine — persisted JSON, a
- * cross-context observation, a wire message — into an `EnergyState`.
+ * Parse a value that came from OUTSIDE this engine - persisted JSON, a
+ * cross-context observation, a wire message - into an `EnergyState`.
  *
  * This is the interchange boundary, so it enforces the published JSON Schema
  * exactly rather than approximately: `additionalProperties: false` means an

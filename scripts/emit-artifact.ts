@@ -5,7 +5,7 @@
  *
  * The two modes exist because collapsing them makes the drift guard
  * meaningless. `pnpm test` used to run `build` first, so the generator had
- * already rewritten the artifact before the test read it — the comparison was
+ * already rewritten the artifact before the test read it - the comparison was
  * a file against itself and could not fail, whatever was committed. Generation
  * now belongs to `pnpm run build` alone; every validation path checks.
  */
@@ -32,14 +32,14 @@ export function emitArtifact(target: URL, contents: string): string {
   try {
     committed = readFileSync(target, 'utf8')
   } catch (err: unknown) {
-    throw new Error(`${path} is missing — run \`pnpm run build\` and commit the result`, {
+    throw new Error(`${path} is missing - run \`pnpm run build\` and commit the result`, {
       cause: err,
     })
   }
 
   if (committed !== contents) {
     throw new Error(
-      `${path} is stale — it does not match the library that generates it. Run \`pnpm run build\` and commit the result.`,
+      `${path} is stale - it does not match the library that generates it. Run \`pnpm run build\` and commit the result.`,
     )
   }
 

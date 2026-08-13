@@ -56,7 +56,7 @@
       "value": 0,
       "key": "rest",
       "label": "Rest",
-      "description": "Recovery. Consumption only — reading, reflecting.",
+      "description": "Recovery. Consumption only - reading, reflecting.",
       "cognitiveProfile": {
         "decisionCapacity": "none",
         "focusDuration": "none",

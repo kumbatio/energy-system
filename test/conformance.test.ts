@@ -18,7 +18,7 @@ import type { EnergyLevel, EnergyState } from '../src/index.ts'
  * worth something if two things hold: they match the library that produced them,
  * and a consumer reading them gets the same answers the library gives.
  *
- * The first is a drift guard — recompute and compare without writing, the same
+ * The first is a drift guard - recompute and compare without writing, the same
  * discipline `api-surface.json` is held to below. The second is a round-trip:
  * replay a sample of the vectors THROUGH the public API, so the file is proven
  * to be a description of behavior rather than a snapshot of one afternoon.
@@ -203,7 +203,7 @@ void test('every reconciliation pair replays, in both directions', () => {
     // other would swap states forever.
     assert.ok(
       !(pair.expected && pair.expectedReversed),
-      `${pair.rule}: both directions preferred — the ordering is not antisymmetric`,
+      `${pair.rule}: both directions preferred - the ordering is not antisymmetric`,
     )
   }
 })

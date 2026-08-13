@@ -301,7 +301,7 @@ void test('gate batches at 50, defers below threshold, and releases on energy ri
 /*
  * A batch window is a wait, not a decision that has already been made. Energy
  * and suppression both move while one is open, and the gate's whole purpose is
- * that the policy in force at DELIVERY governs — otherwise an intent admitted
+ * that the policy in force at DELIVERY governs - otherwise an intent admitted
  * at Steady arrives in the middle of a focus session, or lands at Rest with
  * every channel switched off.
  */

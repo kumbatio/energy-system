@@ -2,7 +2,7 @@
  * Emits `conformance.json`: the executable half of `SPEC.md`.
  *
  * The spec says in prose what an energy-aware implementation must do. This says
- * it in data — every level definition, every strategy's output at every level,
+ * it in data - every level definition, every strategy's output at every level,
  * the full decision matrix of both pure gating functions, the deferral
  * arithmetic, the reconciliation ordering, and the derived metrics. An
  * implementation in any language passes by loading this file and asserting its
@@ -10,13 +10,13 @@
  *
  * Why generate rather than hand-write: a hand-written table is a second
  * implementation, and second implementations drift. These vectors are read out
- * of the built modules, so "the vectors" and "the library" cannot disagree — and
+ * of the built modules, so "the vectors" and "the library" cannot disagree - and
  * `test/conformance.test.ts` fails the build if the committed file falls behind
  * the code that produced it.
  *
  * Scope is deliberate. Vectors cover the PURE surface: tables, and functions of
- * their arguments alone. The stateful runtimes — the notification gate's
- * defer-never-drop, focus-session expiry, the engine's persistence ladder —
+ * their arguments alone. The stateful runtimes - the notification gate's
+ * defer-never-drop, focus-session expiry, the engine's persistence ladder -
  * are specified normatively in SPEC.md and checked by this package's own suite,
  * because a vector cannot express "and it must never drop one".
  *
@@ -96,7 +96,7 @@ const METRICS_NOW = Date.parse('2026-08-05T12:00:00.000Z')
 function requireUtc(): void {
   if (new Date().getTimezoneOffset() !== 0) {
     throw new Error(
-      'conformance vectors must be generated under TZ=UTC — the deferral presets compute in ' +
+      'conformance vectors must be generated under TZ=UTC - the deferral presets compute in ' +
         'local time, so any other zone bakes a local-only answer into a portable file',
     )
   }
@@ -164,7 +164,7 @@ function demandVectors() {
 }
 
 function deferralVectors() {
-  // Default preset hours (morning 9, evening 18) — a port that hard-codes other
+  // Default preset hours (morning 9, evening 18) - a port that hard-codes other
   // defaults produces a different "tomorrow morning" for the same instant.
   const presets = createDeferralPresets()
   const ids = Object.values(DEFERRAL_PRESET_IDS)
@@ -277,7 +277,7 @@ function metricsVectors() {
 }
 
 function compatibilityVectors() {
-  // Percentages an external model might hand over, including both midpoints —
+  // Percentages an external model might hand over, including both midpoints -
   // 12.5 and 37.5 sit exactly between two levels, which is where rounding
   // implementations disagree.
   const inputs = [-20, 0, 5, 12.5, 13, 25, 37.5, 38, 50, 62.5, 63, 75, 87.5, 88, 100, 140]
@@ -351,7 +351,7 @@ const conformance = {
  *
  * conformance.json ships with a `$schema` pointer, which is a promise to every
  * port that loads it: this file has the shape that document describes. A
- * pointer nothing checks is worse than no pointer — it invites a reader to
+ * pointer nothing checks is worse than no pointer - it invites a reader to
  * trust a guarantee no one is keeping. Both schemas are registered together,
  * so the reconciliation vectors are validated against the same EnergyState
  * definition external producers write to.

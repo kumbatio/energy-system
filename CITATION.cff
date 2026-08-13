@@ -6,6 +6,7 @@ abstract: "Framework-agnostic TypeScript library for energy-aware application be
 authors:
   - family-names: Pritis
     given-names: Dominikos
+    orcid: "https://orcid.org/0009-0001-0679-9592"
 license: MIT
 repository-code: "https://github.com/kumbatio/energy-system"
 url: "https://kumbat.io"
@@ -16,6 +17,7 @@ references:
     authors:
       - family-names: Pritis
         given-names: Dominikos
+        orcid: "https://orcid.org/0009-0001-0679-9592"
     year: 2026
     doi: 10.5281/zenodo.21915159
   - type: article
@@ -23,5 +25,6 @@ references:
     authors:
       - family-names: Pritis
         given-names: Dominikos
+        orcid: "https://orcid.org/0009-0001-0679-9592"
     year: 2026
     doi: 10.5281/zenodo.21915165

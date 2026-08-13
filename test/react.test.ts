@@ -352,7 +352,7 @@ void test('a provider render that never commits leaves no persistence observer b
   }
 
   // A server render runs the provider's render phase and then stops: no commit,
-  // no effects, no cleanup — the same shape as a concurrent render React throws
+  // no effects, no cleanup - the same shape as a concurrent render React throws
   // away, and reproducible without racing the scheduler.
   const markup = renderToStaticMarkup(
     createElement(EnergyProvider, { persistence, applyToDOM: false, children: null }),

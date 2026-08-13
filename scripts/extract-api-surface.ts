@@ -7,7 +7,7 @@
  * hand. `pnpm run docs:check` in kumbatio-docs is the consumer.
  *
  * Values are enumerated by importing the built modules, so they are exactly what a
- * consumer can import — no parsing, no drift. Types have no runtime presence, so
+ * consumer can import - no parsing, no drift. Types have no runtime presence, so
  * they are read from the emitted declarations.
  */
 
@@ -28,7 +28,7 @@ interface ApiSurface {
   readonly version: string
   readonly entryPoints: readonly EntryPointSurface[]
   /**
-   * Members of every exported interface, keyed by interface name — engine methods,
+   * Members of every exported interface, keyed by interface name - engine methods,
    * component props, option bags. Most API drift is a new or renamed member on an
    * existing type (`domTarget`, `whenHidden`), which a top-level export list cannot
    * see.
@@ -170,15 +170,15 @@ const surface = await buildSurface()
 
 /*
  * The frozen surface is only a contract if it is complete. This is the one
- * member the parser used to miss — `resolve<T>()` opens with its own type
- * parameter rather than `(`, so a terminator set without `<` dropped it — and
+ * member the parser used to miss - `resolve<T>()` opens with its own type
+ * parameter rather than `(`, so a terminator set without `<` dropped it - and
  * a member absent from the artifact is a member nobody notices removing.
  */
 const engineMembers = surface.members['EnergyEngine'] ?? []
 for (const required of ['resolve', 'getState', 'setLevel', 'subscribe', 'dispose']) {
   if (!engineMembers.includes(required)) {
     throw new Error(
-      `api-surface.json would omit EnergyEngine.${required} — the declaration parser is not seeing it`,
+      `api-surface.json would omit EnergyEngine.${required} - the declaration parser is not seeing it`,
     )
   }
 }

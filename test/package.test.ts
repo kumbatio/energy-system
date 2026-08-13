@@ -28,7 +28,7 @@ before(
     workDir = mkdtempSync(join(tmpdir(), 'energy-system-pack-'))
 
     // Suppressing lifecycle scripts is load-bearing: `prepack` runs the full
-    // suite, and this test lives inside it — packing with scripts enabled
+    // suite, and this test lives inside it - packing with scripts enabled
     // recurses forever. pnpm has no `--ignore-scripts` flag on `pack`, so this
     // goes through its escape hatch for config not exposed as an option.
     execFileSync('pnpm', ['pack', '--config.ignore-scripts=true', '--pack-destination', workDir], {

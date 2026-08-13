@@ -29,7 +29,7 @@
       "maximum": 9007199254740991
     },
     "origin": {
-      "description": "Stable identity of the producer — an engine instance, a device, a process. Must be unique per producer and stable across that producer's writes. The final tiebreaker compares it lexicographically, so a producer that reuses one identity for different state breaks convergence.",
+      "description": "Stable identity of the producer - an engine instance, a device, a process. Must be unique per producer and stable across that producer's writes. The final tiebreaker compares it lexicographically, so a producer that reuses one identity for different state breaks convergence.",
       "type": "string",
       "minLength": 1
     }

@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        The minimum viable bug report is two sentences. Fill what you can, skip what you can't — a partial report beats no report.
+        The minimum viable bug report is two sentences. Fill what you can, skip what you can't - a partial report beats no report.
   - type: textarea
     id: what-happened
     attributes:

@@ -15,10 +15,10 @@ body:
       label: Behavior per level
       description: What should happen at each level? Levels you skip inherit from the nearest defined one.
       placeholder: |
-        100 — full form, all optional fields, inline validation
-        50 — required fields only, one per screen
-        25 — save draft, offer to resume later
-        0 — hidden entirely
+        100 - full form, all optional fields, inline validation
+        50 - required fields only, one per screen
+        25 - save draft, offer to resume later
+        0 - hidden entirely
     validations:
       required: true
   - type: textarea
