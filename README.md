@@ -652,6 +652,22 @@ The integration patterns these apps proved out are documented in the [Production
 - How to help: [CONTRIBUTING.md](./CONTRIBUTING.md)
 - Live demo: [kumbat.io](https://kumbat.io) adapts its entire interface with this model — move the energy control and watch
 
+## Research
+
+The thinking behind this library is documented in a five-paper preprint series,
+published on Zenodo under CC BY 4.0. Papers 1 and 4 below describe this library
+directly; the others give the evidence base, the self-report position, and the
+work-design framework. Badges link the concept DOI, which always resolves to
+the latest version.
+
+1. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915159.svg)](https://doi.org/10.5281/zenodo.21915159) Energy as State, Not Time — the model this library implements
+2. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915161.svg)](https://doi.org/10.5281/zenodo.21915161) The Myth of the Flat Workday — the cognitive-science evidence
+3. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915163.svg)](https://doi.org/10.5281/zenodo.21915163) Self-Report Over Surveillance — why the state is declared, never inferred
+4. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915165.svg)](https://doi.org/10.5281/zenodo.21915165) Capacity-Aware Software Design — the pattern language this library ships
+5. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21915167.svg)](https://doi.org/10.5281/zenodo.21915167) Energy > Time — the framework, from individuals to teams
+
+To cite the software itself, see [CITATION.cff](./CITATION.cff).
+
 ## License
 
 [MIT](./LICENSE)

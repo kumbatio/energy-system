@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below. To cite the research behind it, use the referenced papers' DOIs."
+type: software
+title: "energy-system"
+abstract: "Framework-agnostic TypeScript library for energy-aware application behavior: cognitive capacity as explicit, user-declared application state, with decoupled adaptation strategies."
+authors:
+  - family-names: Pritis
+    given-names: Dominikos
+license: MIT
+repository-code: "https://github.com/kumbatio/energy-system"
+url: "https://kumbat.io"
+version: 2.0.0
+references:
+  - type: article
+    title: "Energy as State, Not Time: Rethinking Productivity Models for Variable-Capacity Work"
+    authors:
+      - family-names: Pritis
+        given-names: Dominikos
+    year: 2026
+    doi: 10.5281/zenodo.21915159
+  - type: article
+    title: "Capacity-Aware Software Design: A Pattern Language for Energy-Adaptive Applications"
+    authors:
+      - family-names: Pritis
+        given-names: Dominikos
+    year: 2026
+    doi: 10.5281/zenodo.21915165
