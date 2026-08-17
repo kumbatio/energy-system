@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@entro314labs/release-kit':
+        specifier: ^1.0.2
+        version: 1.0.2
       '@happy-dom/global-registrator':
         specifier: ^20.11.2
         version: 20.11.2
@@ -46,6 +49,11 @@ importers:
         version: 7.0.2
 
 packages:
+
+  '@entro314labs/release-kit@1.0.2':
+    resolution: {integrity: sha512-IeQl5yapxOZnHpaicTioUjW67D7cuOnrhZ0F4HFS46GxaJ/RtnVf4+f6A7zvafpF/QbNy/+7qgqsa2WNja0RSw==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -735,6 +743,8 @@ packages:
         optional: true
 
 snapshots:
+
+  '@entro314labs/release-kit@1.0.2': {}
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true

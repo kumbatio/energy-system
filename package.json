@@ -67,6 +67,7 @@
     "conformance:check": "TZ=UTC tsx scripts/extract-conformance.ts --check"
   },
   "devDependencies": {
+    "@entro314labs/release-kit": "^1.0.2",
     "@happy-dom/global-registrator": "^20.11.2",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
@@ -95,5 +96,5 @@
   "engines": {
     "node": ">=24.19.0"
   },
-  "packageManager": "pnpm@11.21.0"
+  "packageManager": "pnpm@11.22.0"
 }
