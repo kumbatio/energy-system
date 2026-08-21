@@ -14,6 +14,8 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-08-21
+
 ### Changed
 
 - **The Rest level description now opens with "Recovery." instead of
