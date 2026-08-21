@@ -1,6 +1,6 @@
 {
   "name": "@kumbatio/energy-system",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
   "license": "MIT",
