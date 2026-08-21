@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-08-21
+
+### Bug Fixes
+
+- update @entro314labs/release-kit to version 2.9.0 and standardize string quotes in CITATION.cff ([ea3d9c1](https://github.com/kumbatio/energy-system/commit/ea3d9c1))
+
 ## [2.0.1] - 2026-08-21
 
 ### Changed
@@ -189,3 +195,13 @@ framework-agnostic engine with strategy resolution, the first three built-in
 strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
+
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.2...HEAD
+[2.0.2]: https://github.com/kumbatio/energy-system/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/kumbatio/energy-system/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/kumbatio/energy-system/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/kumbatio/energy-system/compare/v0.6.0...v1.0.0
+[0.6.0]: https://github.com/kumbatio/energy-system/compare/v0.5.4...v0.6.0
+[0.5.4]: https://github.com/kumbatio/energy-system/compare/v0.4.0...v0.5.4
+[0.4.0]: https://github.com/kumbatio/energy-system/compare/v0.1.0...v0.4.0
+[0.1.0]: https://github.com/kumbatio/energy-system/releases/tag/v0.1.0
