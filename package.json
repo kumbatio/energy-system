@@ -64,26 +64,27 @@
     "lint:fix-unsafe": "oxlint --import-plugin --type-aware --type-check --vitest-plugin --fix --fix-suggestions --fix-dangerously . && oxfmt --write .",
     "check:fix-suggestions": "oxlint --import-plugin   --type-aware --type-check --vitest-plugin --fix --fix-suggestions . && oxfmt --write .",
     "conformance": "TZ=UTC tsx scripts/extract-conformance.ts",
-    "conformance:check": "TZ=UTC tsx scripts/extract-conformance.ts --check"
+    "conformance:check": "TZ=UTC tsx scripts/extract-conformance.ts --check",
+    "release": "release-kit"
   },
   "devDependencies": {
-    "@entro314labs/release-kit": "^1.0.2",
-    "@happy-dom/global-registrator": "^20.11.2",
+    "@entro314labs/release-kit": "^2.8.0",
+    "@happy-dom/global-registrator": "^20.11.6",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "ajv": "8.20.0",
-    "oxfmt": "0.63.0",
-    "oxlint": "1.78.0",
+    "oxfmt": "0.64.0",
+    "oxlint": "1.79.0",
     "oxlint-tsgolint": "^7.0.2001",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "typescript": "next"
   },
   "peerDependencies": {
-    "@types/react": ">=19.2.0",
-    "react": ">=19.2.0"
+    "@types/react": ">=19.2.18",
+    "react": ">=19.2.8"
   },
   "peerDependenciesMeta": {
     "@types/react": {
