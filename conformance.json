@@ -1,6 +1,6 @@
 {
   "$schema": "./spec/conformance.schema.json",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "timezone": "UTC",
   "note": "Generated from the built library by scripts/extract-conformance.ts. See SPEC.md for the normative rules these vectors encode, including the runtime invariants that no vector can express.",
   "levels": [
@@ -56,7 +56,7 @@
       "value": 0,
       "key": "rest",
       "label": "Rest",
-      "description": "Recovery. Consumption only - reading, reflecting.",
+      "description": "Recovery. Consumption only — reading, reflecting.",
       "cognitiveProfile": {
         "decisionCapacity": "none",
         "focusDuration": "none",
