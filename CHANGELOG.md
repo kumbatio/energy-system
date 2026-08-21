@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-08-21
+
+### Miscellaneous Chores
+
+- regenerate api-surface.json and conformance.json ([427d02d](https://github.com/kumbatio/energy-system/commit/427d02d))
+
 ## [2.0.2] - 2026-08-21
 
 ### Bug Fixes
@@ -196,7 +202,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.2...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.3...HEAD
+[2.0.3]: https://github.com/kumbatio/energy-system/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/kumbatio/energy-system/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/kumbatio/energy-system/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/kumbatio/energy-system/compare/v1.0.0...v2.0.0
