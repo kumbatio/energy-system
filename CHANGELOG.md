@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-08-21
+
+### Miscellaneous Chores
+
+- update version to 2.0.3 in api-surface.json and conformance.json ([3a21713](https://github.com/kumbatio/energy-system/commit/3a21713))
+
 ## [2.0.3] - 2026-08-21
 
 ### Miscellaneous Chores
@@ -202,7 +208,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.3...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.4...HEAD
+[2.0.4]: https://github.com/kumbatio/energy-system/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/kumbatio/energy-system/compare/v2.0.2...v2.0.3
 [2.0.2]: https://github.com/kumbatio/energy-system/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/kumbatio/energy-system/compare/v2.0.0...v2.0.1
