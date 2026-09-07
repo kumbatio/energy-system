@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.0.6] - 2026-09-07
+
+### Dependencies
+
+- **deps:** update dev tooling and pin pnpm 11.26.0 ([a306b1a](https://github.com/kumbatio/energy-system/commit/a306b1a))
+
 ## [2.0.5] - 2026-08-21
 
 ### Fixed
@@ -214,7 +220,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.5...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.6...HEAD
+[2.0.6]: https://github.com/kumbatio/energy-system/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/kumbatio/energy-system/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/kumbatio/energy-system/compare/v2.0.3...v2.0.4
 [2.0.3]: https://github.com/kumbatio/energy-system/compare/v2.0.2...v2.0.3
