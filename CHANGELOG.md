@@ -14,6 +14,15 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-10
+
+### Changed
+
+- Node 24.20.0 or newer is now required (`engines` floor raised from 24.19.0). ([f480fad](https://github.com/kumbatio/energy-system/commit/f480fad))
+### Fixed
+
+- The published package again builds `dist` with type declarations, declaration maps, and source maps, restoring the `tsconfig.build.json` that `build:ts` and `prepack` depend on. ([3046fa4](https://github.com/kumbatio/energy-system/commit/3046fa4))
+
 ## [2.0.6] - 2026-09-07
 
 ### Dependencies
@@ -220,7 +229,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.0.6...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/kumbatio/energy-system/compare/v2.0.6...v2.1.0
 [2.0.6]: https://github.com/kumbatio/energy-system/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/kumbatio/energy-system/compare/v2.0.4...v2.0.5
 [2.0.4]: https://github.com/kumbatio/energy-system/compare/v2.0.3...v2.0.4
