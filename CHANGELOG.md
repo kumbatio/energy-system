@@ -19,6 +19,7 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 ### Changed
 
 - Node 24.20.0 or newer is now required (`engines` floor raised from 24.19.0). ([f480fad](https://github.com/kumbatio/energy-system/commit/f480fad))
+
 ### Fixed
 
 - The published package again builds `dist` with type declarations, declaration maps, and source maps, restoring the `tsconfig.build.json` that `build:ts` and `prepack` depend on. ([3046fa4](https://github.com/kumbatio/energy-system/commit/3046fa4))
