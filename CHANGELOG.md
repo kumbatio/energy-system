@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-09-10
+
+### Changed
+
+- Node.js 24.20.0 or later is now required (previously 24.19.0) ([f480fad](https://github.com/kumbatio/energy-system/commit/f480fad))
+
 ## [2.1.0] - 2026-09-10
 
 ### Changed
@@ -230,7 +236,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/kumbatio/energy-system/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/kumbatio/energy-system/compare/v2.0.6...v2.1.0
 [2.0.6]: https://github.com/kumbatio/energy-system/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/kumbatio/energy-system/compare/v2.0.4...v2.0.5
