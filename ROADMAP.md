@@ -63,9 +63,11 @@ second consumer proves what the shared machinery actually is.
 
 ## M2 - Documentation for real adoption
 
-- [ ] Docs readable at energy `25`: short pages, one concept each, optional depth
+- [x] Docs readable at energy `25`: short pages, one concept each, optional depth - [docs.kumbat.io](https://docs.kumbat.io)
 - [ ] Example gallery: navbar, dashboard, form, and notification patterns at each level
-- [ ] Adaptation strategy authoring guide
+- [x] [Adaptation strategy authoring guide](https://docs.kumbat.io/docs/energy-system/guides/authoring-strategies)
+- [x] Generated API reference, built from the package's own declarations so it cannot drift from the shipped surface - [docs.kumbat.io/docs/api/reference](https://docs.kumbat.io/docs/api/reference)
+- [x] [Upgrade guide](https://docs.kumbat.io/docs/energy-system/guides/upgrading) covering what each major breaks
 
 ## M3 - Reference integration
 
@@ -97,6 +99,37 @@ later want, and it is worth more than any single port would have been.
       SPEC.md §10 so they bind ports too
 - [x] Coverage across all 20 level transitions in both directions, strategy
       composition, and the model's directional invariants
+
+## Shipped (v2.0) - Corrections to the freeze
+
+Four correctness bugs found in `1.0` after it was frozen, shipped as a major
+because for this package behavior is API even when no type signature moves.
+Upgrading from `1.x` breaks you only if you pinned React below 19.2, persisted
+state carrying properties outside the published schema, or depended on a batched
+notification being delivered after suppression started.
+
+- [x] The notification gate **re-judges what it is holding** when energy or
+      suppression changes. An intent was classified once, at publish time, and an
+      open batch window was then delivered under whatever policy was in force
+      later - so something admitted at Steady could arrive mid-focus-session, and
+      something batched at Steady could surface at Rest with every channel
+      disabled. `flush()` now overrides the wait, not the policy
+- [x] External state is validated against the published JSON Schema **exactly**:
+      unknown properties are rejected rather than silently trimmed, so two
+      implementations can no longer exchange a state and disagree about what they
+      exchanged. Fractional timestamps are rejected for the same reason
+- [x] A configured `originId` no longer corrupts the unproduced sentinel, which
+      SPEC.md §3.2 requires to stay distinguishable from a real state
+- [x] `api-surface.json` includes `EnergyEngine.resolve()` - the declaration
+      parser did not recognise generic members, and a method absent from the
+      freeze is a method nobody notices removing
+- [x] The guard itself: `pnpm test` used to run the full build first, so the
+      drift check compared `conformance.json` against a copy it had just written
+      and could not fail. Generation belongs to `build`; both generators take
+      `--check` and the suite verifies rather than regenerates
+- [x] React peer range raised to `>=19.2.0` for `react` and `@types/react` - the
+      React entry point imports `<Activity>`, so the previous `>=19` advertised a
+      compatibility that throws on first render
 
 ## M5 - Beyond the current adapters
 

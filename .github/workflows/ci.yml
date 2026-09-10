@@ -21,7 +21,7 @@ jobs:
       # which is what makes a stale lockfile fail rather than get repaired.
       - uses: pnpm/setup@v2
         with:
-          runtime: node@24.19.0
+          runtime: node@24.20.0
           cache: true
           install: false
       - run: pnpm install --frozen-lockfile

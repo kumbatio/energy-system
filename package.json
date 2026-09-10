@@ -68,17 +68,17 @@
     "release": "release-kit"
   },
   "devDependencies": {
-    "@entro314labs/release-kit": "^2.9.3",
-    "@happy-dom/global-registrator": "^20.14.0",
-    "@types/node": "^26.4.1",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.7",
+    "@entro314labs/release-kit": "^2.9.4",
+    "@happy-dom/global-registrator": "^20.14.3",
+    "@types/node": "^26.5.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "ajv": "8.20.0",
-    "oxfmt": "0.66.0",
-    "oxlint": "1.81.0",
+    "oxfmt": "0.67.0",
+    "oxlint": "1.82.0",
     "oxlint-tsgolint": "^7.0.2001",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tsx": "^4.23.13",
     "typescript": "next"
   },
@@ -95,7 +95,7 @@
     }
   },
   "engines": {
-    "node": ">=24.19.0"
+    "node": ">=24.20.0"
   },
   "packageManager": "pnpm@11.26.0"
 }
