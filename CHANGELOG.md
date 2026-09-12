@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-09-12
+
+### Changed
+
+- React and `@types/react` 19.3.0 or later is now required as a peer dependency (previously `>=19.2.8` and `>=19.2.18`), and Node.js 24.21.0 or later is now required (previously 24.20.0). ([f731c06](https://github.com/kumbatio/energy-system/commit/f731c06))
+
 ## [2.1.1] - 2026-09-10
 
 ### Changed
@@ -236,7 +242,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/kumbatio/energy-system/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/kumbatio/energy-system/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/kumbatio/energy-system/compare/v2.0.6...v2.1.0
 [2.0.6]: https://github.com/kumbatio/energy-system/compare/v2.0.5...v2.0.6
