@@ -17,6 +17,7 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 ### Fixed
 
 - A manual `engine.hydrate()` no longer reverts a newer local write. When storage lagged the engine — a save still in flight, or one waiting on retry backoff — hydrating applied the older stored state unconditionally and then persisted it over the person's latest choice. Storage now replaces the current state only when it is the unproduced default or SPEC.md §4 prefers the stored state.
+- `NotificationGate.dispose()` no longer loses a notification published re-entrantly from `onDeliver` during its final `released` delivery. The gate is inert before that delivery, so the re-entrant `publish()` throws instead of queueing into a gate nothing drains.
 
 ## [2.1.2] - 2026-09-12
 

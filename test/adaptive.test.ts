@@ -652,3 +652,38 @@ void test('gate and session controller compose: focus defers, end releases', () 
   controller.dispose()
   gate.dispose()
 })
+
+/*
+ * `onDeliver` is host code and may publish re-entrantly - a follow-up reminder
+ * scheduled from the delivery handler is the obvious case. During the final
+ * 'released' delivery of `dispose()` that publish used to land in a queue no
+ * one would ever drain again: §9.1's "never silently drop", broken by the
+ * very call that promises to surface everything. It must fail loudly instead.
+ */
+void test('a publish re-entering from the final dispose delivery fails loudly, never queues', () => {
+  const engine = createEnergyEngine({ initialLevel: 0 })
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  try {
+    let publishError: unknown
+    const gate = createNotificationGate(engine, {
+      onDeliver(delivery) {
+        if (delivery.reason !== 'released') return
+        try {
+          gate.publish({ payload: 'follow-up' })
+        } catch (err: unknown) {
+          publishError = err
+        }
+      },
+    })
+
+    assert.equal(gate.publish({ payload: 'held' }), 'deferred')
+    gate.dispose()
+
+    assert.match(String(publishError), /disposed notification gate/)
+    assert.deepEqual(gate.pendingCount(), { batched: 0, deferred: 0 })
+  } finally {
+    console.error = originalConsoleError
+  }
+})

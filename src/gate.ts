@@ -384,17 +384,20 @@ export function createNotificationGate(
     dispose() {
       if (disposed) return
 
-      // Surface everything still held before going inert: an intent that
-      // entered the gate must always exit through onDeliver.
+      // Inert BEFORE the final delivery: `onDeliver` is host code, and a
+      // publish re-entering from it would otherwise land in a queue nothing
+      // drains again. It throws instead, which `deliver` surfaces.
+      disposed = true
+      unsubscribe()
+
+      // Surface everything still held: an intent that entered the gate must
+      // always exit through onDeliver.
       clearBatchTimer()
       const pending = [...batch, ...deferred]
       batch = []
       deferred = []
       batchOpenedAt = undefined
       deliver(pending, 'released')
-
-      disposed = true
-      unsubscribe()
     },
   }
 }
