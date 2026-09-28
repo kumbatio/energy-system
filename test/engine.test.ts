@@ -94,6 +94,57 @@ void test('hydrate does not override a newer local change', async () => {
   assert.equal(engine.getState().source, 'manual')
 })
 
+/*
+ * A manual `hydrate()` is a second reader of storage, not a reset. When the
+ * newest local write has not reached storage yet - a save in flight, or one
+ * that failed and is waiting on backoff - storage holds an OLDER state, and
+ * applying it unconditionally reverts the person's latest choice and then
+ * persists the revert over it. §4 decides, exactly as for any observed state.
+ */
+void test('a manual hydrate never replaces a newer local write with older storage', async () => {
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  const olderStored = createEnergyState(100, 'manual', 500, 0, 'previous-session')
+  let now = 1000
+  const saved: EnergyState[] = []
+  let failSaves = true
+  const engine = createEnergyEngine({
+    clock: () => now,
+    originId: 'manual-hydrate-test',
+    persistence: {
+      async load() {
+        return saved.at(-1) ?? olderStored
+      },
+      async save(state) {
+        if (failSaves) throw new Error('storage unavailable')
+        saved.push(state)
+      },
+    },
+  })
+
+  try {
+    await engine.hydrate()
+    assert.equal(engine.getState().level, 100)
+
+    now = 2000
+    engine.setLevel(25)
+    await sleep(0)
+
+    // The write failed, so storage still holds the older state.
+    await engine.hydrate()
+    assert.equal(engine.getState().level, 25)
+    assert.equal(engine.getState().timestamp, 2000)
+
+    failSaves = false
+    await engine.flush()
+    assert.equal(saved.at(-1)?.level, 25, 'the newer write, not the revert, must reach storage')
+  } finally {
+    engine.dispose()
+    console.error = originalConsoleError
+  }
+})
+
 void test('newer observed external state is applied even while a save is in flight', async () => {
   let observeState: ((state: ReturnType<typeof createEnergyState>) => void) | undefined
 

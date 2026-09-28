@@ -4,6 +4,7 @@ import {
   createEnergyOrigin,
   createEnergyState,
   cycleEnergyLevel,
+  isUnproducedState,
   parseExternalEnergyState,
 } from './levels.js'
 import { isPreferredEnergyState } from './reconcile.js'
@@ -66,7 +67,11 @@ export interface EnergyEngine {
   subscribe(listener: EnergyChangeListener): () => void
   /** Resolve a strategy against current energy state */
   resolve<T>(strategy: AdaptationStrategy<T>): T
-  /** Load persisted state (called automatically, but can be called manually) */
+  /**
+   * Load persisted state (called automatically, but can be called manually).
+   * The stored state replaces the current one only when the current state is
+   * the unproduced default or `isPreferredEnergyState` prefers the stored one.
+   */
   hydrate(): Promise<void>
   /**
    * Wait until the current state version is durably persisted.
@@ -399,7 +404,6 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     async hydrate() {
       if (!persistence || disposed) return
 
-      const hydrateStartVersion = stateVersion
       let stored: EnergyState | null
 
       try {
@@ -425,7 +429,11 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
 
       if (isSameState(normalized, state)) return
 
-      if (hydrateStartVersion === stateVersion || isPreferredEnergyState(normalized, state)) {
+      // Storage replaces the untouched default unconditionally (SPEC.md §3.2),
+      // and anything else only when §4 prefers it. A later manual hydrate can
+      // read storage that lags this engine - a save still in flight, or one
+      // waiting on backoff - and must not revert the newer local state.
+      if (isUnproducedState(state) || isPreferredEnergyState(normalized, state)) {
         applyState(normalized)
       }
     },

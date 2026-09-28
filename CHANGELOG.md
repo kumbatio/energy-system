@@ -14,6 +14,10 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+### Fixed
+
+- A manual `engine.hydrate()` no longer reverts a newer local write. When storage lagged the engine — a save still in flight, or one waiting on retry backoff — hydrating applied the older stored state unconditionally and then persisted it over the person's latest choice. Storage now replaces the current state only when it is the unproduced default or SPEC.md §4 prefers the stored state.
+
 ## [2.1.2] - 2026-09-12
 
 ### Changed
