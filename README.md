@@ -218,6 +218,11 @@ capacity dipped. `<EnergyGate>` hides through React 19.2's `<Activity>`:
 component state, DOM and scroll position survive, effects are torn down while
 hidden and re-run on reveal, and hidden content is not server-rendered.
 
+Hidden content leaves the focus order. If a level change hides the element that
+had focus, the browser returns focus to the document; the gate cannot know a
+better place for it, so move it from `onLevelChange` when your layout has one
+([SPEC.md §10.2](./SPEC.md#10-accessibility-requirements)).
+
 Opt out for subtrees whose cost is worth reclaiming - media, canvases, live
 connections:
 

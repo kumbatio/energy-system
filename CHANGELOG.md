@@ -14,6 +14,9 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+### Changed
+
+- SPEC.md §10.2 now says who owns focus when a level change hides the focused element. A surface that only hides — a stylesheet rule, a headless gate like `<EnergyGate>` — must take the element out of the focus order, which the reference stylesheet and `<EnergyGate>` do; choosing a better destination than the document is the host's, from the level-change event. The requirement previously read as if the reference implementation moved focus itself, which it never did.
 ### Fixed
 
 - A manual `engine.hydrate()` no longer reverts a newer local write. When storage lagged the engine — a save still in flight, or one waiting on retry backoff — hydrating applied the older stored state unconditionally and then persisted it over the person's latest choice. Storage now replaces the current state only when it is the unproduced default or SPEC.md §4 prefers the stored state.

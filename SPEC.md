@@ -379,9 +379,13 @@ requirements, not suggestions.
 1. **Hiding MUST remove from the accessibility tree.** A level-hidden element
    **MUST NOT** remain focusable or reachable by assistive technology. Visual
    hiding alone leaves a keyboard trap into content that isn't there.
-2. **Focus MUST survive a level change.** If the focused element is hidden by a
-   transition, focus **MUST** be moved somewhere sensible and **MUST NOT** be
-   left on a removed node.
+2. **Focus MUST survive a level change.** If a transition hides the focused
+   element, focus **MUST NOT** be left on it, and it **MUST** end up somewhere
+   sensible. A surface that only hides - a stylesheet rule, a headless gate -
+   cannot know where that is. It **MUST** take the element out of the focus
+   order (`display: none` does, and the platform then returns focus to the
+   document), and the choice of a better destination is the host's, made from
+   the level-change event it already receives (see item 4).
 3. **Faded chrome MUST reveal on focus, not only on hover.** A control at 10%
    opacity that a keyboard user can tab into but cannot see fails WCAG 2.4.7.
    Every hover-reveal rule **MUST** have a `:focus-within` twin.
