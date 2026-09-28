@@ -26,3 +26,6 @@ jobs:
           install: false
       - run: pnpm install --frozen-lockfile
       - run: pnpm run validate
+      # The release-age gate is off by design (see pnpm-workspace.yaml); this
+      # is the backstop that comment relies on.
+      - run: pnpm audit --audit-level high

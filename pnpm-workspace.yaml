@@ -12,5 +12,5 @@ allowBuilds:
 # The trade is real: a compromised release is caught later here than it would
 # be with the gate on. What backstops it instead is a zero-runtime-dependency
 # package (nothing shipped to consumers can be affected), a committed lockfile,
-# and `pnpm audit` in the validation run.
+# and `pnpm audit` (high and critical) in CI.
 minimumReleaseAge: 0
