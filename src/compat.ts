@@ -1,5 +1,5 @@
-import { isEnergyLevel } from './levels.js'
-import type { EnergyLevel } from './types.js'
+import { isEnergyLevel } from './levels.ts'
+import type { EnergyLevel } from './types.ts'
 
 const NATIVE_ENERGY_LEVELS: readonly EnergyLevel[] = [100, 75, 50, 25, 0]
 

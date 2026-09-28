@@ -1,6 +1,6 @@
-import { createEnergyState, isEnergyLevel } from './levels.js'
-import { uiVisibilityStrategy } from './strategies.js'
-import type { EnergyChangeListener, EnergyLevel } from './types.js'
+import { createEnergyState, isEnergyLevel } from './levels.ts'
+import { uiVisibilityStrategy } from './strategies.ts'
+import type { EnergyChangeListener, EnergyLevel } from './types.ts'
 
 const ATTR = 'energyLevel'
 

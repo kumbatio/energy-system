@@ -16,8 +16,8 @@ export type {
   FocusDuration,
   InterruptionTolerance,
   TaskComplexity,
-} from './types.js'
-export { ENERGY_LEVEL_VALUES, ENERGY_PRESENCE_VALUES, ENERGY_SOURCE_VALUES } from './types.js'
+} from './types.ts'
+export { ENERGY_LEVEL_VALUES, ENERGY_PRESENCE_VALUES, ENERGY_SOURCE_VALUES } from './types.ts'
 
 // Level definitions and pure functions
 export {
@@ -32,25 +32,25 @@ export {
   isEnergySource,
   isHigherEnergy,
   isUnproducedState,
-} from './levels.js'
+} from './levels.ts'
 // Compatibility helpers for non-native external level models
-export type { ExternalLevelCompatibility, ExternalLevelCompatibilityOptions } from './compat.js'
+export type { ExternalLevelCompatibility, ExternalLevelCompatibilityOptions } from './compat.ts'
 export {
   createExternalLevelCompatibility,
   cycleDiscreteLevel,
   mapToNearestDiscreteLevel,
   mapToNearestEnergyLevel,
-} from './compat.js'
+} from './compat.ts'
 
 // State reconciliation (which of two states for the same user wins)
-export { isPreferredEnergyState } from './reconcile.js'
+export { isPreferredEnergyState } from './reconcile.ts'
 
 // Derived metrics
-export { getEnergyMetrics } from './metrics.js'
+export { getEnergyMetrics } from './metrics.ts'
 
 // Engine
-export type { EnergyEngine, EnergyEngineOptions } from './engine.js'
-export { createEnergyEngine } from './engine.js'
+export type { EnergyEngine, EnergyEngineOptions } from './engine.ts'
+export { createEnergyEngine } from './engine.ts'
 
 // Built-in strategies
 export type {
@@ -59,17 +59,17 @@ export type {
   NotificationConfig,
   TaskComplexityConfig,
   UIVisibilityConfig,
-} from './strategies.js'
+} from './strategies.ts'
 export {
   autonomyStrategy,
   interactionForgivenessStrategy,
   notificationStrategy,
   taskComplexityStrategy,
   uiVisibilityStrategy,
-} from './strategies.js'
+} from './strategies.ts'
 
 // Presence annotation (which energy states an element belongs to)
-export type { EnergyPresenceSpec } from './presence.js'
+export type { EnergyPresenceSpec } from './presence.ts'
 export {
   createPresenceStrategy,
   defineEnergyPresence,
@@ -78,7 +78,7 @@ export {
   presenceAtOrAbove,
   presenceAtOrBelow,
   resolveEnergyPresence,
-} from './presence.js'
+} from './presence.ts'
 
 // Focus sessions (time-boxed suppression with auto-expiry)
 export type {
@@ -89,17 +89,17 @@ export type {
   FocusSessionListener,
   FocusSuppressible,
   StartFocusSessionOptions,
-} from './session.js'
-export { createFocusSessionController, isSessionExpired, sessionRemainingMs } from './session.js'
+} from './session.ts'
+export { createFocusSessionController, isSessionExpired, sessionRemainingMs } from './session.ts'
 
 // Deferral ("not now") presets and energy-aware ordering
-export type { DeferralConfig, DeferralPreset, DeferralPresetOptions } from './defer.js'
+export type { DeferralConfig, DeferralPreset, DeferralPresetOptions } from './defer.ts'
 export {
   DEFERRAL_PRESET_IDS,
   createDeferralPresets,
   deferralStrategy,
   resolveDeferral,
-} from './defer.js'
+} from './defer.ts'
 
 // Inbound demand admission (energy-resolved policy for obligation-bearing arrivals)
 export type {
@@ -111,8 +111,8 @@ export type {
   DemandOutcome,
   DemandOutcomeReason,
   OriginatorTier,
-} from './demand.js'
-export { demandAdmissionStrategy, isOriginatorTier, resolveDemandOutcome } from './demand.js'
+} from './demand.ts'
+export { demandAdmissionStrategy, isOriginatorTier, resolveDemandOutcome } from './demand.ts'
 
 // Notification gate (runtime enforcement of NotificationConfig)
 export type {
@@ -125,9 +125,9 @@ export type {
   NotificationGateOptions,
   NotificationPriority,
   PublishOutcome,
-} from './gate.js'
+} from './gate.ts'
 export {
   createNotificationGate,
   isNotificationPriority,
   resolveNotificationOutcome,
-} from './gate.js'
+} from './gate.ts'

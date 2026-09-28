@@ -75,7 +75,7 @@ function readCommitted(): Conformance {
 void test('the committed vectors match the library that generates them', () => {
   const before = readFileSync(new URL('conformance.json', ROOT), 'utf8')
 
-  execFileSync('node', ['--import', 'tsx', 'scripts/extract-conformance.ts', '--check'], {
+  execFileSync('node', ['scripts/extract-conformance.ts', '--check'], {
     cwd: ROOT.pathname,
     env: { ...process.env, TZ: 'UTC' },
     stdio: 'pipe',
@@ -91,7 +91,7 @@ void test('the committed vectors match the library that generates them', () => {
 void test('the committed API surface matches the declarations that generate it', () => {
   const before = readFileSync(new URL('api-surface.json', ROOT), 'utf8')
 
-  execFileSync('node', ['--import', 'tsx', 'scripts/extract-api-surface.ts', '--check'], {
+  execFileSync('node', ['scripts/extract-api-surface.ts', '--check'], {
     cwd: ROOT.pathname,
     stdio: 'pipe',
   })
@@ -144,7 +144,7 @@ void test('the vectors declare a schema that ships alongside them', () => {
 void test('the generator refuses to run outside UTC', () => {
   assert.throws(
     () =>
-      execFileSync('node', ['--import', 'tsx', 'scripts/extract-conformance.ts'], {
+      execFileSync('node', ['scripts/extract-conformance.ts'], {
         cwd: ROOT.pathname,
         env: { ...process.env, TZ: 'Europe/Athens' },
         stdio: 'pipe',

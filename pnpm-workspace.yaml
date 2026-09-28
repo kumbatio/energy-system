@@ -1,10 +1,7 @@
-allowBuilds:
-  esbuild: true
-
 # The release-age gate is off by choice, not by neglect.
 #
 # This package's version policy is deliberately bleeding-edge: dev tooling
-# tracks latest, including same-day publishes (oxlint, oxfmt, tsx). pnpm's
+# tracks latest, including same-day publishes (oxlint, oxfmt, typescript@next). pnpm's
 # default cutoff rejects exactly those, so leaving it on would mean carrying a
 # per-package exception list that needs editing on most upgrades - a gate
 # nobody can satisfy gets disabled in a hurry rather than tuned.

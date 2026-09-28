@@ -1,6 +1,6 @@
-import { getEnergyLevel } from './levels.js'
-import type { AutonomyConfig } from './strategies.js'
-import type { AdaptationStrategy, EnergyLevel } from './types.js'
+import { getEnergyLevel } from './levels.ts'
+import type { AutonomyConfig } from './strategies.ts'
+import type { AdaptationStrategy, EnergyLevel } from './types.ts'
 
 /**
  * Inbound demand - anything arriving from outside that asks for the user's

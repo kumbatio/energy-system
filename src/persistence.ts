@@ -1,5 +1,5 @@
-import { parseExternalEnergyState } from './levels.js'
-import type { EnergyPersistence, EnergyState } from './types.js'
+import { parseExternalEnergyState } from './levels.ts'
+import type { EnergyPersistence, EnergyState } from './types.ts'
 
 /*
  * `null` means "nothing usable is stored", which the engine treats as a fresh

@@ -1,7 +1,7 @@
-import type { EnergyEngine, EnergyEngineOptions } from './engine.js'
-import type { GateScheduler } from './gate.js'
-import { getEnergyMetrics } from './metrics.js'
-import { taskComplexityStrategy } from './strategies.js'
+import type { EnergyEngine, EnergyEngineOptions } from './engine.ts'
+import type { GateScheduler } from './gate.ts'
+import { getEnergyMetrics } from './metrics.ts'
+import { taskComplexityStrategy } from './strategies.ts'
 
 /**
  * Focus sessions - time-boxed "one thing at a time" windows layered on top of

@@ -50,10 +50,10 @@
   "scripts": {
     "build:ts": "tsc -p tsconfig.build.json",
     "build": "pnpm run build:ts && pnpm run api:surface && pnpm run conformance",
-    "api:surface": "tsx scripts/extract-api-surface.ts",
-    "api:surface:check": "tsx scripts/extract-api-surface.ts --check",
+    "api:surface": "node scripts/extract-api-surface.ts",
+    "api:surface:check": "node scripts/extract-api-surface.ts --check",
     "check-types": "tsc --noEmit -p tsconfig.json",
-    "test": "pnpm run build:ts && node --test --import tsx",
+    "test": "pnpm run build:ts && node --test 'test/**/*.test.ts'",
     "validate": "pnpm run format:check && pnpm run lint && pnpm run check-types && pnpm run test && pnpm run pack:dry-run",
     "prepack": "pnpm run format:check && pnpm run lint && pnpm run check-types && pnpm run test",
     "pack:dry-run": "pnpm pack --dry-run",
@@ -63,8 +63,8 @@
     "lint:fix": "oxlint --type-aware --type-check --fix . && oxfmt --write .",
     "lint:fix-unsafe": "oxlint --type-aware --type-check --fix --fix-suggestions --fix-dangerously . && oxfmt --write .",
     "check:fix-suggestions": "oxlint --type-aware --type-check --fix --fix-suggestions . && oxfmt --write .",
-    "conformance": "TZ=UTC tsx scripts/extract-conformance.ts",
-    "conformance:check": "TZ=UTC tsx scripts/extract-conformance.ts --check",
+    "conformance": "TZ=UTC node scripts/extract-conformance.ts",
+    "conformance:check": "TZ=UTC node scripts/extract-conformance.ts --check",
     "release": "release-kit"
   },
   "devDependencies": {
@@ -79,7 +79,6 @@
     "oxlint-tsgolint": "^7.0.2003",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "tsx": "^4.23.15",
     "typescript": "next"
   },
   "peerDependencies": {

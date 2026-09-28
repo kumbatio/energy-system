@@ -1,5 +1,5 @@
-import { getEnergyLevel, isUnproducedState } from './levels.js'
-import type { EnergyLevel, EnergyMetrics, EnergyState } from './types.js'
+import { getEnergyLevel, isUnproducedState } from './levels.ts'
+import type { EnergyLevel, EnergyMetrics, EnergyState } from './types.ts'
 
 function freezeObject<T extends object>(value: T): Readonly<T> {
   return Object.freeze(value)

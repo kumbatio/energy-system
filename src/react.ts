@@ -23,11 +23,11 @@ import {
   useSyncExternalStore,
 } from 'react'
 
-import { applyEnergyLevel } from './dom.js'
-import type { EnergyEngine } from './engine.js'
-import { createEnergyEngine } from './engine.js'
-import { getEnergyLevel, getEnergyLevels } from './levels.js'
-import { defineEnergyPresence, presenceAtOrAbove, resolveEnergyPresence } from './presence.js'
+import { applyEnergyLevel } from './dom.ts'
+import type { EnergyEngine } from './engine.ts'
+import { createEnergyEngine } from './engine.ts'
+import { getEnergyLevel, getEnergyLevels } from './levels.ts'
+import { defineEnergyPresence, presenceAtOrAbove, resolveEnergyPresence } from './presence.ts'
 import type {
   AdaptationStrategy,
   EnergyChangeListener,
@@ -38,7 +38,7 @@ import type {
   EnergyPresenceMap,
   EnergySource,
   EnergyState,
-} from './types.js'
+} from './types.ts'
 
 // ── Context ──
 

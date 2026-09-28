@@ -11,11 +11,16 @@
     "exactOptionalPropertyTypes": true,
     "lib": ["ESNext", "DOM"],
     "jsx": "react-jsx",
-    // The checking config covers src *and* test: `tsc -p tsconfig.build.json`
-    // narrows back to src for emit. Tests import source through explicit `.ts`
-    // specifiers, which only resolve under noEmit.
+    // Everything imports through explicit `.ts` specifiers, so Node runs src,
+    // tests and scripts directly with type stripping - no loader. Emit rewrites
+    // those specifiers to `.js`, and erasableSyntaxOnly rejects the syntax
+    // (enums, namespaces, parameter properties) stripping cannot run.
+    // The checking config covers src *and* test; `tsc -p tsconfig.build.json`
+    // narrows back to src for emit.
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true
   },
   "include": ["src", "test", "scripts"]
 }

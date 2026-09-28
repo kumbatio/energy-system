@@ -6,8 +6,8 @@ import {
   cycleEnergyLevel,
   isUnproducedState,
   parseExternalEnergyState,
-} from './levels.js'
-import { isPreferredEnergyState } from './reconcile.js'
+} from './levels.ts'
+import { isPreferredEnergyState } from './reconcile.ts'
 import type {
   AdaptationStrategy,
   EnergyClock,
@@ -16,7 +16,7 @@ import type {
   EnergyPersistence,
   EnergySource,
   EnergyState,
-} from './types.js'
+} from './types.ts'
 
 export interface EnergyEngineOptions {
   initialLevel?: EnergyLevel

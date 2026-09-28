@@ -1,4 +1,4 @@
-import type { EnergySource, EnergyState } from './types.js'
+import type { EnergySource, EnergyState } from './types.ts'
 
 /**
  * State reconciliation - how two `EnergyState` values that describe the same

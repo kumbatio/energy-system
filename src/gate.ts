@@ -1,7 +1,7 @@
-import type { EnergyEngine, EnergyEngineOptions } from './engine.js'
-import { notificationStrategy } from './strategies.js'
-import type { NotificationConfig } from './strategies.js'
-import type { AdaptationStrategy, EnergyLevel } from './types.js'
+import type { EnergyEngine, EnergyEngineOptions } from './engine.ts'
+import { notificationStrategy } from './strategies.ts'
+import type { NotificationConfig } from './strategies.ts'
+import type { AdaptationStrategy, EnergyLevel } from './types.ts'
 
 /**
  * Notification gate - the runtime that ENFORCES `NotificationConfig` instead

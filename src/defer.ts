@@ -1,5 +1,5 @@
-import { getEnergyLevel } from './levels.js'
-import type { AdaptationStrategy, EnergyLevel } from './types.js'
+import { getEnergyLevel } from './levels.ts'
+import type { AdaptationStrategy, EnergyLevel } from './types.ts'
 
 /**
  * Deferral ("snooze") - the "not now" primitive. Deferring an item is an
