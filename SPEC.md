@@ -86,7 +86,7 @@ claim about a person's capacity. Its serialized form is specified by
 | `timestamp` | non-negative safe integer, epoch milliseconds | When it was produced. Primary ordering key.  |
 | `source`    | `manual \| scheduled \| inferred`             | How it was arrived at.                       |
 | `revision`  | non-negative safe integer                     | Sequence among states sharing one timestamp. |
-| `origin`    | non-empty string                              | Stable identity of the producer.             |
+| `origin`    | non-blank string                              | Stable identity of the producer.             |
 
 A state **MUST** be immutable once produced. Implementations **SHOULD** enforce
 this with whatever their language offers.

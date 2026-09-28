@@ -3,6 +3,8 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
+import { Ajv2020 } from 'ajv/dist/2020.js'
+
 import {
   autonomyStrategy,
   demandAdmissionStrategy,
@@ -12,6 +14,7 @@ import {
   resolveNotificationOutcome,
 } from '../src/index.ts'
 import type { EnergyLevel, EnergyState } from '../src/index.ts'
+import { parseExternalEnergyState } from '../src/levels.ts'
 
 /**
  * The conformance vectors are the executable half of SPEC.md, and they are only
@@ -227,5 +230,52 @@ void test('the vectors cover every level and every strategy', () => {
       [...levels],
       `strategy ${name} is missing a level`,
     )
+  }
+})
+
+/*
+ * The runtime boundary and spec/energy-state.schema.json are one contract. A
+ * state one accepts and the other refuses is exactly the divergence the schema
+ * exists to prevent: another implementation validates against the schema,
+ * publishes, and this one silently discards what it was sent. Both directions
+ * are checked for every edge case, not just "the schema rejects, so we do".
+ */
+void test('the runtime accepts exactly the states the published schema accepts', () => {
+  const ajv = new Ajv2020({ strict: true })
+  const validate = ajv.compile(
+    JSON.parse(readFileSync(new URL('spec/energy-state.schema.json', ROOT), 'utf8')) as object,
+  )
+  const valid = { level: 50, timestamp: 1000, source: 'manual', revision: 0, origin: 'a' }
+  const cases: ReadonlyArray<[string, unknown]> = [
+    ['a valid state', valid],
+    ['the unproduced sentinel', { ...valid, level: 100, timestamp: 0, origin: '0-initial' }],
+    ['timestamp at the safe-integer bound', { ...valid, timestamp: Number.MAX_SAFE_INTEGER }],
+    ['timestamp past the safe-integer bound', { ...valid, timestamp: Number.MAX_SAFE_INTEGER + 2 }],
+    ['fractional timestamp', { ...valid, timestamp: 1.5 }],
+    ['negative timestamp', { ...valid, timestamp: -1 }],
+    ['revision at the safe-integer bound', { ...valid, revision: Number.MAX_SAFE_INTEGER }],
+    ['revision past the safe-integer bound', { ...valid, revision: Number.MAX_SAFE_INTEGER + 2 }],
+    ['fractional revision', { ...valid, revision: 0.5 }],
+    ['negative revision', { ...valid, revision: -1 }],
+    ['empty origin', { ...valid, origin: '' }],
+    ['whitespace-only origin', { ...valid, origin: ' \t\n' }],
+    ['origin padded with whitespace', { ...valid, origin: ' a ' }],
+    ['intermediate level', { ...valid, level: 33 }],
+    ['level as a string', { ...valid, level: '50' }],
+    ['unknown source', { ...valid, source: 'guessed' }],
+    ['unknown property', { ...valid, extra: true }],
+    ['missing property', { level: 50, timestamp: 1000, source: 'manual', revision: 0 }],
+    ['an array', [valid]],
+    ['null', null],
+  ]
+
+  for (const [label, candidate] of cases) {
+    let runtimeAccepts = true
+    try {
+      parseExternalEnergyState(candidate)
+    } catch {
+      runtimeAccepts = false
+    }
+    assert.equal(runtimeAccepts, validate(candidate), `schema and runtime disagree on ${label}`)
   }
 })
