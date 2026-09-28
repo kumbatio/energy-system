@@ -277,10 +277,13 @@ export function createFocusSessionController(
 
     dispose() {
       if (disposed) return
-      // Ending first guarantees suppression is released and observers hear
-      // about the interruption before listeners are torn down.
-      endSession('stop')
+      // Disposed before the final 'stop' is emitted, so a listener that
+      // re-enters `start()` is refused rather than leaving a live session -
+      // and a suppressed gate - on a controller whose `stop()` no longer acts.
       disposed = true
+      // Ending still precedes teardown, so suppression is released and
+      // observers hear about the interruption before listeners are cleared.
+      endSession('stop')
       listeners.clear()
     },
   }

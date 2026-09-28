@@ -687,3 +687,46 @@ void test('a publish re-entering from the final dispose delivery fails loudly, n
     console.error = originalConsoleError
   }
 })
+
+/*
+ * The same re-entrancy on the session controller: a 'stop' listener that starts
+ * a new session during `dispose()` used to leave a live session - and a
+ * suppressed gate - on a controller whose `stop()` is already a no-op, so the
+ * host had no way left to lift the suppression before the timer ran out.
+ */
+void test('a session started from the dispose stop event is refused, not stranded', () => {
+  const timeline = createFakeTimeline()
+  const originalConsoleError = console.error
+  console.error = () => {}
+
+  try {
+    let suppressed = false
+    let startError: unknown
+    const controller = createFocusSessionController({
+      gate: {
+        setSuppressed(next) {
+          suppressed = next
+        },
+      },
+      clock: timeline.clock,
+      scheduler: timeline.scheduler,
+    })
+    controller.subscribe((event) => {
+      if (event !== 'stop') return
+      try {
+        controller.start({ durationMinutes: 30 })
+      } catch (err: unknown) {
+        startError = err
+      }
+    })
+
+    controller.start({ durationMinutes: 10 })
+    controller.dispose()
+
+    assert.match(String(startError), /disposed controller/)
+    assert.equal(controller.getSession(), null)
+    assert.equal(suppressed, false)
+  } finally {
+    console.error = originalConsoleError
+  }
+})
