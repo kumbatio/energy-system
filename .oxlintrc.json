@@ -6,9 +6,9 @@
     "typescript",
     "unicorn",
     "import",
-    "promise",
-    "vitest"
-    // no react, no jsx-a11y, no nextjs
+    "promise"
+    // No react/jsx-a11y: src/react.ts uses createElement, not JSX, and its
+    // render-time ref init and effect dependencies are deliberate.
   ],
 
   "env": {
@@ -71,7 +71,8 @@
     "no-empty": ["error", { "allowEmptyCatch": true }],
     "no-else-return": "error",
     "no-array-constructor": "error",
-    // CLIs log output intentionally - console is the interface
+    // The library reports failures it contains (persist, observer, listener)
+    // through console.error, prefixed [energy-system]
     "no-console": "off",
     "no-void": ["error", { "allowAsStatement": true }],
     "no-useless-concat": "error",
@@ -183,7 +184,7 @@
     "unicorn/prefer-includes": "error",
     "unicorn/prefer-math-min-max": "error",
     "unicorn/prefer-native-coercion-functions": "error",
-    "unicorn/prefer-node-protocol": "error", // critical for CLI: import 'node:fs' not 'fs'
+    "unicorn/prefer-node-protocol": "error", // scripts and tests: import 'node:fs', not 'fs'
     "unicorn/prefer-number-properties": "error",
     "unicorn/prefer-regexp-test": "error",
     "unicorn/prefer-set-has": "error",
@@ -192,7 +193,8 @@
     "unicorn/prefer-type-error": "error",
     "unicorn/require-number-to-fixed-digits-argument": "error",
 
-    // DOM rules - irrelevant for CLI, disabled explicitly
+    // DOM rules off: the React provider snapshots and restores the raw
+    // data-energy-level attribute, which dataset does not round-trip as-is
     "unicorn/prefer-dom-node-dataset": "off",
     "unicorn/prefer-dom-node-text-content": "off",
     "unicorn/prefer-keyboard-event-key": "off",
@@ -210,14 +212,8 @@
       }
     },
     {
-      // Config files used by the CLI tool itself
-      "files": [
-        "*.config.{js,ts,mjs,cjs}",
-        "tsup.config.{js,ts}",
-        "tsconfig*.json",
-        "vitest.config.{js,ts}",
-        "rollup.config.{js,ts}"
-      ],
+      // Tool config files
+      "files": ["*.config.{js,ts,mjs,cjs}", "tsconfig*.json"],
       "rules": {
         "unicorn/no-anonymous-default-export": "off"
       }

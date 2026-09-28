@@ -13,10 +13,10 @@
   "objectWrap": "preserve",
   "endOfLine": "lf",
   "insertFinalNewline": true,
-  "embeddedLanguageFormatting": "off", // no embedded languages in CLI code
+  "embeddedLanguageFormatting": "off", // no embedded languages in this library
   "proseWrap": "preserve",
 
-  // JSX options omitted - no JSX in CLI projects
+  // JSX options omitted - src/react.ts uses createElement, not JSX
 
   "ignorePatterns": [
     "node_modules",
@@ -37,7 +37,7 @@
       ["internal", "subpath"],
       ["parent", "sibling", "index"],
       "unknown",
-      // no "style" group - CLIs don't import CSS
+      // no "style" group - energy.css is shipped, never imported by source
     ],
     "internalPattern": ["~/", "@/", "#"],
     "newlinesBetween": true,
