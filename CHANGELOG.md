@@ -20,6 +20,7 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 - `NotificationGate.dispose()` no longer loses a notification published re-entrantly from `onDeliver` during its final `released` delivery. The gate is inert before that delivery, so the re-entrant `publish()` throws instead of queueing into a gate nothing drains.
 - `FocusSessionController.dispose()` no longer leaves a live session and a suppressed gate behind when a `stop` listener starts a new session during disposal. The re-entrant `start()` now throws, as it does on any disposed controller.
 - `spec/energy-state.schema.json` and the SPEC.md §3 field table now bound `timestamp` at `Number.MAX_SAFE_INTEGER`, as they already bounded `revision`. The reference implementation has always rejected larger timestamps; the schema accepted them, so a state could validate against the published contract and still be refused here.
+- The README's first React example imported a `useEnergy` hook that does not exist; it now uses `useEnergyLevel`.
 
 ## [2.1.2] - 2026-09-12
 

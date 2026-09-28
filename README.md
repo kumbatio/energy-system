@@ -26,9 +26,9 @@ engine.resolve(uiVisibilityStrategy) // -> what the UI should do about it
 React:
 
 ```tsx
-import { EnergyProvider, useEnergy } from '@kumbatio/energy-system/react'
+import { EnergyProvider, useEnergyLevel } from '@kumbatio/energy-system/react'
 
-const { state, setLevel } = useEnergy()
+const [level, setLevel] = useEnergyLevel() // anywhere under <EnergyProvider>
 ```
 
 | If you want to                     | Go to                                                                                       |
@@ -547,8 +547,8 @@ Recommended migration sequence:
 
 ## Persistence and reconciliation
 
-Persisted states are validated strictly. A state must contain a legal level and source, a finite
-non-negative timestamp, a non-negative integer revision, and a non-empty origin. Invalid records
+Persisted states are validated strictly. A state must contain a legal level and source, a
+non-negative safe-integer timestamp, a non-negative safe-integer revision, and a non-blank origin. Invalid records
 are ignored rather than repaired into a more authoritative state.
 
 The engine orders concurrent writes by timestamp, logical revision, source priority, and producer
