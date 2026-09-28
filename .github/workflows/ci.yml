@@ -19,7 +19,7 @@ jobs:
       # `packageManager` in package.json so CI cannot drift from local.
       # `install: false` keeps the explicit frozen-lockfile install below,
       # which is what makes a stale lockfile fail rather than get repaired.
-      - uses: pnpm/setup@v2
+      - uses: pnpm/setup@v3
         with:
           runtime: node@24.21.0
           cache: true
