@@ -17,6 +17,7 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 ### Changed
 
 - SPEC.md §10.2 now says who owns focus when a level change hides the focused element. A surface that only hides — a stylesheet rule, a headless gate like `<EnergyGate>` — must take the element out of the focus order, which the reference stylesheet and `<EnergyGate>` do; choosing a better destination than the document is the host's, from the level-change event. The requirement previously read as if the reference implementation moved focus itself, which it never did.
+- The emitted type declarations now reference their sibling files with `.ts` specifiers (`from './types.ts'`), a side effect of the source running on Node's native type stripping. TypeScript 5.0 and later resolve these; the built package type-checks cleanly under TypeScript 5.0, 5.6, 5.9 and 7.0 with `node16`, `nodenext` and `bundler` resolution. Runtime JavaScript still imports `.js`.
 
 ### Fixed
 
