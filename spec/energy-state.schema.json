@@ -15,7 +15,8 @@
     "timestamp": {
       "description": "When this state was produced, in milliseconds since the Unix epoch. The primary ordering key. 0 is reserved for the unproduced sentinel (see SPEC.md).",
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "maximum": 9007199254740991
     },
     "source": {
       "description": "How the level was arrived at. Load-bearing during reconciliation: manual outranks scheduled outranks inferred, so nothing the system worked out on its own overwrites what the person said.",
