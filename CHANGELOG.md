@@ -14,6 +14,8 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.1.3] - 2026-09-28
+
 ### Changed
 
 - SPEC.md §10.2 now says who owns focus when a level change hides the focused element. A surface that only hides — a stylesheet rule, a headless gate like `<EnergyGate>` — must take the element out of the focus order, which the reference stylesheet and `<EnergyGate>` do; choosing a better destination than the document is the host's, from the level-change event. The requirement previously read as if the reference implementation moved focus itself, which it never did.
@@ -256,7 +258,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/kumbatio/energy-system/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/kumbatio/energy-system/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/kumbatio/energy-system/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/kumbatio/energy-system/compare/v2.0.6...v2.1.0
