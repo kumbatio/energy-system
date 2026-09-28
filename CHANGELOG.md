@@ -14,6 +14,17 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.1.4] - 2026-09-28
+
+I didn't write 2.1.4 notes, because nothing user-visible has changed since the last release.
+
+Most of the commits you listed are already out. The repo has a `v2.1.3` tag (2c412b8), cut after v2.1.2. Every fix, spec change and docs change in your list (e69a145, 53a9f6f, a9078d4, eda186a, aece94f, 7517d79, 21fb98b, and the `.ts` specifier change) is under `## [2.1.3] - 2026-09-28` in `CHANGELOG.md`. Putting them in 2.1.4 would announce them twice.
+
+Only two commits come after v2.1.3, and both are dev-tooling chores that your rules say to leave out:
+
+- **dcf6b0d:** pnpm update in `packageManager`.
+- **645086a:** updates release-kit (dev dependency) to `^2.11.0`, and refreshes pnpm and the TypeScript nightly in the lockfile.
+
 ## [2.1.3] - 2026-09-28
 
 ### Changed
@@ -258,7 +269,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.3...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.1.4...HEAD
+[2.1.4]: https://github.com/kumbatio/energy-system/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/kumbatio/energy-system/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/kumbatio/energy-system/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/kumbatio/energy-system/compare/v2.1.0...v2.1.1
