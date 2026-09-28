@@ -2,7 +2,7 @@ import { getEnergyLevel } from './levels.ts'
 import type { AutonomyConfig } from './strategies.ts'
 import type { AdaptationStrategy, EnergyLevel } from './types.ts'
 
-/**
+/*
  * Inbound demand - anything arriving from outside that asks for the user's
  * attention or action: an email, a document comment, a review request, a task
  * assignment, a collaboration invite.
@@ -26,10 +26,6 @@ import type { AdaptationStrategy, EnergyLevel } from './types.ts'
  * acknowledgment states when the user will actually get to the item, and the
  * energy-ordered deferral default is that answer.
  */
-
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
 
 /**
  * Standing of the originator relative to the user.
@@ -124,24 +120,24 @@ export interface DemandAdmissionConfig {
   readonly acknowledgmentDetail: AcknowledgmentDetail
 }
 
-const ADMISSION_CONFIGS = freezeObject({
+const ADMISSION_CONFIGS = Object.freeze({
   // Full capacity: no policy at all. Everything reaches the user.
-  100: freezeObject({
+  100: Object.freeze({
     originatorThreshold: 'all',
     acknowledge: false,
     acknowledgmentDetail: 'full',
   }),
-  75: freezeObject({
+  75: Object.freeze({
     originatorThreshold: 'known',
     acknowledge: true,
     acknowledgmentDetail: 'full',
   }),
-  50: freezeObject({
+  50: Object.freeze({
     originatorThreshold: 'exempt',
     acknowledge: true,
     acknowledgmentDetail: 'full',
   }),
-  25: freezeObject({
+  25: Object.freeze({
     originatorThreshold: 'exempt',
     acknowledge: true,
     acknowledgmentDetail: 'brief',
@@ -149,7 +145,7 @@ const ADMISSION_CONFIGS = freezeObject({
   // Rest: the acknowledgment survives, stripped to a fixed template. The
   // originator's social debt still clears - that is the whole point of the
   // loop - but nothing is composed on the user's behalf.
-  0: freezeObject({
+  0: Object.freeze({
     originatorThreshold: 'exempt',
     acknowledge: true,
     acknowledgmentDetail: 'minimal',
@@ -221,7 +217,7 @@ export function resolveDemandOutcome(
   // "deprioritised" and escalates through another channel only succeeds if
   // their escalation is one the user cannot ignore - which makes them exempt.
   if (demand.originatorTier === 'exempt') {
-    return freezeObject({
+    return Object.freeze({
       admission: 'live',
       acknowledgment: null,
       reason: 'exempt-originator',
@@ -229,7 +225,7 @@ export function resolveDemandOutcome(
   }
 
   if (isTierAdmitted(config.originatorThreshold, demand.originatorTier)) {
-    return freezeObject({
+    return Object.freeze({
       admission: 'live',
       acknowledgment: null,
       reason: 'tier-admitted',
@@ -239,7 +235,7 @@ export function resolveDemandOutcome(
   // Informational mail asks nothing, so there is nothing to acknowledge or
   // capture. Whether it should *interrupt* is the notification gate's question.
   if (!demand.bearsObligation) {
-    return freezeObject({
+    return Object.freeze({
       admission: 'live',
       acknowledgment: null,
       reason: 'no-obligation',
@@ -247,7 +243,7 @@ export function resolveDemandOutcome(
   }
 
   if (!config.acknowledge) {
-    return freezeObject({
+    return Object.freeze({
       admission: 'silent',
       acknowledgment: null,
       reason: 'acknowledgment-disabled',
@@ -259,16 +255,16 @@ export function resolveDemandOutcome(
   // acknowledgment on the user's behalf. Silence is recoverable; a sent message
   // is not.
   if (confidence < autonomy.confidenceThreshold) {
-    return freezeObject({
+    return Object.freeze({
       admission: 'silent',
       acknowledgment: null,
       reason: 'below-confidence',
     })
   }
 
-  return freezeObject({
+  return Object.freeze({
     admission: 'acknowledge',
-    acknowledgment: freezeObject({
+    acknowledgment: Object.freeze({
       detail: config.acknowledgmentDetail,
       allowGeneratedContent: autonomy.allowGeneratedContent,
     }),

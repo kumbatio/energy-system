@@ -1,7 +1,7 @@
 import { getEnergyLevel } from './levels.ts'
 import type { AdaptationStrategy, EnergyLevel } from './types.ts'
 
-/**
+/*
  * Deferral ("snooze") - the "not now" primitive. Deferring an item is an
  * energy statement: it declares insufficient capacity for it right now and
  * names when it should resurface. Presets are pure `(now) -> Date` functions;
@@ -9,10 +9,6 @@ import type { AdaptationStrategy, EnergyLevel } from './types.ts'
  * current capacity (low energy -> longer deferrals, because items should
  * resurface when capacity has plausibly recovered, not in an hour).
  */
-
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
 
 /** A named deferral option */
 export interface DeferralPreset {
@@ -30,7 +26,7 @@ export interface DeferralPresetOptions {
 }
 
 /** Stable preset ids, exported so configs/strategies can reference them */
-export const DEFERRAL_PRESET_IDS = freezeObject({
+export const DEFERRAL_PRESET_IDS = Object.freeze({
   inOneHour: 'in-1-hour',
   thisEvening: 'this-evening',
   tomorrowMorning: 'tomorrow-morning',
@@ -67,14 +63,14 @@ export function createDeferralPresets(
   validateHour('eveningHour', eveningHour)
 
   return Object.freeze([
-    freezeObject({
+    Object.freeze({
       id: DEFERRAL_PRESET_IDS.inOneHour,
       label: 'In 1 hour',
       compute(now: Date): Date {
         return new Date(now.getTime() + 60 * 60_000)
       },
     }),
-    freezeObject({
+    Object.freeze({
       id: DEFERRAL_PRESET_IDS.thisEvening,
       label: `This evening (${eveningHour}:00)`,
       compute(now: Date): Date {
@@ -86,7 +82,7 @@ export function createDeferralPresets(
         return evening
       },
     }),
-    freezeObject({
+    Object.freeze({
       id: DEFERRAL_PRESET_IDS.tomorrowMorning,
       label: `Tomorrow morning (${morningHour}:00)`,
       compute(now: Date): Date {
@@ -96,7 +92,7 @@ export function createDeferralPresets(
         return morning
       },
     }),
-    freezeObject({
+    Object.freeze({
       id: DEFERRAL_PRESET_IDS.nextWorkday,
       label: `Next workday (${morningHour}:00)`,
       compute(now: Date): Date {
@@ -109,7 +105,7 @@ export function createDeferralPresets(
         return day
       },
     }),
-    freezeObject({
+    Object.freeze({
       id: DEFERRAL_PRESET_IDS.nextMonday,
       label: `Next Monday (${morningHour}:00)`,
       compute(now: Date): Date {
@@ -148,8 +144,8 @@ export interface DeferralConfig {
 
 const IDS = DEFERRAL_PRESET_IDS
 
-const DEFERRAL_CONFIGS = freezeObject({
-  100: freezeObject({
+const DEFERRAL_CONFIGS = Object.freeze({
+  100: Object.freeze({
     orderedPresetIds: Object.freeze([
       IDS.inOneHour,
       IDS.thisEvening,
@@ -159,7 +155,7 @@ const DEFERRAL_CONFIGS = freezeObject({
     ]),
     defaultPresetId: IDS.inOneHour,
   }),
-  75: freezeObject({
+  75: Object.freeze({
     orderedPresetIds: Object.freeze([
       IDS.inOneHour,
       IDS.thisEvening,
@@ -169,7 +165,7 @@ const DEFERRAL_CONFIGS = freezeObject({
     ]),
     defaultPresetId: IDS.inOneHour,
   }),
-  50: freezeObject({
+  50: Object.freeze({
     orderedPresetIds: Object.freeze([
       IDS.thisEvening,
       IDS.tomorrowMorning,
@@ -179,7 +175,7 @@ const DEFERRAL_CONFIGS = freezeObject({
     ]),
     defaultPresetId: IDS.thisEvening,
   }),
-  25: freezeObject({
+  25: Object.freeze({
     orderedPresetIds: Object.freeze([
       IDS.tomorrowMorning,
       IDS.nextWorkday,
@@ -189,7 +185,7 @@ const DEFERRAL_CONFIGS = freezeObject({
     ]),
     defaultPresetId: IDS.tomorrowMorning,
   }),
-  0: freezeObject({
+  0: Object.freeze({
     orderedPresetIds: Object.freeze([
       IDS.tomorrowMorning,
       IDS.nextMonday,

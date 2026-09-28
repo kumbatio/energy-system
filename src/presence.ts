@@ -2,10 +2,6 @@ import { getEnergyLevel, getEnergyLevels, isEnergyLevel } from './levels.ts'
 import type { AdaptationStrategy, EnergyLevel, EnergyPresence, EnergyPresenceMap } from './types.ts'
 import { ENERGY_PRESENCE_VALUES } from './types.ts'
 
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
-
 /** Validate that an unknown value is a valid EnergyPresence */
 export function isEnergyPresence(value: unknown): value is EnergyPresence {
   return typeof value === 'string' && ENERGY_PRESENCE_VALUES.has(value as EnergyPresence)
@@ -50,7 +46,7 @@ export function defineEnergyPresence(spec: EnergyPresenceSpec = {}): EnergyPrese
     entries[definition.value] = declared ?? fallback
   }
 
-  return freezeObject(entries)
+  return Object.freeze(entries)
 }
 
 /**
@@ -77,7 +73,7 @@ export function presenceAtOrAbove(
   for (const definition of getEnergyLevels()) {
     entries[definition.value] = definition.value >= min ? 'visible' : below
   }
-  return freezeObject(entries)
+  return Object.freeze(entries)
 }
 
 /**
@@ -100,7 +96,7 @@ export function presenceAtOrBelow(
   for (const definition of getEnergyLevels()) {
     entries[definition.value] = definition.value <= max ? 'visible' : above
   }
-  return freezeObject(entries)
+  return Object.freeze(entries)
 }
 
 /** Resolve the presence of an element for a given energy level */

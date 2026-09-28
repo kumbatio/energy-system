@@ -1,10 +1,6 @@
 import type { EnergyLevel, EnergyLevelDefinition, EnergySource, EnergyState } from './types.ts'
 import { ENERGY_LEVEL_VALUES, ENERGY_SOURCE_VALUES } from './types.ts'
 
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
-
 let originSequence = 0
 let standaloneRevision = 0
 
@@ -66,60 +62,60 @@ function nextStandaloneRevision(): number {
 }
 
 const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
-  freezeObject<EnergyLevelDefinition>({
+  Object.freeze<EnergyLevelDefinition>({
     value: 100,
     key: 'peak',
     label: 'Peak',
     description: 'High capacity. Planning, complex decisions, creative work.',
-    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
+    cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'high',
       focusDuration: 'extended',
       taskComplexity: 'complex',
       interruptionTolerance: 'high',
     }),
   }),
-  freezeObject<EnergyLevelDefinition>({
+  Object.freeze<EnergyLevelDefinition>({
     value: 75,
     key: 'active',
     label: 'Active',
     description: 'Good capacity. Focused execution, problem-solving.',
-    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
+    cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'moderate',
       focusDuration: 'moderate',
       taskComplexity: 'moderate',
       interruptionTolerance: 'moderate',
     }),
   }),
-  freezeObject<EnergyLevelDefinition>({
+  Object.freeze<EnergyLevelDefinition>({
     value: 50,
     key: 'steady',
     label: 'Steady',
     description: 'Moderate capacity. Routine tasks, familiar work.',
-    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
+    cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'low',
       focusDuration: 'short',
       taskComplexity: 'routine',
       interruptionTolerance: 'low',
     }),
   }),
-  freezeObject<EnergyLevelDefinition>({
+  Object.freeze<EnergyLevelDefinition>({
     value: 25,
     key: 'low',
     label: 'Low',
     description: 'Limited capacity. Simple tasks, review, light work.',
-    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
+    cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'minimal',
       focusDuration: 'minimal',
       taskComplexity: 'simple',
       interruptionTolerance: 'minimal',
     }),
   }),
-  freezeObject<EnergyLevelDefinition>({
+  Object.freeze<EnergyLevelDefinition>({
     value: 0,
     key: 'rest',
     label: 'Rest',
     description: 'Recovery. Consumption only \u2014 reading, reflecting.',
-    cognitiveProfile: freezeObject<EnergyLevelDefinition['cognitiveProfile']>({
+    cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'none',
       focusDuration: 'none',
       taskComplexity: 'consumption',
@@ -197,7 +193,7 @@ export function createEnergyState(
     throw new Error(`Invalid energy origin: ${String(origin)}`)
   }
 
-  return freezeObject({
+  return Object.freeze({
     level,
     timestamp,
     source,

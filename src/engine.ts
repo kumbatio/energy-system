@@ -8,6 +8,7 @@ import {
   parseExternalEnergyState,
 } from './levels.ts'
 import { isPreferredEnergyState } from './reconcile.ts'
+import { logContainedError, resolveNow } from './runtime.ts'
 import type {
   AdaptationStrategy,
   EnergyClock,
@@ -83,19 +84,9 @@ export interface EnergyEngine {
   dispose(): void
 }
 
-function logEngineError(message: string, err: unknown): void {
-  console.error(`[energy-system] ${message}`, err)
-}
-
 const PERSIST_RETRY_INITIAL_MS = 250
 const PERSIST_RETRY_MAX_MS = 30_000
 const DEFAULT_MAX_FUTURE_SKEW_MS = 5 * 60_000
-
-function resolveNow(clock?: EnergyEngineOptions['clock']): () => number {
-  if (typeof clock === 'function') return clock
-  if (clock?.now) return () => clock.now()
-  return () => Date.now()
-}
 
 function isSameState(a: EnergyState, b: EnergyState): boolean {
   return (
@@ -231,12 +222,12 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
         persistRetryDelayMs = PERSIST_RETRY_INITIAL_MS
         resolvePersistWaiters()
       } catch (err: unknown) {
-        logEngineError('Failed to persist energy state', err)
+        logContainedError('Failed to persist energy state', err)
         if (onPersistenceError) {
           try {
             onPersistenceError(err, snapshot)
           } catch (err: unknown) {
-            logEngineError('onPersistenceError callback threw', err)
+            logContainedError('onPersistenceError callback threw', err)
           }
         }
         isPersisting = false
@@ -288,7 +279,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
           try {
             onChange(transition.next, transition.prev)
           } catch (err: unknown) {
-            logEngineError('onChange listener threw', err)
+            logContainedError('onChange listener threw', err)
           }
         }
 
@@ -297,7 +288,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
           try {
             listener(transition.next, transition.prev)
           } catch (err: unknown) {
-            logEngineError('Energy subscriber threw', err)
+            logContainedError('Energy subscriber threw', err)
           }
         }
       }
@@ -330,7 +321,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       started = true
 
       initialHydrationTask = engine.hydrate().catch((err: unknown) => {
-        logEngineError('Unexpected hydrate failure', err)
+        logContainedError('Unexpected hydrate failure', err)
       })
 
       if (!persistence.observe) return
@@ -344,7 +335,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
           try {
             normalized = normalizeState(externalState, now(), maxFutureSkewMs)
           } catch (err: unknown) {
-            logEngineError('Ignoring invalid observed energy state', err)
+            logContainedError('Ignoring invalid observed energy state', err)
             return
           }
 
@@ -353,7 +344,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
           applyState(normalized)
         })
       } catch (err: unknown) {
-        logEngineError('Failed to subscribe to persistence observation', err)
+        logContainedError('Failed to subscribe to persistence observation', err)
       }
     },
 
@@ -412,7 +403,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
         persistenceLoadError = undefined
       } catch (err: unknown) {
         persistenceLoadError = err
-        logEngineError('Failed to load persisted energy state', err)
+        logContainedError('Failed to load persisted energy state', err)
         return
       }
 
@@ -423,7 +414,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       try {
         normalized = normalizeState(stored, now(), maxFutureSkewMs)
       } catch (err: unknown) {
-        logEngineError('Ignoring invalid persisted energy state', err)
+        logContainedError('Ignoring invalid persisted energy state', err)
         return
       }
 
@@ -480,7 +471,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       try {
         disposePersistenceObservation()
       } catch (err: unknown) {
-        logEngineError('Failed to release persistence observation', err)
+        logContainedError('Failed to release persistence observation', err)
       }
       if (persistRetryTimer) {
         clearTimeout(persistRetryTimer)

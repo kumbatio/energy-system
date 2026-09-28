@@ -1,9 +1,10 @@
 import type { EnergyEngine, EnergyEngineOptions } from './engine.ts'
 import type { GateScheduler } from './gate.ts'
 import { getEnergyMetrics } from './metrics.ts'
+import { defaultScheduler, logContainedError, resolveNow } from './runtime.ts'
 import { taskComplexityStrategy } from './strategies.ts'
 
-/**
+/*
  * Focus sessions - time-boxed "one thing at a time" windows layered on top of
  * the energy model. A session is a temporary commitment, not an energy level:
  * it suppresses interruptions for a bounded duration, surfaces break nudges,
@@ -17,14 +18,6 @@ import { taskComplexityStrategy } from './strategies.ts'
  *      end-of-session notification can never be swallowed by the session's
  *      own suppression.
  */
-
-function logSessionError(message: string, err: unknown): void {
-  console.error(`[energy-system] ${message}`, err)
-}
-
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
 
 /** An active focus session snapshot */
 export interface FocusSession {
@@ -104,21 +97,6 @@ export interface FocusSessionController {
 
 const DEFAULT_SESSION_MINUTES = 25
 
-function resolveNow(clock?: EnergyEngineOptions['clock']): () => number {
-  if (typeof clock === 'function') return clock
-  if (clock?.now) return () => clock.now()
-  return () => Date.now()
-}
-
-const defaultScheduler: GateScheduler = {
-  setTimeout(callback, ms) {
-    return setTimeout(callback, ms)
-  },
-  clearTimeout(handle) {
-    clearTimeout(handle as Parameters<typeof clearTimeout>[0])
-  },
-}
-
 export function createFocusSessionController(
   options: FocusSessionControllerOptions = {},
 ): FocusSessionController {
@@ -139,7 +117,7 @@ export function createFocusSessionController(
       try {
         listener(event, snapshot)
       } catch (err: unknown) {
-        logSessionError('Focus session listener threw', err)
+        logContainedError('Focus session listener threw', err)
       }
     }
   }
@@ -159,7 +137,7 @@ export function createFocusSessionController(
     try {
       gate?.setSuppressed(false)
     } catch (err: unknown) {
-      logSessionError('Failed to release suppression', err)
+      logContainedError('Failed to release suppression', err)
     }
   }
 
@@ -226,7 +204,7 @@ export function createFocusSessionController(
       }
 
       const startedAt = now()
-      const next: FocusSession = freezeObject({
+      const next: FocusSession = Object.freeze({
         startedAt,
         endsAt: startedAt + durationMinutes * 60_000,
         breakIntervalMs: breakEveryMinutes * 60_000,
@@ -236,7 +214,7 @@ export function createFocusSessionController(
       try {
         gate?.setSuppressed(true)
       } catch (err: unknown) {
-        logSessionError('Failed to apply suppression', err)
+        logContainedError('Failed to apply suppression', err)
       }
 
       endTimer = scheduler.setTimeout(() => {

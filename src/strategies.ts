@@ -1,10 +1,6 @@
 import { getEnergyLevel } from './levels.ts'
 import type { AdaptationStrategy, EnergyLevel, TaskComplexity } from './types.ts'
 
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
-
 // ── UI Visibility Strategy ──
 
 export interface UIVisibilityConfig {
@@ -19,8 +15,8 @@ export interface UIVisibilityConfig {
   readonly readOnlyCursor: boolean
 }
 
-const UI_CONFIGS = freezeObject({
-  100: freezeObject({
+const UI_CONFIGS = Object.freeze({
+  100: Object.freeze({
     sidebar: true,
     tabBar: true,
     statusBar: true,
@@ -31,7 +27,7 @@ const UI_CONFIGS = freezeObject({
     contentFontScale: 1,
     readOnlyCursor: false,
   }),
-  75: freezeObject({
+  75: Object.freeze({
     sidebar: true,
     tabBar: true,
     statusBar: true,
@@ -42,7 +38,7 @@ const UI_CONFIGS = freezeObject({
     contentFontScale: 1,
     readOnlyCursor: false,
   }),
-  50: freezeObject({
+  50: Object.freeze({
     sidebar: true,
     tabBar: true,
     statusBar: true,
@@ -53,7 +49,7 @@ const UI_CONFIGS = freezeObject({
     contentFontScale: 1,
     readOnlyCursor: false,
   }),
-  25: freezeObject({
+  25: Object.freeze({
     sidebar: false,
     tabBar: false,
     statusBar: false,
@@ -64,7 +60,7 @@ const UI_CONFIGS = freezeObject({
     contentFontScale: 1.05,
     readOnlyCursor: false,
   }),
-  0: freezeObject({
+  0: Object.freeze({
     sidebar: false,
     tabBar: false,
     statusBar: false,
@@ -114,36 +110,36 @@ export interface NotificationConfig {
   readonly priorityThreshold: 'all' | 'high' | 'critical' | 'none'
 }
 
-const NOTIFICATION_CONFIGS = freezeObject({
-  100: freezeObject({
+const NOTIFICATION_CONFIGS = Object.freeze({
+  100: Object.freeze({
     allowVisual: true,
     allowSound: true,
     allowVibration: true,
     batchInterval: 0,
     priorityThreshold: 'all',
   }),
-  75: freezeObject({
+  75: Object.freeze({
     allowVisual: true,
     allowSound: true,
     allowVibration: false,
     batchInterval: 0,
     priorityThreshold: 'all',
   }),
-  50: freezeObject({
+  50: Object.freeze({
     allowVisual: true,
     allowSound: false,
     allowVibration: false,
     batchInterval: 5 * 60 * 1000, // 5 minutes
     priorityThreshold: 'high',
   }),
-  25: freezeObject({
+  25: Object.freeze({
     allowVisual: true,
     allowSound: false,
     allowVibration: false,
     batchInterval: 15 * 60 * 1000, // 15 minutes
     priorityThreshold: 'critical',
   }),
-  0: freezeObject({
+  0: Object.freeze({
     allowVisual: false,
     allowSound: false,
     allowVibration: false,
@@ -181,30 +177,30 @@ export interface TaskComplexityConfig {
   readonly breakIntervalMinutes: number
 }
 
-const TASK_CONFIGS = freezeObject({
-  100: freezeObject({
+const TASK_CONFIGS = Object.freeze({
+  100: Object.freeze({
     maxComplexity: 'complex',
     suggestBreaks: false,
     breakIntervalMinutes: 0,
   }),
-  75: freezeObject({
+  75: Object.freeze({
     maxComplexity: 'moderate',
     suggestBreaks: false,
     breakIntervalMinutes: 0,
   }),
-  50: freezeObject({
+  50: Object.freeze({
     maxComplexity: 'routine',
     suggestBreaks: true,
     breakIntervalMinutes: 45,
   }),
-  25: freezeObject({
+  25: Object.freeze({
     maxComplexity: 'simple',
     suggestBreaks: true,
     breakIntervalMinutes: 25,
   }),
   // Rest is already a break: prompting someone at 0 to take a break from
   // resting is noise, so break suggestions are disabled entirely.
-  0: freezeObject({
+  0: Object.freeze({
     maxComplexity: 'consumption',
     suggestBreaks: false,
     breakIntervalMinutes: 0,
@@ -242,28 +238,28 @@ export interface InteractionForgivenessConfig {
   readonly autosaveIntervalMs: number
 }
 
-const FORGIVENESS_CONFIGS = freezeObject({
-  100: freezeObject({
+const FORGIVENESS_CONFIGS = Object.freeze({
+  100: Object.freeze({
     undoWindowMs: 5000,
     confirmDestructive: false,
     autosaveIntervalMs: 60_000,
   }),
-  75: freezeObject({
+  75: Object.freeze({
     undoWindowMs: 8000,
     confirmDestructive: false,
     autosaveIntervalMs: 45_000,
   }),
-  50: freezeObject({
+  50: Object.freeze({
     undoWindowMs: 10_000,
     confirmDestructive: true,
     autosaveIntervalMs: 30_000,
   }),
-  25: freezeObject({
+  25: Object.freeze({
     undoWindowMs: 15_000,
     confirmDestructive: true,
     autosaveIntervalMs: 20_000,
   }),
-  0: freezeObject({
+  0: Object.freeze({
     undoWindowMs: 20_000,
     confirmDestructive: true,
     autosaveIntervalMs: 15_000,
@@ -313,23 +309,23 @@ export interface AutonomyConfig {
   readonly maxUnattendedSteps: number
 }
 
-const AUTONOMY_CONFIGS = freezeObject({
-  100: freezeObject({
+const AUTONOMY_CONFIGS = Object.freeze({
+  100: Object.freeze({
     confidenceThreshold: 0.6,
     allowGeneratedContent: true,
     maxUnattendedSteps: 8,
   }),
-  75: freezeObject({
+  75: Object.freeze({
     confidenceThreshold: 0.7,
     allowGeneratedContent: true,
     maxUnattendedSteps: 5,
   }),
-  50: freezeObject({
+  50: Object.freeze({
     confidenceThreshold: 0.8,
     allowGeneratedContent: true,
     maxUnattendedSteps: 3,
   }),
-  25: freezeObject({
+  25: Object.freeze({
     confidenceThreshold: 0.9,
     allowGeneratedContent: false,
     maxUnattendedSteps: 1,
@@ -337,7 +333,7 @@ const AUTONOMY_CONFIGS = freezeObject({
   // Rest: one certain, templated step at most. Not zero - an automated action
   // the user has standing consent for (an out-of-office reply is the classic)
   // is safest at rest precisely because it stops improvising.
-  0: freezeObject({
+  0: Object.freeze({
     confidenceThreshold: 1,
     allowGeneratedContent: false,
     maxUnattendedSteps: 1,

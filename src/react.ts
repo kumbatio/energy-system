@@ -28,6 +28,7 @@ import type { EnergyEngine } from './engine.ts'
 import { createEnergyEngine } from './engine.ts'
 import { getEnergyLevel, getEnergyLevels } from './levels.ts'
 import { defineEnergyPresence, presenceAtOrAbove, resolveEnergyPresence } from './presence.ts'
+import { logContainedError } from './runtime.ts'
 import type {
   AdaptationStrategy,
   EnergyChangeListener,
@@ -77,7 +78,7 @@ function callLevelChange(
   try {
     listener(state, prev)
   } catch (err: unknown) {
-    console.error('[energy-system] onLevelChange listener threw', err)
+    logContainedError('onLevelChange listener threw', err)
   }
 }
 

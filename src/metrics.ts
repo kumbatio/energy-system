@@ -1,10 +1,6 @@
 import { getEnergyLevel, isUnproducedState } from './levels.ts'
 import type { EnergyLevel, EnergyMetrics, EnergyState } from './types.ts'
 
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
-
 const PRODUCTIVITY_WINDOW_MINUTES: Record<EnergyLevel, number> = {
   100: 120,
   75: 90,
@@ -53,8 +49,8 @@ export function getEnergyMetrics(state: EnergyState, now = Date.now()): EnergyMe
   }
 
   return recoveryHintMinutes === undefined
-    ? freezeObject(base)
-    : freezeObject({
+    ? Object.freeze(base)
+    : Object.freeze({
         ...base,
         recoveryHintMinutes,
       })

@@ -1,9 +1,10 @@
 import type { EnergyEngine, EnergyEngineOptions } from './engine.ts'
+import { defaultScheduler, logContainedError, resolveNow } from './runtime.ts'
 import { notificationStrategy } from './strategies.ts'
 import type { NotificationConfig } from './strategies.ts'
 import type { AdaptationStrategy, EnergyLevel } from './types.ts'
 
-/**
+/*
  * Notification gate - the runtime that ENFORCES `NotificationConfig` instead
  * of leaving it as guidance. Apps publish notification intents through the
  * gate; the gate resolves the current energy level's config and decides
@@ -19,14 +20,6 @@ import type { AdaptationStrategy, EnergyLevel } from './types.ts'
  * Energy and suppression both move inside an open batch window, so every held
  * intent is re-classified whenever either changes.
  */
-
-function logGateError(message: string, err: unknown): void {
-  console.error(`[energy-system] ${message}`, err)
-}
-
-function freezeObject<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(value)
-}
 
 /** Priority of a single notification intent */
 export type NotificationPriority = 'normal' | 'high' | 'critical'
@@ -105,15 +98,6 @@ export interface GateScheduler {
   clearTimeout(handle: unknown): void
 }
 
-const defaultScheduler: GateScheduler = {
-  setTimeout(callback, ms) {
-    return setTimeout(callback, ms)
-  },
-  clearTimeout(handle) {
-    clearTimeout(handle as Parameters<typeof clearTimeout>[0])
-  },
-}
-
 export interface NotificationGateOptions {
   /** Delivery sink. Called with everything the gate decides to surface. */
   onDeliver(delivery: NotificationDelivery): void
@@ -143,12 +127,6 @@ export interface NotificationGate {
    * 'released' delivery first - a disposed gate never swallows intents.
    */
   dispose(): void
-}
-
-function resolveNow(clock?: EnergyEngineOptions['clock']): () => number {
-  if (typeof clock === 'function') return clock
-  if (clock?.now) return () => clock.now()
-  return () => Date.now()
 }
 
 /**
@@ -193,7 +171,7 @@ export function createNotificationGate(
   }
 
   function channelsFrom(config: NotificationConfig): NotificationChannels {
-    return freezeObject({
+    return Object.freeze({
       visual: config.allowVisual,
       sound: config.allowSound,
       vibration: config.allowVibration,
@@ -207,7 +185,7 @@ export function createNotificationGate(
     if (notifications.length === 0) return
 
     const config = currentConfig()
-    const delivery: NotificationDelivery = freezeObject({
+    const delivery: NotificationDelivery = Object.freeze({
       notifications: Object.freeze([...notifications]),
       reason,
       channels: channelsFrom(config),
@@ -217,7 +195,7 @@ export function createNotificationGate(
     try {
       onDeliver(delivery)
     } catch (err: unknown) {
-      logGateError('onDeliver callback threw', err)
+      logContainedError('onDeliver callback threw', err)
     }
   }
 
@@ -331,7 +309,7 @@ export function createNotificationGate(
         throw new Error(`Invalid notification priority: ${String(priority)}`)
       }
 
-      const notification: EnergyNotification = freezeObject({
+      const notification: EnergyNotification = Object.freeze({
         priority,
         payload: input.payload,
         createdAt: now(),

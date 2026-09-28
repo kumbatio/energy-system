@@ -1,4 +1,5 @@
 import { parseExternalEnergyState } from './levels.ts'
+import { logContainedError } from './runtime.ts'
 import type { EnergyPersistence, EnergyState } from './types.ts'
 
 /*
@@ -15,7 +16,7 @@ function parsePersistedState(source: string, raw: string | null): EnergyState | 
   try {
     parsed = JSON.parse(raw)
   } catch (err: unknown) {
-    console.error(`[energy-system] Discarding unparseable persisted energy state (${source})`, err)
+    logContainedError(`Discarding unparseable persisted energy state (${source})`, err)
     return null
   }
 
@@ -28,7 +29,7 @@ function parsePersistedState(source: string, raw: string | null): EnergyState | 
   } catch (err: unknown) {
     // Distinct from the unparseable case above: the bytes were JSON, the
     // content was not an EnergyState. The thrown error carries which rule broke.
-    console.error(`[energy-system] Discarding malformed persisted energy state (${source})`, err)
+    logContainedError(`Discarding malformed persisted energy state (${source})`, err)
     return null
   }
 }
