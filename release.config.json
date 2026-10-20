@@ -1,4 +1,5 @@
 {
+  "tagPrefix": "v",
   "hooks": {
     "afterVersion": "pnpm run build"
   }
