@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.2.2] - 2026-10-20
+
+### Fixed
+
+- The citation metadata in CITATION.cff now reports the current release version instead of the stale 2.0.0, and each release updates it automatically. ([7957d7f](https://github.com/kumbatio/energy-system/commit/7957d7f))
+
 ## [2.2.1] - 2026-10-20
 
 ### Changed
@@ -283,7 +289,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/kumbatio/energy-system/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/kumbatio/energy-system/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/kumbatio/energy-system/compare/v2.1.4...v2.2.0
 [2.1.4]: https://github.com/kumbatio/energy-system/compare/v2.1.3...v2.1.4

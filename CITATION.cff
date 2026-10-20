@@ -10,7 +10,7 @@ authors:
 license: MIT
 repository-code: 'https://github.com/kumbatio/energy-system'
 url: 'https://kumbat.io'
-version: 2.2.1
+version: 2.2.2
 references:
   - type: article
     title: 'Energy as State, Not Time: Rethinking Productivity Models for Variable-Capacity Work'
