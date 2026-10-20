@@ -14,6 +14,8 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-10-20
+
 ### Changed
 
 - The React and `@types/react` peer floor is `>=19.2.0` again (previously `>=19.3.1`). React 19.2 added `<Activity>`, the only 19.2+ API the React entry imports, and the higher floor made `npm install` fail with `ERESOLVE` in any app not on the newest React patch.
@@ -281,22 +283,23 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.2.0...HEAD
-[2.2.0]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.1.4...@kumbatio/energy-system@2.2.0
-[2.1.4]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.1.3...@kumbatio/energy-system@2.1.4
-[2.1.3]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.1.2...@kumbatio/energy-system@2.1.3
-[2.1.2]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.1.1...@kumbatio/energy-system@2.1.2
-[2.1.1]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.1.0...@kumbatio/energy-system@2.1.1
-[2.1.0]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.0.6...@kumbatio/energy-system@2.1.0
-[2.0.6]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.0.5...@kumbatio/energy-system@2.0.6
-[2.0.5]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.0.4...@kumbatio/energy-system@2.0.5
-[2.0.4]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.0.3...@kumbatio/energy-system@2.0.4
-[2.0.3]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.0.2...@kumbatio/energy-system@2.0.3
-[2.0.2]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.0.1...@kumbatio/energy-system@2.0.2
-[2.0.1]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@2.0.0...@kumbatio/energy-system@2.0.1
-[2.0.0]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@1.0.0...@kumbatio/energy-system@2.0.0
-[1.0.0]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@0.6.0...@kumbatio/energy-system@1.0.0
-[0.6.0]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@0.5.4...@kumbatio/energy-system@0.6.0
-[0.5.4]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@0.4.0...@kumbatio/energy-system@0.5.4
-[0.4.0]: https://github.com/kumbatio/energy-system/compare/@kumbatio/energy-system@0.1.0...@kumbatio/energy-system@0.4.0
-[0.1.0]: https://github.com/kumbatio/energy-system/releases/tag/@kumbatio/energy-system@0.1.0
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/kumbatio/energy-system/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/kumbatio/energy-system/compare/v2.1.4...v2.2.0
+[2.1.4]: https://github.com/kumbatio/energy-system/compare/v2.1.3...v2.1.4
+[2.1.3]: https://github.com/kumbatio/energy-system/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/kumbatio/energy-system/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/kumbatio/energy-system/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/kumbatio/energy-system/compare/v2.0.6...v2.1.0
+[2.0.6]: https://github.com/kumbatio/energy-system/compare/v2.0.5...v2.0.6
+[2.0.5]: https://github.com/kumbatio/energy-system/compare/v2.0.4...v2.0.5
+[2.0.4]: https://github.com/kumbatio/energy-system/compare/v2.0.3...v2.0.4
+[2.0.3]: https://github.com/kumbatio/energy-system/compare/v2.0.2...v2.0.3
+[2.0.2]: https://github.com/kumbatio/energy-system/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/kumbatio/energy-system/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/kumbatio/energy-system/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/kumbatio/energy-system/compare/v0.6.0...v1.0.0
+[0.6.0]: https://github.com/kumbatio/energy-system/compare/v0.5.4...v0.6.0
+[0.5.4]: https://github.com/kumbatio/energy-system/compare/v0.4.0...v0.5.4
+[0.4.0]: https://github.com/kumbatio/energy-system/compare/v0.1.0...v0.4.0
+[0.1.0]: https://github.com/kumbatio/energy-system/releases/tag/v0.1.0
