@@ -1,5 +1,11 @@
 {
   "tagPrefix": "v",
+  "versionFiles": [
+    {
+      "path": "CITATION.cff",
+      "pattern": "^version: (.+)$"
+    }
+  ],
   "hooks": {
     "afterVersion": "pnpm run build"
   }
