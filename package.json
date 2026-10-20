@@ -3,7 +3,29 @@
   "version": "2.2.0",
   "private": false,
   "description": "Framework-agnostic TypeScript library for energy-aware application behavior.",
+  "keywords": [
+    "accessibility",
+    "adaptive-ui",
+    "adhd",
+    "capacity",
+    "cognitive-load",
+    "energy",
+    "focus",
+    "neurodivergent",
+    "notifications",
+    "react",
+    "state",
+    "typescript"
+  ],
+  "homepage": "https://docs.kumbat.io/docs/energy-system",
+  "bugs": {
+    "url": "https://github.com/kumbatio/energy-system/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kumbatio/energy-system.git"
+  },
   "files": [
     "dist",
     "src/energy.css",
@@ -82,8 +104,8 @@
     "typescript": "next"
   },
   "peerDependencies": {
-    "@types/react": ">=19.3.1",
-    "react": ">=19.3.1"
+    "@types/react": ">=19.2.0",
+    "react": ">=19.2.0"
   },
   "peerDependenciesMeta": {
     "@types/react": {
@@ -94,7 +116,7 @@
     }
   },
   "engines": {
-    "node": ">=24.21.0"
+    "node": ">=22"
   },
   "packageManager": "pnpm@11.28.6"
 }

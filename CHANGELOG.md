@@ -14,6 +14,17 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+### Changed
+
+- The React and `@types/react` peer floor is `>=19.2.0` again (previously `>=19.3.1`). React 19.2 added `<Activity>`, the only 19.2+ API the React entry imports, and the higher floor made `npm install` fail with `ERESOLVE` in any app not on the newest React patch.
+- Node.js 22 or later is now the `engines` floor (previously `>=24.21.0`). The published JavaScript runs on Node 22; 24.21 is only needed to develop the package, where the source runs on native type stripping.
+- `package.json` now carries `repository`, `bugs`, `homepage` and `keywords`, so the npm page links to the source and the issue tracker.
+
+### Fixed
+
+- The 2.1.4 changelog section contained a pasted drafting note instead of release notes. It now lists the two tooling changes that release covered.
+- The Meltemi link in the README points to meltemi.email; meltemi.app no longer serves the site.
+
 ## [2.2.0] - 2026-10-19
 
 ### Changed
@@ -22,14 +33,9 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [2.1.4] - 2026-09-28
 
-I didn't write 2.1.4 notes, because nothing user-visible has changed since the last release.
+### Changed
 
-Most of the commits you listed are already out. The repo has a `v2.1.3` tag (2c412b8), cut after v2.1.2. Every fix, spec change and docs change in your list (e69a145, 53a9f6f, a9078d4, eda186a, aece94f, 7517d79, 21fb98b, and the `.ts` specifier change) is under `## [2.1.3] - 2026-09-28` in `CHANGELOG.md`. Putting them in 2.1.4 would announce them twice.
-
-Only two commits come after v2.1.3, and both are dev-tooling chores that your rules say to leave out:
-
-- **dcf6b0d:** pnpm update in `packageManager`.
-- **645086a:** updates release-kit (dev dependency) to `^2.11.0`, and refreshes pnpm and the TypeScript nightly in the lockfile.
+- Development tooling only; nothing user-visible changed. The pinned pnpm package manager was updated ([dcf6b0d](https://github.com/kumbatio/energy-system/commit/dcf6b0d)), and release-kit moved to `^2.11.0` with pnpm and the TypeScript nightly re-resolved in the lockfile ([645086a](https://github.com/kumbatio/energy-system/commit/645086a)).
 
 ## [2.1.3] - 2026-09-28
 

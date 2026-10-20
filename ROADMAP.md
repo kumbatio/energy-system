@@ -72,7 +72,7 @@ second consumer proves what the shared machinery actually is.
 ## M3 - Reference integration
 
 - [x] Migrate [kumbat.io](https://kumbat.io) from its inline energy provider to this package - the site becomes the living integration test
-- [x] Case study: what adaptation strategies survived contact with real use - [Production Patterns](https://docs.kumbat.io/docs/energy-system/guides/production-patterns), drawn from [Anasa](https://anasa.md) (public alpha) and [Meltemi](https://meltemi.app) (private beta, entro314 labs - built outside the Kumbatio product line)
+- [x] Case study: what adaptation strategies survived contact with real use - [Production Patterns](https://docs.kumbat.io/docs/energy-system/guides/production-patterns), drawn from [Anasa](https://anasa.md) (public alpha) and [Meltemi](https://meltemi.email) (private beta, entro314 labs - built outside the Kumbatio product line)
 
 ## Shipped (v1.0) - Specification, conformance, and the API freeze
 

@@ -616,6 +616,9 @@ that means more than the type signatures:
 
 ## Development
 
+The source runs on Node's native type stripping, so developing the package needs Node 24.21 or
+later. The published JavaScript runs on Node 22 or later.
+
 ```bash
 pnpm run validate   # format, lint, types, tests, packaging - what CI runs
 ```
@@ -643,7 +646,7 @@ adapters (e.g., SQLite-backed desktop stores) should live in consuming apps.
 ## Who uses this
 
 - **[Anasa](https://anasa.md)** - Kumbatio's local-first writing and thinking workspace, in public alpha. Runs its entire adaptive shell on the engine: custom settings-backed persistence, energy-gated AI surfaces, notification filtering, and task-complexity guidance.
-- **[Meltemi](https://meltemi.app)** - an email client in private beta from [entro314 labs](https://github.com/entro314-labs) (the studio behind Kumbatio), built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, interaction forgiveness, and demand admission - integrated without the React adapter. Its demand binding is the reference one: originator tiers come from its VIP list, obligation is classified from RFC 3834 header evidence and its own sender lanes, acknowledgments go out as `Auto-Submitted: auto-replied` auto-replies, and the capture is a snooze to the horizon `deferralStrategy` picked.
+- **[Meltemi](https://meltemi.email)** - an email client in private beta from [entro314 labs](https://github.com/entro314-labs) (the studio behind Kumbatio), built outside the Kumbatio product line. Uses the notification gate (defer, never drop), focus sessions, deferral ordering, interaction forgiveness, and demand admission - integrated without the React adapter. Its demand binding is the reference one: originator tiers come from its VIP list, obligation is classified from RFC 3834 header evidence and its own sender lanes, acknowledgments go out as `Auto-Submitted: auto-replied` auto-replies, and the capture is a snooze to the horizon `deferralStrategy` picked.
 - **[kumbat.io](https://kumbat.io)** - the site itself runs on this model; change the energy level there and watch the interface adapt.
 
 The integration patterns these apps proved out are documented in the [Production Patterns guide](https://docs.kumbat.io/docs/energy-system/guides/production-patterns). If you ship something with `energy-system`, tell us: [hello@kumbat.io](mailto:hello@kumbat.io).

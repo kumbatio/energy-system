@@ -10,6 +10,11 @@ permissions: {}
 jobs:
   validate:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 24.21.0 is what the package is developed on; 22 is the engines floor
+        # consumers are promised, and the suite runs on it unchanged.
+        node: ['22', '24.21.0']
     steps:
       - uses: actions/checkout@v7
         with:
@@ -21,7 +26,7 @@ jobs:
       # which is what makes a stale lockfile fail rather than get repaired.
       - uses: pnpm/setup@v3
         with:
-          runtime: node@24.21.0
+          runtime: node@${{ matrix.node }}
           cache: true
           install: false
       - run: pnpm install --frozen-lockfile
