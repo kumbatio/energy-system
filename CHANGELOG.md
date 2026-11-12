@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.2.4] - 2026-11-12
+
+### Changed
+
+- The `react` and `@types/react` peer ranges still require 19.2.0 or later, the same as in 2.2.2. The wider range tagged as v2.2.3 was never published to npm and has been withdrawn, because the package renders `<Activity>`, which React 19.0 and 19.1 do not export. ([5dfcd5b](https://github.com/kumbatio/energy-system/commit/5dfcd5b), [064c870](https://github.com/kumbatio/energy-system/commit/064c870))
+
 ## [2.2.2] - 2026-10-20
 
 ### Fixed
@@ -289,7 +295,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.2...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.4...HEAD
+[2.2.4]: https://github.com/kumbatio/energy-system/compare/v2.2.2...v2.2.4
 [2.2.2]: https://github.com/kumbatio/energy-system/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/kumbatio/energy-system/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/kumbatio/energy-system/compare/v2.1.4...v2.2.0
