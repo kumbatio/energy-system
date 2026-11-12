@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [2.2.3] - 2026-11-12
+
+### Fixed
+
+- The `react` and `@types/react` peer dependency ranges now accept any React 19 release (`>=19`), so projects on React 19.0 or 19.1 install without peer dependency warnings or failures. ([5dfcd5b](https://github.com/kumbatio/energy-system/commit/5dfcd5b))
+
 ## [2.2.2] - 2026-10-20
 
 ### Fixed
@@ -289,7 +295,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.2...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.3...HEAD
+[2.2.3]: https://github.com/kumbatio/energy-system/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/kumbatio/energy-system/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/kumbatio/energy-system/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/kumbatio/energy-system/compare/v2.1.4...v2.2.0
