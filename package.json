@@ -90,15 +90,15 @@
     "release": "release-kit"
   },
   "devDependencies": {
-    "@entro314labs/release-kit": "^2.11.0",
-    "@happy-dom/global-registrator": "^21.0.3",
-    "@types/node": "^26.6.5",
+    "@entro314labs/release-kit": "^3.0.0",
+    "@happy-dom/global-registrator": "^21.0.4",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "ajv": "8.20.0",
-    "oxfmt": "0.74.0",
-    "oxlint": "1.89.0",
-    "oxlint-tsgolint": "^7.0.2004",
+    "oxfmt": "0.78.0",
+    "oxlint": "1.93.0",
+    "oxlint-tsgolint": "^7.0.2006",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "next"
@@ -118,5 +118,5 @@
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@11.28.6"
+  "packageManager": "pnpm@11.28.11"
 }
