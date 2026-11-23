@@ -14,6 +14,12 @@ all. Prose returned by `describe()` is not covered; wording is a product decisio
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-23
+
+### Features
+
+- add pacing strategies, calibration, web components, file sync ([2ee8836](https://github.com/kumbatio/energy-system/commit/2ee8836))
+
 ## [2.2.4] - 2026-11-12
 
 ### Changed
@@ -295,7 +301,8 @@ strategies, the DOM adapter, the React provider and hooks, persistence adapters
 with external observation, deterministic clocks, derived metrics, and legacy
 level compatibility mapping.
 
-[Unreleased]: https://github.com/kumbatio/energy-system/compare/v2.2.4...HEAD
+[Unreleased]: https://github.com/kumbatio/energy-system/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/kumbatio/energy-system/compare/v2.2.4...v3.0.0
 [2.2.4]: https://github.com/kumbatio/energy-system/compare/v2.2.2...v2.2.4
 [2.2.2]: https://github.com/kumbatio/energy-system/compare/v2.2.1...v2.2.2
 [2.2.1]: https://github.com/kumbatio/energy-system/compare/v2.2.0...v2.2.1
