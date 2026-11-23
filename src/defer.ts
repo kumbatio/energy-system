@@ -23,6 +23,18 @@ export interface DeferralPresetOptions {
   morningHour?: number
   /** Hour (0-23) evenings resolve to. Default 18. */
   eveningHour?: number
+  /**
+   * IANA time zone (e.g. 'Europe/Athens', 'America/New_York') for server-side
+   * resolution in the person's local time. When omitted, uses the host's local
+   * clock.
+   */
+  timeZone?: string
+  /**
+   * Days of the week treated as weekend (0 = Sunday .. 6 = Saturday).
+   * Default: `[0, 6]` (Saturday and Sunday). Pass `[5, 6]` for Friday-Saturday
+   * workweeks. Must leave at least one workday.
+   */
+  weekendDays?: readonly number[]
 }
 
 /** Stable preset ids, exported so configs/strategies can reference them */
@@ -40,27 +52,185 @@ function validateHour(name: string, value: number): void {
   }
 }
 
+function validateWeekendDays(weekendDays: readonly number[]): ReadonlySet<number> {
+  const normalized = new Set<number>()
+  for (const day of weekendDays) {
+    if (!Number.isInteger(day) || day < 0 || day > 6) {
+      throw new Error(`Invalid weekend day: ${String(day)} (expected integer 0-6)`)
+    }
+    normalized.add(day)
+  }
+  if (normalized.size >= 7) {
+    throw new Error('weekendDays cannot exclude all seven days of the week')
+  }
+  return normalized
+}
+
+interface WallParts {
+  year: number
+  month: number
+  day: number
+  hour: number
+  minute: number
+  second: number
+  weekday: number
+}
+
+const WEEKDAY_INDEX: Readonly<Record<string, number>> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+}
+
+function createTimeZoneFormatter(timeZone: string): Intl.DateTimeFormat {
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      weekday: 'short',
+      hourCycle: 'h23',
+    })
+  } catch (err: unknown) {
+    throw new Error(`Invalid timeZone: ${timeZone}`, { cause: err })
+  }
+}
+
+function getWallParts(date: Date, formatter: Intl.DateTimeFormat): WallParts {
+  const parts = formatter.formatToParts(date)
+  let year = 0
+  let month = 1
+  let day = 1
+  let hour = 0
+  let minute = 0
+  let second = 0
+  let weekday = 0
+
+  for (const part of parts) {
+    switch (part.type) {
+      case 'year':
+        year = Number(part.value)
+        break
+      case 'month':
+        month = Number(part.value)
+        break
+      case 'day':
+        day = Number(part.value)
+        break
+      case 'hour':
+        hour = Number(part.value) % 24
+        break
+      case 'minute':
+        minute = Number(part.value)
+        break
+      case 'second':
+        second = Number(part.value)
+        break
+      case 'weekday':
+        weekday = WEEKDAY_INDEX[part.value] ?? 0
+        break
+    }
+  }
+
+  return { year, month, day, hour, minute, second, weekday }
+}
+
+/**
+ * Convert a wall-clock date/hour in `timeZone` back to an epoch `Date`.
+ * Uses two-step offset refinement so DST boundaries settle accurately.
+ */
+function wallTimeToDate(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  formatter: Intl.DateTimeFormat,
+): Date {
+  const targetUtcMs = Date.UTC(year, month - 1, day, hour, 0, 0, 0)
+  let guess = targetUtcMs
+
+  for (let pass = 0; pass < 2; pass += 1) {
+    const actual = getWallParts(new Date(guess), formatter)
+    const actualAsUtcMs = Date.UTC(
+      actual.year,
+      actual.month - 1,
+      actual.day,
+      actual.hour,
+      actual.minute,
+      actual.second,
+      0,
+    )
+    const diff = targetUtcMs - actualAsUtcMs
+    if (diff === 0) break
+    guess += diff
+  }
+
+  return new Date(guess)
+}
+
+function addCalendarDays(
+  year: number,
+  month: number,
+  day: number,
+  deltaDays: number,
+): { year: number; month: number; day: number; weekday: number } {
+  const shifted = new Date(Date.UTC(year, month - 1, day + deltaDays, 12, 0, 0))
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate(),
+    weekday: shifted.getUTCDay(),
+  }
+}
+
 function startOfDay(from: Date): Date {
   const day = new Date(from)
   day.setHours(0, 0, 0, 0)
   return day
 }
 
-function isWeekend(day: Date): boolean {
-  const weekday = day.getDay()
-  return weekday === 0 || weekday === 6
-}
-
 /**
- * Build the standard deferral presets. Times are computed in local time -
- * "tomorrow morning" means the user's morning.
+ * Build the standard deferral presets. Times are computed in local time (or the
+ * supplied IANA `timeZone`) - "tomorrow morning" means the person's morning.
  */
 export function createDeferralPresets(
   options: DeferralPresetOptions = {},
 ): readonly DeferralPreset[] {
-  const { morningHour = 9, eveningHour = 18 } = options
+  const { morningHour = 9, eveningHour = 18, timeZone, weekendDays = [0, 6] } = options
   validateHour('morningHour', morningHour)
   validateHour('eveningHour', eveningHour)
+  const weekendSet = validateWeekendDays(weekendDays)
+  const formatter = timeZone ? createTimeZoneFormatter(timeZone) : null
+
+  const atDayOffset = (now: Date, deltaDays: number, targetHour: number): Date => {
+    if (formatter) {
+      const parts = getWallParts(now, formatter)
+      const shifted = addCalendarDays(parts.year, parts.month, parts.day, deltaDays)
+      return wallTimeToDate(shifted.year, shifted.month, shifted.day, targetHour, formatter)
+    }
+    const day = startOfDay(now)
+    day.setDate(day.getDate() + deltaDays)
+    day.setHours(targetHour)
+    return day
+  }
+
+  const weekdayAtOffset = (now: Date, deltaDays: number): number => {
+    if (formatter) {
+      const parts = getWallParts(now, formatter)
+      return addCalendarDays(parts.year, parts.month, parts.day, deltaDays).weekday
+    }
+    const day = startOfDay(now)
+    day.setDate(day.getDate() + deltaDays)
+    return day.getDay()
+  }
 
   return Object.freeze([
     Object.freeze({
@@ -74,49 +244,63 @@ export function createDeferralPresets(
       id: DEFERRAL_PRESET_IDS.thisEvening,
       label: `This evening (${eveningHour}:00)`,
       compute(now: Date): Date {
-        const evening = startOfDay(now)
-        evening.setHours(eveningHour)
-        if (evening.getTime() <= now.getTime()) {
-          evening.setDate(evening.getDate() + 1)
+        const todayEvening = atDayOffset(now, 0, eveningHour)
+        if (todayEvening.getTime() <= now.getTime()) {
+          return atDayOffset(now, 1, eveningHour)
         }
-        return evening
+        return todayEvening
       },
     }),
     Object.freeze({
       id: DEFERRAL_PRESET_IDS.tomorrowMorning,
       label: `Tomorrow morning (${morningHour}:00)`,
       compute(now: Date): Date {
-        const morning = startOfDay(now)
-        morning.setDate(morning.getDate() + 1)
-        morning.setHours(morningHour)
-        return morning
+        return atDayOffset(now, 1, morningHour)
       },
     }),
     Object.freeze({
       id: DEFERRAL_PRESET_IDS.nextWorkday,
       label: `Next workday (${morningHour}:00)`,
       compute(now: Date): Date {
-        const day = startOfDay(now)
-        day.setDate(day.getDate() + 1)
-        while (isWeekend(day)) {
-          day.setDate(day.getDate() + 1)
+        let offset = 1
+        while (weekendSet.has(weekdayAtOffset(now, offset))) {
+          offset += 1
         }
-        day.setHours(morningHour)
-        return day
+        return atDayOffset(now, offset, morningHour)
       },
     }),
     Object.freeze({
       id: DEFERRAL_PRESET_IDS.nextMonday,
       label: `Next Monday (${morningHour}:00)`,
       compute(now: Date): Date {
-        const day = startOfDay(now)
-        const delta = (1 - day.getDay() + 7) % 7 || 7
-        day.setDate(day.getDate() + delta)
-        day.setHours(morningHour)
-        return day
+        const currentWeekday = weekdayAtOffset(now, 0)
+        const delta = (1 - currentWeekday + 7) % 7 || 7
+        return atDayOffset(now, delta, morningHour)
       },
     }),
   ])
+}
+
+/**
+ * Neutral, fact-not-promise human phrasing for a deferral preset horizon,
+ * suitable for inbound-demand acknowledgments (SPEC.md §8.2.2) so the queue
+ * and the message to the sender always agree.
+ */
+export function describeDeferralHorizon(presetId: string): string {
+  switch (presetId) {
+    case DEFERRAL_PRESET_IDS.inOneHour:
+      return 'within the next few hours'
+    case DEFERRAL_PRESET_IDS.thisEvening:
+      return 'later today'
+    case DEFERRAL_PRESET_IDS.tomorrowMorning:
+      return 'tomorrow morning'
+    case DEFERRAL_PRESET_IDS.nextWorkday:
+      return 'the next working day'
+    case DEFERRAL_PRESET_IDS.nextMonday:
+      return 'early next week'
+    default:
+      return 'when capacity opens up'
+  }
 }
 
 /**
@@ -202,7 +386,7 @@ export const deferralStrategy: AdaptationStrategy<DeferralConfig> = {
   describe(level) {
     const def = getEnergyLevel(level)
     const config = DEFERRAL_CONFIGS[def.value]
-    return `${def.label}: default deferral is "${config.defaultPresetId}"`
+    return `${def.label}: one-tap "not now" defaults to ${describeDeferralHorizon(config.defaultPresetId)}`
   },
   resolve(level) {
     return DEFERRAL_CONFIGS[getEnergyLevel(level).value]

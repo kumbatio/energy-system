@@ -10,6 +10,7 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "lib": ["ESNext", "DOM"],
+    "types": ["node"],
     "jsx": "react-jsx",
     // Everything imports through explicit `.ts` specifiers, so Node runs src,
     // tests and scripts directly with type stripping - no loader. Emit rewrites

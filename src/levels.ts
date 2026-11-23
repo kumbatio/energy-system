@@ -66,7 +66,7 @@ const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
     value: 100,
     key: 'peak',
     label: 'Peak',
-    description: 'High capacity. Planning, complex decisions, creative work.',
+    description: 'Full capacity for planning, tough decisions, and deep creative work.',
     cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'high',
       focusDuration: 'extended',
@@ -78,7 +78,7 @@ const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
     value: 75,
     key: 'active',
     label: 'Active',
-    description: 'Good capacity. Focused execution, problem-solving.',
+    description: 'Good capacity for focused work and problem-solving.',
     cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'moderate',
       focusDuration: 'moderate',
@@ -90,7 +90,7 @@ const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
     value: 50,
     key: 'steady',
     label: 'Steady',
-    description: 'Moderate capacity. Routine tasks, familiar work.',
+    description: 'Moderate capacity for steady, familiar, routine work.',
     cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'low',
       focusDuration: 'short',
@@ -102,7 +102,7 @@ const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
     value: 25,
     key: 'low',
     label: 'Low',
-    description: 'Limited capacity. Simple tasks, review, light work.',
+    description: 'Limited capacity for light review and simple steps.',
     cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'minimal',
       focusDuration: 'minimal',
@@ -114,7 +114,7 @@ const LEVELS: ReadonlyArray<Readonly<EnergyLevelDefinition>> = Object.freeze([
     value: 0,
     key: 'rest',
     label: 'Rest',
-    description: 'Recovery. Consumption only \u2014 reading, reflecting.',
+    description: 'Recovery mode for quiet reading and resting — no work expected.',
     cognitiveProfile: Object.freeze<EnergyLevelDefinition['cognitiveProfile']>({
       decisionCapacity: 'none',
       focusDuration: 'none',

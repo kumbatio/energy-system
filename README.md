@@ -68,28 +68,28 @@ This library gives applications a structured way to adapt to energy state instea
 - Rich immutable state object: `level`, `timestamp`, `source`, `revision`, `origin`
 - Framework-agnostic core engine
 - Strategy system for behavior adaptation
-- Built-in strategies:
-  - UI visibility
-  - Notification filtering
-  - Task complexity guidance
-  - Interaction forgiveness (undo windows, destructive-action confirmation)
-  - Energy-aware deferral ordering
-  - Autonomy (how much automation may do unattended)
-- **Inbound demand admission**: an energy-resolved policy for arrivals that ask
-  something of the user - reach them now, acknowledge and queue, or queue
-  silently (`demandAdmissionStrategy`, `resolveDemandOutcome`)
+- Built-in strategies (10):
+  - UI visibility (`uiVisibilityStrategy`)
+  - Notification filtering (`notificationStrategy`)
+  - Task complexity guidance (`taskComplexityStrategy`)
+  - Interaction forgiveness (`interactionForgivenessStrategy`)
+  - Energy-aware deferral ordering (`deferralStrategy` + `describeDeferralHorizon`, timezone & weekend support)
+  - Automation autonomy (`autonomyStrategy`)
+  - Inbound demand admission (`demandAdmissionStrategy`, `resolveDemandOutcome`, `createDemandCoordinator`)
+  - Sensory pacing (`sensoryStrategy` — motion, ambient audio, visual weight, no extra prompts at Low/Rest)
+  - Choice budget (`choiceBudgetStrategy` — Hick's Law ceiling & response density for AI and menus)
+  - Form pacing (`formPacingStrategy` — fields per step, optional fields, validation timing, draft autosave)
+- **Personal calibration & composition**: layer your own sensory/schedule bounds (`EnergyCalibration`, `calibrateNotifications`, `calibrateUIVisibility`, `calibrateSensory`, `defineStrategy`, `extendStrategy`, `composeStrategies`)
 - **Presence annotation**: declare which energy levels a component/view belongs
   to (`defineEnergyPresence`, `presenceAtOrAbove`, `<EnergyGate>`, `data-energy-min`)
-- **Focus sessions**: time-boxed suppression windows with auto-expiry and break nudges
-- **Notification gate**: a runtime that enforces `NotificationConfig`
-  (threshold, batching, defer-not-drop) instead of leaving it as guidance
-- **Deferral presets**: pure "not now" (`snooze`) computations with
-  energy-aware default ordering
-- DOM adapter (`data-energy-level` + CSS variables)
-- React provider, hooks, and headless render components
-- Persistence adapters (`localStorage`, in-memory)
+- **Focus sessions**: time-boxed suppression windows with auto-expiry, break nudges, `pause`/`resume`/`extend`/`restore`, and optional stop on Rest
+- **Notification gate**: typed `NotificationGate<TPayload>` runtime that enforces `NotificationConfig`
+  (threshold, batching, defer-not-drop)
+- **Gentle staleness check-ins & local reflection**: `createStalenessMonitor` (never nags at Rest), `createEnergyLedger` (local-only `wh`/`ph` summaries & opt-in rhythm suggestions), and `computeSharedWindows` (privacy-preserving team overlap)
+- **DOM, SSR, Accessibility & Web Components**: `bindEnergyEngine`, `createEnergyAnnouncer`, `manageEnergyFocus`, `createEnergyPrepaintScript`, `<EnergyAnnouncer>`, `<energy-dial>`, `<energy-gate>` (`@kumbatio/energy-system/elements`)
+- **React 18+ provider, hooks, and headless components** (`@kumbatio/energy-system/react`)
+- **Persistence & cross-app interchange**: `localStoragePersistence` (with corruption cleanup), `cookiePersistence` + `parseEnergyCookie`, `broadcastChannelPersistence`, `browserExtensionPersistence`, `memoryPersistence`, and atomic local file sync (`@kumbatio/energy-system/node`)
 - Deterministic clock and timer support for testing/simulation
-- Optional external persistence observation (`observe`)
 - Derived metrics helper (`getEnergyMetrics`)
 - Compatibility helpers for non-native external level models
 

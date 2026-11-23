@@ -48,6 +48,8 @@ const ENTRY_POINTS: ReadonlyArray<{ specifier: string; module: string }> = [
   { specifier: '@kumbatio/energy-system/dom', module: 'dom' },
   { specifier: '@kumbatio/energy-system/react', module: 'react' },
   { specifier: '@kumbatio/energy-system/persistence', module: 'persistence' },
+  { specifier: '@kumbatio/energy-system/node', module: 'node' },
+  { specifier: '@kumbatio/energy-system/elements', module: 'elements' },
 ]
 
 /**

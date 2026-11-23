@@ -59,6 +59,14 @@
       "types": "./dist/persistence.d.ts",
       "import": "./dist/persistence.js"
     },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    },
+    "./elements": {
+      "types": "./dist/elements.d.ts",
+      "import": "./dist/elements.js"
+    },
     "./css": "./src/energy.css",
     "./api-surface.json": "./api-surface.json",
     "./package.json": "./package.json",
@@ -96,16 +104,16 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "ajv": "8.20.0",
-    "oxfmt": "0.78.0",
-    "oxlint": "1.93.0",
-    "oxlint-tsgolint": "^7.0.2006",
+    "oxfmt": "0.80.0",
+    "oxlint": "1.95.0",
+    "oxlint-tsgolint": "^7.0.2008",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "next"
   },
   "peerDependencies": {
-    "@types/react": ">=19.2.0",
-    "react": ">=19.2.0"
+    "@types/react": ">=18.0.0",
+    "react": ">=18.0.0"
   },
   "peerDependenciesMeta": {
     "@types/react": {

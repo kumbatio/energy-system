@@ -64,7 +64,7 @@ second consumer proves what the shared machinery actually is.
 ## M2 - Documentation for real adoption
 
 - [x] Docs readable at energy `25`: short pages, one concept each, optional depth - [docs.kumbat.io](https://docs.kumbat.io)
-- [ ] Example gallery: navbar, dashboard, form, and notification patterns at each level
+- [x] Example gallery: navbar, dashboard, form, notification, and AI assistant patterns at each level
 - [x] [Adaptation strategy authoring guide](https://docs.kumbat.io/docs/energy-system/guides/authoring-strategies)
 - [x] Generated API reference, built from the package's own declarations so it cannot drift from the shipped surface - [docs.kumbat.io/docs/api/reference](https://docs.kumbat.io/docs/api/reference)
 - [x] [Upgrade guide](https://docs.kumbat.io/docs/energy-system/guides/upgrading) covering what each major breaks
@@ -133,12 +133,10 @@ notification being delivered after suppression started.
 
 ## M5 - Beyond the current adapters
 
-- [ ] Web-component / vanilla examples
-- [ ] Additional framework adapter, chosen by adopter demand - open an issue to vote
-- [ ] A first non-JavaScript implementation, when a real consumer needs one. The
-      spec and vectors are what make that cheap, and the bet is that the first
-      genuine demand is server-side rather than another UI framework - that is
-      where the energy models which did NOT adopt this one already live.
+- [x] Zero-dependency Web Components (`@kumbatio/energy-system/elements`: `<energy-dial>`, `<energy-gate>`) and vanilla `bindEnergyEngine` DOM kit
+- [x] Local interchange bus (`@kumbatio/energy-system/node`: atomic `filePersistence`), AI agent bridge (`@kumbatio/energy-mcp`), and opt-in browser extension (`energy-extension/`)
+- [x] First non-JavaScript conformance implementation (`energy-system-py` — zero-dependency Python 3 port replaying every vector in `conformance.json`)
+- [ ] Additional framework adapters (Vue, Svelte, Solid) and native OS tray dial, chosen by adopter demand - open an issue to vote
 
 ## Continuously
 

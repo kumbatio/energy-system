@@ -91,17 +91,21 @@ void test('the packed JavaScript entry points import in a clean consumer', async
   const load = async (subpath: string): Promise<Record<string, unknown>> =>
     (await import(new URL(`file://${join(packageDir, subpath)}`).href)) as Record<string, unknown>
 
-  const [root, dom, persistence, react] = await Promise.all([
+  const [root, dom, persistence, react, nodeEntry, elements] = await Promise.all([
     load('dist/index.js'),
     load('dist/dom.js'),
     load('dist/persistence.js'),
     load('dist/react.js'),
+    load('dist/node.js'),
+    load('dist/elements.js'),
   ])
 
   assert.equal(typeof root['createEnergyEngine'], 'function')
   assert.equal(typeof dom['applyEnergyLevel'], 'function')
   assert.equal(typeof persistence['localStoragePersistence'], 'function')
   assert.equal(typeof react['EnergyProvider'], 'function')
+  assert.equal(typeof nodeEntry['filePersistence'], 'function')
+  assert.equal(typeof elements['registerEnergyElements'], 'function')
 
   const createEnergyEngine = root['createEnergyEngine'] as (options: { initialLevel: number }) => {
     getState: () => { level: number }
@@ -133,28 +137,25 @@ void test('the packed conformance vectors resolve their own schema reference', (
   assert.equal(conformance.version, surface.version, 'shipped artifacts disagree on the version')
 })
 
-void test('the React peer range excludes versions without the APIs the subpath imports', async () => {
-  const react = (await import('react')) as Record<string, unknown>
-
-  // <Activity> is a React 19.2 addition and dist/react.js imports it
-  // unconditionally, so a range admitting 19.0 or 19.1 advertises a
-  // compatibility that throws on first render.
+void test('the React entry supports React 18+ without hard-importing React 19.2-only APIs', () => {
   const reactEntry = readFileSync(join(packageDir, 'dist/react.js'), 'utf8')
-  assert.match(reactEntry, /\bActivity\b/, 'the React entry no longer imports Activity')
-  assert.ok('Activity' in react, 'the installed React predates <Activity>')
+  // Activity is feature-detected at runtime from the React namespace rather
+  // than statically imported, so React 18 / 19.0 / 19.1 consumers don't crash.
+  assert.doesNotMatch(
+    reactEntry,
+    /import\s*\{[^}]*\bActivity\b[^}]*\}\s*from\s*['"]react['"]/,
+    'dist/react.js must not statically import Activity from react',
+  )
 
   for (const field of ['react', '@types/react']) {
     const range = packedManifest().peerDependencies[field]
     const floor = /^>=(\d+)\.(\d+)\./.exec(range ?? '')
-    assert.ok(
-      floor,
-      `${field} peer range must state an explicit minor floor, got: ${String(range)}`,
-    )
+    assert.ok(floor, `${field} peer range must state an explicit floor, got: ${String(range)}`)
 
-    const [major, minor] = [Number(floor[1]), Number(floor[2])]
+    const major = Number(floor[1])
     assert.ok(
-      major > 19 || (major === 19 && minor >= 2),
-      `${field} peer range ${String(range)} admits React versions without <Activity>`,
+      major >= 18,
+      `${field} peer range ${String(range)} admits React versions without useSyncExternalStore`,
     )
   }
 })

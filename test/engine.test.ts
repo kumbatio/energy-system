@@ -991,7 +991,45 @@ void test('initial flush waits for hydration instead of overwriting unread persi
   await flush
 
   assert.equal(engine.getState().level, 25)
-  assert.deepEqual(saves.at(-1), engine.getState())
+  assert.equal(saves.length, 0, 'clean hydration must not echo loaded state back to storage')
+  engine.dispose()
+})
+
+void test('clean hydrate and observe do not echo already-persisted state back to storage', async () => {
+  let observeState: ((state: EnergyState) => void) | undefined
+  const saves: EnergyState[] = []
+  const stored = createEnergyState(50, 'manual', 100, 0, 'tab-a')
+
+  const engine = createEnergyEngine({
+    initialLevel: 100,
+    clock: () => 200,
+    originId: 'tab-b',
+    persistence: {
+      async load() {
+        return stored
+      },
+      async save(state) {
+        saves.push(state)
+      },
+      observe(onState) {
+        observeState = onState
+        return () => {}
+      },
+    },
+  })
+
+  await engine.hydrate()
+  await sleep(0)
+  assert.equal(engine.getState().level, 50)
+  assert.equal(saves.length, 0, 'clean hydrate must not write back what it just read')
+
+  observeState?.(createEnergyState(25, 'manual', 150, 0, 'tab-a'))
+  await sleep(0)
+  assert.equal(engine.getState().level, 25)
+  assert.equal(saves.length, 0, 'clean observe must not cause N-tab write amplification')
+
+  await engine.flush()
+  assert.equal(saves.length, 0, 'flush sees the observed state is already durable')
   engine.dispose()
 })
 
@@ -1108,8 +1146,8 @@ void test('DOM parsing rejects empty and coerced values', () => {
 })
 
 void test('notification descriptions match enabled channels', () => {
-  assert.match(notificationStrategy.describe(100), /All notification channels enabled/)
-  assert.match(notificationStrategy.describe(75), /haptics disabled/)
+  assert.match(notificationStrategy.describe(100), /visual, sound, and haptic/)
+  assert.match(notificationStrategy.describe(75), /no haptics/)
 })
 
 void test('rest level suggests no breaks anywhere: the user is already resting', () => {

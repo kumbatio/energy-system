@@ -121,7 +121,7 @@ void test('every level transition applies, notifies once, and orders after its p
   }
 })
 
-void test('re-setting the same level is not a transition', () => {
+void test('re-setting the same level re-affirms state and advances revision', () => {
   for (const level of LEVELS) {
     let notifications = 0
     const engine = createEnergyEngine({ initialLevel: level, originId: 'test' })
@@ -129,13 +129,20 @@ void test('re-setting the same level is not a transition', () => {
       notifications += 1
     })
 
-    // The first set produces a real state over the unproduced default, so it
-    // does notify; the second is genuinely identical and must not.
+    // The first set produces a real state over the unproduced default; a second
+    // explicit set at the same level re-affirms capacity (refreshing timestamp
+    // or advancing revision), so subscribers still observe the fresh state.
     engine.setLevel(level)
+    const firstState = engine.getState()
     const afterFirst = notifications
     engine.setLevel(level)
+    const secondState = engine.getState()
 
-    assert.equal(notifications, afterFirst + 1, `level ${level}: revision must still advance`)
+    assert.equal(notifications, afterFirst + 1, `level ${level}: re-affirmation must notify`)
+    assert.ok(
+      isPreferredEnergyState(secondState, firstState),
+      `level ${level}: re-affirmed state must order after its predecessor`,
+    )
     engine.dispose()
   }
 })

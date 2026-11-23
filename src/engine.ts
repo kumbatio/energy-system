@@ -297,16 +297,34 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
     }
   }
 
-  function applyState(next: EnergyState): boolean {
+  function applyState(next: EnergyState, persist: 'always' | 'if-dirty' = 'always'): boolean {
     // A disposed engine is inert: it must not mutate state, notify onChange,
     // or schedule persistence after its resources were released.
     if (disposed || isSameState(next, state)) return false
 
+    // When state arrived from storage itself (hydrate or observe), only write
+    // back if a local write was in-flight, waiting on retry, or unpersisted
+    // (so the newer external state still wins over a lagging local save).
+    // Otherwise storage already holds `next` and echoing it back causes
+    // pointless N-tab write amplification.
+    const hasPendingLocalWrite =
+      isPersisting ||
+      persistRetryTimer !== undefined ||
+      (stateVersion > 0 && persistedVersion < stateVersion)
+
     const prev = state
     state = next
     stateVersion += 1
+
+    if (persistence && persist === 'if-dirty' && !hasPendingLocalWrite) {
+      persistedVersion = stateVersion
+      requestedPersistVersion = Math.max(requestedPersistVersion, stateVersion)
+      resolvePersistWaiters()
+    }
+
     notify(next, prev)
-    if (persistence) {
+
+    if (persistence && (persist === 'always' || hasPendingLocalWrite)) {
       queuePersist()
     }
     return true
@@ -341,7 +359,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
 
           if (!isPreferredEnergyState(normalized, state)) return
 
-          applyState(normalized)
+          applyState(normalized, 'if-dirty')
         })
       } catch (err: unknown) {
         logContainedError('Failed to subscribe to persistence observation', err)
@@ -425,7 +443,7 @@ export function createEnergyEngine(options: EnergyEngineOptions = {}): EnergyEng
       // read storage that lags this engine - a save still in flight, or one
       // waiting on backoff - and must not revert the newer local state.
       if (isUnproducedState(state) || isPreferredEnergyState(normalized, state)) {
-        applyState(normalized)
+        applyState(normalized, 'if-dirty')
       }
     },
 

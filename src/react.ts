@@ -6,9 +6,9 @@
 // having to wrap it in their own client boundary first. The directive must
 // stay the first statement in the file for bundlers to honour it.
 
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
+import * as ReactNamespace from 'react'
 import {
-  Activity,
   Fragment,
   createContext,
   createElement,
@@ -23,11 +23,16 @@ import {
   useSyncExternalStore,
 } from 'react'
 
-import { applyEnergyLevel } from './dom.ts'
+import { bindEnergyEngine, createEnergyAnnouncer } from './dom.ts'
 import type { EnergyEngine } from './engine.ts'
 import { createEnergyEngine } from './engine.ts'
-import { getEnergyLevel, getEnergyLevels } from './levels.ts'
-import { defineEnergyPresence, presenceAtOrAbove, resolveEnergyPresence } from './presence.ts'
+import { getEnergyLevel, getEnergyLevels, isEnergyLevel } from './levels.ts'
+import {
+  defineEnergyPresence,
+  presenceAtOrAbove,
+  presenceAtOrBelow,
+  resolveEnergyPresence,
+} from './presence.ts'
 import { logContainedError } from './runtime.ts'
 import type {
   AdaptationStrategy,
@@ -41,32 +46,17 @@ import type {
   EnergyState,
 } from './types.ts'
 
+// ── React 19.2 <Activity> feature detection (supports React 18.0+) ──
+
+type ActivityComponentType = ComponentType<{ mode: 'visible' | 'hidden'; children?: ReactNode }>
+
+const ReactActivity: ActivityComponentType | undefined = (
+  ReactNamespace as { Activity?: ActivityComponentType }
+).Activity
+
 // ── Context ──
 
 const EnergyEngineContext = createContext<EnergyEngine | null>(null)
-const DOM_STYLE_PROPERTIES = [
-  '--energy-chrome-opacity',
-  '--energy-chrome-opacity-hover',
-  '--energy-content-max-width',
-  '--energy-content-font-scale',
-] as const
-
-interface DOMProjectionSnapshot {
-  attribute: string | null
-  styles: ReadonlyMap<(typeof DOM_STYLE_PROPERTIES)[number], string>
-}
-
-interface DOMProjectionLayer {
-  owner: object
-  level: EnergyLevel
-}
-
-interface DOMProjectionStack {
-  baseline: DOMProjectionSnapshot
-  layers: DOMProjectionLayer[]
-}
-
-const domProjectionStacks = new WeakMap<HTMLElement, DOMProjectionStack>()
 
 function callLevelChange(
   listener: EnergyChangeListener | undefined,
@@ -79,22 +69,6 @@ function callLevelChange(
     listener(state, prev)
   } catch (err: unknown) {
     logContainedError('onLevelChange listener threw', err)
-  }
-}
-
-function restoreDOMProjection(target: HTMLElement, snapshot: DOMProjectionSnapshot): void {
-  if (snapshot.attribute === null) {
-    target.removeAttribute('data-energy-level')
-  } else {
-    target.setAttribute('data-energy-level', snapshot.attribute)
-  }
-
-  for (const [property, value] of snapshot.styles) {
-    if (value === '') {
-      target.style.removeProperty(property)
-    } else {
-      target.style.setProperty(property, value)
-    }
   }
 }
 
@@ -111,6 +85,11 @@ export interface EnergyProviderProps {
   engine?: EnergyEngine
   /** Initial energy level when the provider creates its own engine. */
   defaultLevel?: EnergyLevel
+  /**
+   * Optional server-resolved state (e.g. from `parseEnergyCookie()` in SSR) so
+   * the server HTML and first client render agree with zero hydration flash.
+   */
+  initialState?: EnergyState | null
   /** Persistence adapter when the provider creates its own engine. */
   persistence?: EnergyPersistence
   /** Called on every level change. */
@@ -127,25 +106,28 @@ export interface EnergyProviderProps {
    * baseline on unmount.
    */
   domTarget?: HTMLElement | (() => HTMLElement | null)
+  /**
+   * Automatically mount a polite ARIA live region announcing energy transitions
+   * to screen readers (SPEC.md §10.4). Default: `false`.
+   */
+  announceTransitions?: boolean
   children: ReactNode
 }
 
 export function EnergyProvider({
   engine: externalEngine,
   defaultLevel = 100,
+  initialState,
   persistence,
   onLevelChange,
   applyToDOM = true,
   domTarget,
+  announceTransitions = false,
   children,
 }: EnergyProviderProps) {
   const internalEngineRef = useRef<EnergyEngine | null>(null)
   const [, refreshEngine] = useReducer((version: number) => version + 1, 0)
   const onLevelChangeRef = useRef(onLevelChange)
-  // Held in a ref, not a dependency: `domTarget={() => document.documentElement}`
-  // is the natural way to write this, and a fresh arrow every render would tear
-  // the projection down and rebuild it on every render. The target is resolved
-  // once per mount, like `defaultLevel` and `persistence`.
   const domTargetRef = useRef(domTarget)
   const isProviderCommittedRef = useRef(false)
   const pendingInternalChangesRef = useRef<Array<{ state: EnergyState; prev: EnergyState }>>([])
@@ -155,18 +137,11 @@ export function EnergyProvider({
     domTargetRef.current = domTarget
   }, [onLevelChange, domTarget])
 
-  // `defaultLevel` and `persistence` are initial-only by contract: they
-  // configure the engine the provider creates, they do not reconfigure it.
-  //
-  // `autoStart: false` because this runs during render. React discards
-  // in-progress renders (an interrupted transition, a sibling suspending), and
-  // the effect that disposes the engine only runs for a tree it committed. An
-  // engine that hydrated and subscribed at construction would strand a live
-  // cross-context observer with nothing left to release it. Starting from the
-  // effect below ties both to a commit.
+  const effectiveDefaultLevel = initialState?.level ?? defaultLevel
+
   const createInternalEngine = () =>
     createEnergyEngine({
-      initialLevel: defaultLevel,
+      initialLevel: effectiveDefaultLevel,
       autoStart: false,
       ...(persistence ? { persistence } : {}),
       onChange(state, prev) {
@@ -196,7 +171,6 @@ export function EnergyProvider({
   // effects without re-rendering, so render-time lazy init cannot recover).
   useEffect(() => {
     if (externalEngine) {
-      // An external engine took over; release the provider-owned engine.
       internalEngineRef.current?.dispose()
       internalEngineRef.current = null
       return
@@ -209,8 +183,6 @@ export function EnergyProvider({
       refreshEngine()
     }
 
-    // Idempotent, so the StrictMode remount path above and the ordinary mount
-    // path both land here exactly once per live engine.
     internalEngineRef.current.start()
 
     return () => {
@@ -219,9 +191,6 @@ export function EnergyProvider({
     }
   }, [externalEngine])
 
-  // Internal changes can happen during hydration or child layout effects
-  // before a parent effect subscription would exist. Queue them until the
-  // provider commits, then deliver them in transition order.
   useLayoutEffect(() => {
     if (externalEngine) return
 
@@ -237,9 +206,6 @@ export function EnergyProvider({
     }
   }, [engine, externalEngine])
 
-  // External engines own their own pre-provider history. Subscribe before
-  // descendant layout effects so changes made after this provider commits are
-  // still reported through onLevelChange.
   useInsertionEffect(() => {
     if (!externalEngine) return
 
@@ -248,7 +214,7 @@ export function EnergyProvider({
     })
   }, [engine, externalEngine])
 
-  // Sync to DOM when state changes
+  // Sync to DOM using the shared projection stack from `@kumbatio/energy-system/dom`.
   useEffect(() => {
     if (!applyToDOM || typeof document === 'undefined') return
 
@@ -256,60 +222,37 @@ export function EnergyProvider({
     const target = (typeof requested === 'function' ? requested() : requested) ?? document.body
     if (!target) return
 
-    const owner = {}
-    const existingStack = domProjectionStacks.get(target)
-    const stack = existingStack ?? {
-      baseline: {
-        attribute: target.getAttribute('data-energy-level'),
-        styles: new Map(
-          DOM_STYLE_PROPERTIES.map((property) => [
-            property,
-            target.style.getPropertyValue(property),
-          ]),
-        ),
-      },
-      layers: [],
-    }
-    const layer: DOMProjectionLayer = { owner, level: engine.getState().level }
-    stack.layers.push(layer)
-    domProjectionStacks.set(target, stack)
-    applyEnergyLevel(layer.level, target)
-    const unsubscribe = engine.subscribe((state) => {
-      layer.level = state.level
-      if (stack.layers.at(-1)?.owner === owner) {
-        applyEnergyLevel(state.level, target)
-      }
-    })
-
-    return () => {
-      unsubscribe()
-      const layerIndex = stack.layers.findIndex((candidate) => candidate.owner === owner)
-      if (layerIndex === -1) return
-
-      const wasTopLayer = layerIndex === stack.layers.length - 1
-      stack.layers.splice(layerIndex, 1)
-      if (!wasTopLayer) return
-
-      const nextLayer = stack.layers.at(-1)
-      if (nextLayer) {
-        applyEnergyLevel(nextLayer.level, target)
-      } else {
-        domProjectionStacks.delete(target)
-        restoreDOMProjection(target, stack.baseline)
-      }
-    }
+    return bindEnergyEngine(engine, target)
   }, [engine, applyToDOM])
+
+  // Optional built-in ARIA live-region announcer (SPEC.md §10.4).
+  useEffect(() => {
+    if (!announceTransitions || typeof document === 'undefined' || !document.body) return
+    return createEnergyAnnouncer(engine)
+  }, [engine, announceTransitions])
 
   return createElement(EnergyEngineContext.Provider, { value: engine }, children)
 }
 
 // ── Hooks ──
 
+const subscribeNoop = () => () => {}
+
+/**
+ * Returns `false` during SSR and on the first client hydration render, then
+ * `true` after hydration commits. Useful when reading client-only storage
+ * without cookie SSR handoff.
+ */
+export function useIsEnergyHydrated(): boolean {
+  return useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  )
+}
+
 function useEnergyStoreState(): EnergyState {
   const engine = useEngine()
-  // Stable subscribe identity so useSyncExternalStore doesn't unsubscribe +
-  // resubscribe on every render. `engine.getState` is closure-backed (doesn't
-  // use `this`), so it's safe to pass unbound as the snapshot getter.
   const subscribe = useCallback(
     (onStoreChange: () => void) =>
       engine.subscribe(() => {
@@ -367,16 +310,54 @@ export function useEnergyPresence(presence: EnergyPresenceMap): EnergyPresence {
   return useMemo(() => resolveEnergyPresence(presence, state.level), [presence, state.level])
 }
 
+// ── EnergyAnnouncer component (SPEC.md §10.4) ──
+
+export interface EnergyAnnouncerProps {
+  /** ARIA politeness level. Default: `'polite'`. */
+  politeness?: 'polite' | 'assertive'
+  /** Custom phrasing for screen-reader announcements. */
+  formatMessage?: (state: EnergyState, prev: EnergyState) => string
+}
+
+/**
+ * Mounts a polite, visually-hidden ARIA live region announcing energy level
+ * transitions (SPEC.md §10.4). Drop anywhere under `<EnergyProvider>`.
+ */
+export function EnergyAnnouncer({
+  politeness = 'polite',
+  formatMessage,
+}: EnergyAnnouncerProps = {}): ReactNode {
+  const engine = useEngine()
+  const formatRef = useRef(formatMessage)
+
+  useInsertionEffect(() => {
+    formatRef.current = formatMessage
+  }, [formatMessage])
+
+  useEffect(() => {
+    if (typeof document === 'undefined' || !document.body) return
+    return createEnergyAnnouncer(engine, {
+      politeness,
+      ...(formatRef.current
+        ? {
+            formatMessage: (state, prev) =>
+              formatRef.current ? formatRef.current(state, prev) : '',
+          }
+        : {}),
+    })
+  }, [engine, politeness])
+
+  return null
+}
+
 // ── EnergyGate component ──
 
 /**
  * What happens to the gated subtree when its presence resolves to 'hidden'.
  *
- * - `preserve` (default): kept mounted inside `<Activity mode="hidden">`, so
- *   component state, DOM and scroll position survive. Effects are torn down
- *   while hidden and re-run on reveal, and hidden content is not rendered on
- *   the server. Energy is expected to move up and down; a half-written message
- *   should still be there when capacity returns.
+ * - `preserve` (default): kept mounted inside React 19.2's `<Activity mode="hidden">`
+ *   when available (or an accessible `hidden` wrapper on React 18 / 19.0–19.1),
+ *   so component state and drafts survive dips in energy.
  * - `unmount`: removed from the tree entirely. Use for subtrees whose cost is
  *   worth reclaiming at low energy (media, canvases, live connections).
  */
@@ -421,19 +402,7 @@ export type EnergyGateProps = EnergyGateBaseProps &
 /**
  * Declarative energy gating for a subtree.
  *
- * ```tsx
- * // Hide the AI chat at 50 and below:
- * <EnergyGate min={75}>
- *   <AiChatPanel />
- * </EnergyGate>
- *
- * // Full presence map, muted state styled by the child:
- * <EnergyGate presence={aiChatPresence}>
- *   {(presence) => <AiChatPanel muted={presence === 'muted'} />}
- * </EnergyGate>
- * ```
- *
- * Headless: renders no wrapper element of its own.
+ * Headless when React 19.2+ `<Activity>` is present (or under `whenHidden="unmount"`).
  */
 export function EnergyGate({
   presence,
@@ -446,6 +415,15 @@ export function EnergyGate({
   const map = useMemo<EnergyPresenceMap>(() => {
     if (presence) return presence
     if (min !== undefined && max !== undefined) {
+      if (!isEnergyLevel(min)) {
+        throw new Error(`Invalid energy level: ${String(min)}`)
+      }
+      if (!isEnergyLevel(max)) {
+        throw new Error(`Invalid energy level: ${String(max)}`)
+      }
+      if (min > max) {
+        throw new Error(`EnergyGate min (${String(min)}) cannot exceed max (${String(max)})`)
+      }
       const spec: Partial<Record<EnergyLevel, EnergyPresence>> = {}
       for (const definition of getEnergyLevels()) {
         spec[definition.value] =
@@ -454,13 +432,7 @@ export function EnergyGate({
       return defineEnergyPresence(spec)
     }
     if (min !== undefined) return presenceAtOrAbove(min)
-    if (max !== undefined) {
-      const spec: Partial<Record<EnergyLevel, EnergyPresence>> = {}
-      for (const definition of getEnergyLevels()) {
-        spec[definition.value] = definition.value <= max ? 'visible' : 'hidden'
-      }
-      return defineEnergyPresence(spec)
-    }
+    if (max !== undefined) return presenceAtOrBelow(max)
     throw new Error('EnergyGate requires a presence map or min/max level')
   }, [presence, min, max])
 
@@ -472,21 +444,39 @@ export function EnergyGate({
     return typeof children === 'function' ? children(resolved) : children
   }
 
-  /*
-   * The <Activity> element sits at a fixed position in a fixed Fragment on every
-   * render, hidden or not. That stability is the whole mechanism: reconciling the
-   * same boundary is what carries state across the transition. Rendering Activity
-   * only while hidden would swap the element type at that slot and remount the
-   * subtree on reveal - losing exactly the state this is here to keep.
-   */
+  const content = typeof children === 'function' ? children(resolved) : children
+
+  if (ReactActivity) {
+    /*
+     * The <Activity> element sits at a fixed position in a fixed Fragment on every
+     * render, hidden or not. That stability is the whole mechanism: reconciling the
+     * same boundary is what carries state across the transition.
+     */
+    return createElement(
+      Fragment,
+      null,
+      isHidden ? fallback : null,
+      createElement(ReactActivity, {
+        mode: isHidden ? 'hidden' : 'visible',
+        children: content,
+      }),
+    )
+  }
+
+  // Fallback for React 18 / 19.0 / 19.1: preserves React state in a stable slot
+  // and removes the hidden subtree from layout and the accessibility tree.
   return createElement(
     Fragment,
     null,
     isHidden ? fallback : null,
-    createElement(Activity, {
-      mode: isHidden ? 'hidden' : 'visible',
-      children: typeof children === 'function' ? children(resolved) : children,
-    }),
+    createElement(
+      'div',
+      {
+        hidden: isHidden,
+        style: isHidden ? { display: 'none' } : { display: 'contents' },
+      },
+      content,
+    ),
   )
 }
 

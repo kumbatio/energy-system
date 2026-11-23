@@ -42,13 +42,13 @@ then a small amount of local code around a shared, checkable definition.
 
 The model has exactly **five** levels, and they are discrete.
 
-| Value | Key      | Label  | Meaning                                                    |
-| ----- | -------- | ------ | ---------------------------------------------------------- |
-| `100` | `peak`   | Peak   | High capacity. Planning, complex decisions, creative work. |
-| `75`  | `active` | Active | Good capacity. Focused execution, problem-solving.         |
-| `50`  | `steady` | Steady | Moderate capacity. Routine tasks, familiar work.           |
-| `25`  | `low`    | Low    | Limited capacity. Simple tasks, review, light work.        |
-| `0`   | `rest`   | Rest   | Recovery. Consumption only - reading, reflecting.          |
+| Value | Key      | Label  | Meaning                                                              |
+| ----- | -------- | ------ | -------------------------------------------------------------------- |
+| `100` | `peak`   | Peak   | Full capacity for planning, tough decisions, and deep creative work. |
+| `75`  | `active` | Active | Good capacity for focused work and problem-solving.                  |
+| `50`  | `steady` | Steady | Moderate capacity for steady, familiar, routine work.                |
+| `25`  | `low`    | Low    | Limited capacity for light review and simple steps.                  |
+| `0`   | `rest`   | Rest   | Recovery mode for quiet reading and resting — no work expected.      |
 
 An implementation **MUST** use exactly these five values and **MUST NOT** admit
 intermediate ones. This is a design commitment, not an arbitrary limit: a
@@ -149,7 +149,9 @@ only if the first differing key below favours it:
 1. **`timestamp`** - greater wins.
 2. **`revision`** - greater wins.
 3. **`source`** - `manual` (3) > `scheduled` (2) > `inferred` (1).
-4. **`origin`** - greater by lexicographic comparison of the string.
+4. **`origin`** - greater by lexicographic comparison of the string (Unicode
+   code-point order; producers **SHOULD** use ASCII identifiers such as UUIDs so
+   UTF-8, UTF-16, and code-point comparisons always agree across languages).
 
 If all four are equal, the states are equal: the candidate **MUST NOT** replace
 the current, and no change **MUST** be reported.
@@ -185,7 +187,7 @@ enforce**. A strategy says "at Steady, notifications batch every five minutes";
 something else does the batching. Keeping the description pure is what makes it
 portable, testable, and readable by a person deciding whether to trust it.
 
-Seven strategies are specified. Their complete per-level tables are in the
+Ten strategies are specified. Their complete per-level tables are in the
 vectors under `strategies`; they are not reproduced here, because a table
 duplicated in prose is a table that will disagree with itself.
 
@@ -198,6 +200,9 @@ duplicated in prose is a table that will disagree with itself.
 | `deferral`                | Ordering of "not now" presets, and the one-tap default.            |
 | `autonomy`                | What automation may do unattended (§7).                            |
 | `demand-admission`        | What happens to an arrival that asks something of the person (§8). |
+| `sensory`                 | Motion pacing, decorative animation, ambient audio, extra prompts. |
+| `choice-budget`           | Simultaneous options ceiling, response density, passive AI hints.  |
+| `form-pacing`             | Fields per step, optional field visibility, validation, autosave.  |
 
 An implementation **MUST** provide `ui-visibility`, `notifications`, and
 `interaction-forgiveness` to claim conformance; the rest are **SHOULD**, since
@@ -428,9 +433,61 @@ version, existing vectors **MUST NOT** change meaning; sections and vectors
 **MAY** be added. A change to a shipped table's values is a breaking change to
 this specification, not just to the library.
 
+### 11.2 Non-coercion and ethical conformance boundary
+
+Conformance is not purely syntactic. Because this model exists to support
+people with variable cognitive capacity rather than to surveil or score them,
+an implementation **MUST NOT** claim conformance if it:
+
+1. **Silently overrides self-report** with biometric, keystroke, or behavioral
+   inference (see §3.1).
+2. **Weaponizes capacity state** by exposing raw energy levels or transition
+   histories to employers, managers, or third parties without explicit,
+   per-app user consent. Team coordination **SHOULD** exchange only voluntary,
+   coarse preferred-collaboration windows, never raw low-energy logs.
+3. **Turns capacity into a score or streak** that penalizes low energy or Rest
+   (see §2.1).
+4. **Hides escape paths** — the control to change energy level **MUST** remain
+   discoverable and reachable at every level, including Rest.
+
 ---
 
-## 12. What is deliberately not specified
+## 12. Local interchange convention (informative)
+
+To fulfill §1 ("set once, every app on the machine listens") without a cloud
+server or background daemon, desktop apps, CLIs, and local AI bridges **MAY**
+share a single JSON file conforming to `spec/energy-state.schema.json`:
+
+- Explicit override: `$KUMBATIO_ENERGY_FILE`
+- Unix (XDG): `$XDG_STATE_HOME/kumbatio/energy-state.json`
+- Windows: `%LOCALAPPDATA%\kumbatio\energy-state.json`
+- Fallback: `~/.config/kumbatio/energy-state.json`
+
+Writers **MUST** update the file atomically (write to a sibling temporary file
+and rename into place) and reconcile incoming reads using §4.
+
+---
+
+## 13. Alignment with W3C COGA and EN 301 549 (informative)
+
+This specification acts as an executable infrastructure layer complementing
+**EN 301 549 Clause 4.2.10** (_Usage with limited cognition, language, or
+learning_) and the **W3C Cognitive Accessibility Guidance (COGA)** objectives:
+
+| Standard / W3C COGA Objective                                                 | `energy-system` Mechanism                                                                                                                                           |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **EN 301 549 Clause 4.2.10** (Limited cognition)                              | Five discrete self-declared states, decoupled strategies, progressive simplification                                                                                |
+| **COGA Objective 2** (Help users find what they need)                         | Escape-path preservation (`.energy-exempt` / `data-energy-exempt`), focus recovery (§10.2)                                                                          |
+| **COGA Objective 3** (Use clear and understandable content)                   | Neutral state language (§2.1), plain `describe()` copy, `choice-budget`                                                                                             |
+| **COGA Objective 4** (Help users avoid mistakes and know how to correct them) | `interaction-forgiveness` (wider undo windows `5s → 20s`, destructive confirmations)                                                                                |
+| **COGA Objective 5** (Help users focus)                                       | `ui-visibility`, `notifications`, `createNotificationGate` (defer-never-drop), `createFocusSessionController`, `sensory`                                            |
+| **COGA Objective 6** (Ensure processes do not rely on memory)                 | `form-pacing` draft autosave, `<EnergyGate whenHidden="preserve">` keeping half-written work intact                                                                 |
+| **COGA Objective 7** (Provide help and support / reduce cognitive stress)     | Non-intrusive staleness check-ins (never at Rest), `demand-admission` backpressure, Rest sanctuary mode                                                             |
+| **COGA Objective 8** (Support adaptation and personalization)                 | Self-reported 5-level state (no surveillance), `EnergyCalibration` personal overlay, `prefers-contrast` / `prefers-reduced-motion` / `prefers-reduced-transparency` |
+
+---
+
+## 14. What is deliberately not specified
 
 - **Wording.** Every user-facing string is a product decision.
 - **Visual design.** The reference stylesheet is one interpretation.

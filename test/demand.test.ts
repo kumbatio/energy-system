@@ -63,9 +63,9 @@ void test('rest admits only certainty, but still admits one templated step', () 
 })
 
 void test('autonomyStrategy describes itself at every level', () => {
-  assert.match(autonomyStrategy.describe(100), /generated content allowed/)
-  assert.match(autonomyStrategy.describe(0), /templates only/)
-  assert.match(autonomyStrategy.describe(0), /1 chained step\b/)
+  assert.match(autonomyStrategy.describe(100), /drafts allowed/)
+  assert.match(autonomyStrategy.describe(0), /fixed templates only/)
+  assert.match(autonomyStrategy.describe(0), /1 step at a time/)
   assert.match(autonomyStrategy.describe(50), /3 chained steps/)
 })
 
@@ -212,9 +212,9 @@ void test('outcomes are frozen and tiers are validated', () => {
 })
 
 void test('demandAdmissionStrategy describes itself at every level', () => {
-  assert.match(demandAdmissionStrategy.describe(100), /all originators reach the inbox/)
-  assert.match(demandAdmissionStrategy.describe(75), /only known originators/)
-  assert.match(demandAdmissionStrategy.describe(0), /minimal acknowledgment and are queued/)
+  assert.match(demandAdmissionStrategy.describe(100), /everything reaches you directly/)
+  assert.match(demandAdmissionStrategy.describe(75), /known people reach you directly/)
+  assert.match(demandAdmissionStrategy.describe(0), /minimal reply and waits in your queue/)
 
   for (const level of LEVELS) {
     assert.equal(typeof demandAdmissionStrategy.describe(level), 'string')

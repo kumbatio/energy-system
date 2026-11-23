@@ -1,8 +1,32 @@
-import { createEnergyState, isEnergyLevel } from './levels.ts'
+import type { EnergyEngine } from './engine.ts'
+import { createEnergyState, getEnergyLevel, isEnergyLevel } from './levels.ts'
 import { uiVisibilityStrategy } from './strategies.ts'
-import type { EnergyChangeListener, EnergyLevel } from './types.ts'
+import type { EnergyChangeListener, EnergyLevel, EnergyState } from './types.ts'
 
 const ATTR = 'energyLevel'
+const DOM_STYLE_PROPERTIES = [
+  '--energy-chrome-opacity',
+  '--energy-chrome-opacity-hover',
+  '--energy-content-max-width',
+  '--energy-content-font-scale',
+] as const
+
+interface DOMProjectionSnapshot {
+  attribute: string | null
+  styles: ReadonlyMap<(typeof DOM_STYLE_PROPERTIES)[number], string>
+}
+
+interface DOMProjectionLayer {
+  owner: object
+  level: EnergyLevel
+}
+
+interface DOMProjectionStack {
+  baseline: DOMProjectionSnapshot
+  layers: DOMProjectionLayer[]
+}
+
+const domProjectionStacks = new WeakMap<HTMLElement, DOMProjectionStack>()
 
 function resolveRoot(root?: HTMLElement): HTMLElement {
   if (root) {
@@ -22,6 +46,22 @@ function normalizeEnergyLevel(level: EnergyLevel): EnergyLevel {
   }
 
   return level
+}
+
+function restoreDOMProjection(target: HTMLElement, snapshot: DOMProjectionSnapshot): void {
+  if (snapshot.attribute === null) {
+    target.removeAttribute('data-energy-level')
+  } else {
+    target.setAttribute('data-energy-level', snapshot.attribute)
+  }
+
+  for (const [property, value] of snapshot.styles) {
+    if (value === '') {
+      target.style.removeProperty(property)
+    } else {
+      target.style.setProperty(property, value)
+    }
+  }
 }
 
 /**
@@ -66,6 +106,62 @@ export function readEnergyLevel(root?: HTMLElement): EnergyLevel {
 }
 
 /**
+ * Bind an `EnergyEngine` directly to a DOM element (default `document.body`).
+ * Snapshots the element's previous attribute and CSS properties, supports
+ * overlapping bindings in stack order, and restores the baseline on cleanup.
+ *
+ * Works identically in vanilla JS, Web Components, Vue, Svelte, or React.
+ */
+export function bindEnergyEngine(engine: EnergyEngine, root?: HTMLElement): () => void {
+  const target = resolveRoot(root)
+  const owner = {}
+  const existingStack = domProjectionStacks.get(target)
+  const stack: DOMProjectionStack = existingStack ?? {
+    baseline: {
+      attribute: target.getAttribute('data-energy-level'),
+      styles: new Map(
+        DOM_STYLE_PROPERTIES.map((property) => [property, target.style.getPropertyValue(property)]),
+      ),
+    },
+    layers: [],
+  }
+
+  const layer: DOMProjectionLayer = { owner, level: engine.getState().level }
+  stack.layers.push(layer)
+  domProjectionStacks.set(target, stack)
+  applyEnergyLevel(layer.level, target)
+
+  const unsubscribe = engine.subscribe((state) => {
+    layer.level = state.level
+    if (stack.layers.at(-1)?.owner === owner) {
+      applyEnergyLevel(state.level, target)
+    }
+  })
+
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    unsubscribe()
+
+    const layerIndex = stack.layers.findIndex((candidate) => candidate.owner === owner)
+    if (layerIndex === -1) return
+
+    const wasTopLayer = layerIndex === stack.layers.length - 1
+    stack.layers.splice(layerIndex, 1)
+    if (!wasTopLayer) return
+
+    const nextLayer = stack.layers.at(-1)
+    if (nextLayer) {
+      applyEnergyLevel(nextLayer.level, target)
+    } else {
+      domProjectionStacks.delete(target)
+      restoreDOMProjection(target, stack.baseline)
+    }
+  }
+}
+
+/**
  * Observe energy level changes on a root element via MutationObserver.
  * Calls back with EnergyState (timestamp will be observation time, source 'inferred').
  * Returns a cleanup function to disconnect the observer.
@@ -79,8 +175,9 @@ export function observeEnergyLevel(callback: EnergyChangeListener, root?: HTMLEl
       if (mutation.type === 'attributes' && mutation.attributeName === 'data-energy-level') {
         const currentLevel = readEnergyLevel(target)
         if (currentLevel !== prevLevel) {
-          const prev = createEnergyState(prevLevel, 'inferred', Date.now())
-          const current = createEnergyState(currentLevel, 'inferred', Date.now())
+          const observedAt = Date.now()
+          const prev = createEnergyState(prevLevel, 'inferred', observedAt)
+          const current = createEnergyState(currentLevel, 'inferred', observedAt)
           prevLevel = currentLevel
           callback(current, prev)
         }
@@ -96,4 +193,143 @@ export function observeEnergyLevel(callback: EnergyChangeListener, root?: HTMLEl
   return () => {
     observer.disconnect()
   }
+}
+
+// ── Accessibility helpers (SPEC.md §10.2 & §10.4) ──
+
+export interface EnergyAnnouncerOptions {
+  /** Container to append the visually-hidden live region to. Default: `document.body`. */
+  container?: HTMLElement
+  /** ARIA politeness level. Default: `'polite'`. */
+  politeness?: 'polite' | 'assertive'
+  /** Custom phrasing for screen-reader announcements. */
+  formatMessage?: (state: EnergyState, prev: EnergyState) => string
+}
+
+function defaultAnnouncement(state: EnergyState): string {
+  const def = getEnergyLevel(state.level)
+  return `Energy set to ${String(def.value)}%, ${def.label}. ${def.description}`
+}
+
+/**
+ * Create a visually hidden ARIA live region that announces energy level
+ * transitions to screen readers (SPEC.md §10.4). Returns a cleanup function.
+ */
+export function createEnergyAnnouncer(
+  engine: EnergyEngine,
+  options: EnergyAnnouncerOptions = {},
+): () => void {
+  const { container, politeness = 'polite', formatMessage = defaultAnnouncement } = options
+  const parent = resolveRoot(container)
+  const region = document.createElement('div')
+  region.setAttribute('role', 'status')
+  region.setAttribute('aria-live', politeness)
+  region.setAttribute('aria-atomic', 'true')
+  region.dataset['energyAnnouncer'] = 'true'
+  // Standard visually-hidden styles without requiring consumer CSS.
+  Object.assign(region.style, {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    padding: '0',
+    margin: '-1px',
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: '0',
+  })
+  parent.appendChild(region)
+
+  const unsubscribe = engine.subscribe((state, prev) => {
+    if (state.level === prev.level) return
+    region.textContent = formatMessage(state, prev)
+  })
+
+  return () => {
+    unsubscribe()
+    region.remove()
+  }
+}
+
+function isElementHidden(element: Element): boolean {
+  let current: Element | null = element
+  while (current) {
+    if (current instanceof HTMLElement) {
+      if (current.hidden || current.style.display === 'none') return true
+      if (typeof getComputedStyle === 'function') {
+        const computed = getComputedStyle(current)
+        if (computed.display === 'none' || computed.visibility === 'hidden') return true
+      }
+    }
+    current = current.parentElement
+  }
+  return false
+}
+
+/**
+ * Preserve keyboard focus across level transitions (SPEC.md §10.2).
+ * If lowering energy hides the currently focused element, moves focus to
+ * `fallbackTarget` (e.g. `<main>` or the energy dial trigger).
+ */
+export function manageEnergyFocus(
+  engine: EnergyEngine,
+  fallbackTarget: HTMLElement | (() => HTMLElement | null),
+): () => void {
+  const resolveFallback = (): HTMLElement | null =>
+    typeof fallbackTarget === 'function' ? fallbackTarget() : fallbackTarget
+
+  return engine.subscribe((state, prev) => {
+    if (state.level === prev.level || typeof document === 'undefined') return
+
+    const recover = () => {
+      const active = document.activeElement
+      const lostFocus =
+        !active ||
+        active === document.body ||
+        active === document.documentElement ||
+        isElementHidden(active)
+      if (!lostFocus) return
+
+      const target = resolveFallback()
+      if (!target || isElementHidden(target)) return
+      if (!target.hasAttribute('tabindex') && target.tabIndex < 0) {
+        target.setAttribute('tabindex', '-1')
+      }
+      target.focus()
+    }
+
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(recover)
+    } else {
+      recover()
+    }
+  })
+}
+
+// ── SSR pre-paint script helper ──
+
+export interface EnergyPrepaintScriptOptions {
+  /** localStorage key holding the serialized EnergyState. Default: `'energy-state'`. */
+  storageKey?: string
+  /** Optional cookie name to check first (takes precedence when present). */
+  cookieName?: string
+  /** Root element to stamp: `'documentElement'` (`<html>`) or `'body'`. Default: `'documentElement'`. */
+  target?: 'documentElement' | 'body'
+}
+
+/**
+ * Generate a tiny, blocking inline `<script>` string for SSR frameworks
+ * (Next.js, Remix, Astro, SvelteKit) that stamps `data-energy-level` before
+ * the first paint — eliminating the Peak-100 flash for visitors who chose Low
+ * or Rest. Safe to import in Server Components (no `'use client'` directive).
+ */
+export function createEnergyPrepaintScript(options: EnergyPrepaintScriptOptions = {}): string {
+  const { storageKey = 'energy-state', cookieName, target = 'documentElement' } = options
+  const targetExpr = target === 'body' ? 'document.body' : 'document.documentElement'
+  const keyJson = JSON.stringify(storageKey)
+  const cookieSnippet = cookieName
+    ? `var m=document.cookie.match(new RegExp('(?:^|; )'+${JSON.stringify(cookieName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))}+'=([^;]*)'));if(m){var c=JSON.parse(decodeURIComponent(m[1]));if(c&&v.indexOf(c.level)!==-1){el.dataset.energyLevel=String(c.level);return}}`
+    : ''
+
+  return `(function(){try{var v=[0,25,50,75,100],el=${targetExpr};if(!el)return;${cookieSnippet}var r=localStorage.getItem(${keyJson});if(!r)return;var s=JSON.parse(r);if(s&&v.indexOf(s.level)!==-1){el.dataset.energyLevel=String(s.level)}}catch(e){}})()`
 }

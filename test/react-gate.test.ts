@@ -261,3 +261,60 @@ void test('useEnergyPresence tracks level changes', async () => {
     engine.dispose()
   }
 })
+
+void test('EnergyGate max shorthand hides above the threshold and rejects inverted min/max bounds', async () => {
+  const engine = createEnergyEngine({ initialLevel: 25 })
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+
+  try {
+    await act(async () => {
+      root.render(
+        createElement(EnergyProvider, {
+          engine,
+          applyToDOM: false,
+          children: createElement(EnergyGate, {
+            max: 25,
+            whenHidden: 'unmount',
+            children: createElement('span', null, 'recovery-hint'),
+          }),
+        }),
+      )
+    })
+    assert.equal(container.textContent, 'recovery-hint')
+
+    await act(async () => {
+      engine.setLevel(50)
+    })
+    assert.equal(container.textContent, '')
+
+    const originalConsoleError = console.error
+    console.error = () => {}
+    try {
+      await assert.rejects(async () => {
+        await act(async () => {
+          root.render(
+            createElement(EnergyProvider, {
+              engine,
+              applyToDOM: false,
+              children: createElement(EnergyGate, {
+                min: 75,
+                max: 25,
+                children: createElement('span', null, 'impossible'),
+              }),
+            }),
+          )
+        })
+      }, /cannot exceed max/)
+    } finally {
+      console.error = originalConsoleError
+    }
+  } finally {
+    await act(async () => {
+      root.unmount()
+    })
+    container.remove()
+    engine.dispose()
+  }
+})

@@ -8,7 +8,7 @@
       "value": 100,
       "key": "peak",
       "label": "Peak",
-      "description": "High capacity. Planning, complex decisions, creative work.",
+      "description": "Full capacity for planning, tough decisions, and deep creative work.",
       "cognitiveProfile": {
         "decisionCapacity": "high",
         "focusDuration": "extended",
@@ -20,7 +20,7 @@
       "value": 75,
       "key": "active",
       "label": "Active",
-      "description": "Good capacity. Focused execution, problem-solving.",
+      "description": "Good capacity for focused work and problem-solving.",
       "cognitiveProfile": {
         "decisionCapacity": "moderate",
         "focusDuration": "moderate",
@@ -32,7 +32,7 @@
       "value": 50,
       "key": "steady",
       "label": "Steady",
-      "description": "Moderate capacity. Routine tasks, familiar work.",
+      "description": "Moderate capacity for steady, familiar, routine work.",
       "cognitiveProfile": {
         "decisionCapacity": "low",
         "focusDuration": "short",
@@ -44,7 +44,7 @@
       "value": 25,
       "key": "low",
       "label": "Low",
-      "description": "Limited capacity. Simple tasks, review, light work.",
+      "description": "Limited capacity for light review and simple steps.",
       "cognitiveProfile": {
         "decisionCapacity": "minimal",
         "focusDuration": "minimal",
@@ -56,7 +56,7 @@
       "value": 0,
       "key": "rest",
       "label": "Rest",
-      "description": "Recovery. Consumption only — reading, reflecting.",
+      "description": "Recovery mode for quiet reading and resting — no work expected.",
       "cognitiveProfile": {
         "decisionCapacity": "none",
         "focusDuration": "none",
@@ -340,6 +340,102 @@
         "originatorThreshold": "all",
         "acknowledge": false,
         "acknowledgmentDetail": "full"
+      }
+    },
+    "sensory": {
+      "0": {
+        "motionScale": 0,
+        "allowDecorativeMotion": false,
+        "allowAmbientAudio": false,
+        "displayWeightScale": 0.45,
+        "allowCallsToAction": false
+      },
+      "25": {
+        "motionScale": 0.25,
+        "allowDecorativeMotion": false,
+        "allowAmbientAudio": false,
+        "displayWeightScale": 0.55,
+        "allowCallsToAction": false
+      },
+      "50": {
+        "motionScale": 0.5,
+        "allowDecorativeMotion": false,
+        "allowAmbientAudio": true,
+        "displayWeightScale": 0.7,
+        "allowCallsToAction": true
+      },
+      "75": {
+        "motionScale": 0.75,
+        "allowDecorativeMotion": true,
+        "allowAmbientAudio": true,
+        "displayWeightScale": 0.85,
+        "allowCallsToAction": true
+      },
+      "100": {
+        "motionScale": 1,
+        "allowDecorativeMotion": true,
+        "allowAmbientAudio": true,
+        "displayWeightScale": 1,
+        "allowCallsToAction": true
+      }
+    },
+    "choice-budget": {
+      "0": {
+        "maxChoices": 0,
+        "responseDensity": "quiet",
+        "allowProactiveSuggestions": false
+      },
+      "25": {
+        "maxChoices": 1,
+        "responseDensity": "single-step",
+        "allowProactiveSuggestions": false
+      },
+      "50": {
+        "maxChoices": 3,
+        "responseDensity": "concise",
+        "allowProactiveSuggestions": false
+      },
+      "75": {
+        "maxChoices": 5,
+        "responseDensity": "balanced",
+        "allowProactiveSuggestions": true
+      },
+      "100": {
+        "maxChoices": null,
+        "responseDensity": "detailed",
+        "allowProactiveSuggestions": true
+      }
+    },
+    "form-pacing": {
+      "0": {
+        "maxFieldsPerStep": 1,
+        "showOptionalFields": false,
+        "validationTiming": "on-submit",
+        "autosaveDraft": true
+      },
+      "25": {
+        "maxFieldsPerStep": 3,
+        "showOptionalFields": false,
+        "validationTiming": "on-blur",
+        "autosaveDraft": true
+      },
+      "50": {
+        "maxFieldsPerStep": 5,
+        "showOptionalFields": false,
+        "validationTiming": "on-blur",
+        "autosaveDraft": true
+      },
+      "75": {
+        "maxFieldsPerStep": 8,
+        "showOptionalFields": true,
+        "validationTiming": "inline",
+        "autosaveDraft": true
+      },
+      "100": {
+        "maxFieldsPerStep": 12,
+        "showOptionalFields": true,
+        "validationTiming": "inline",
+        "autosaveDraft": false
       }
     }
   },

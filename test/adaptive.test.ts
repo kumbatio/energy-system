@@ -298,6 +298,39 @@ void test('gate batches at 50, defers below threshold, and releases on energy ri
   gate.dispose()
 })
 
+void test('rising to an immediate level releases open batch and deferred intents together in publish order', () => {
+  const timeline = createFakeTimeline()
+  const engine = createEnergyEngine({ initialLevel: 50, clock: timeline.clock })
+  const deliveries: NotificationDelivery[] = []
+  const gate = createNotificationGate(engine, {
+    onDeliver: (delivery) => deliveries.push(delivery),
+    clock: timeline.clock,
+    scheduler: timeline.scheduler,
+  })
+
+  // At 50: 'high' is batched (5min), 'normal' is deferred.
+  assert.equal(gate.publish({ priority: 'high', payload: 'first-batched' }), 'batched')
+  assert.equal(gate.publish({ priority: 'normal', payload: 'second-deferred' }), 'deferred')
+  assert.equal(gate.publish({ priority: 'critical', payload: 'third-batched' }), 'batched')
+  assert.deepEqual(gate.pendingCount(), { batched: 2, deferred: 1 })
+
+  // Rising to 100 (batchInterval: 0) releases everything synchronously as one
+  // 'released' delivery in exact publish order, leaving no pending batch timer.
+  engine.setLevel(100)
+  assert.equal(deliveries.length, 1)
+  assert.equal(deliveries[0]?.reason, 'released')
+  assert.deepEqual(
+    deliveries[0]?.notifications.map((notification) => notification.payload),
+    ['first-batched', 'second-deferred', 'third-batched'],
+  )
+  assert.deepEqual(gate.pendingCount(), { batched: 0, deferred: 0 })
+
+  // Advancing past the old 5min batch window must not emit anything further.
+  timeline.advance(10 * 60_000)
+  assert.equal(deliveries.length, 1)
+  gate.dispose()
+})
+
 /*
  * A batch window is a wait, not a decision that has already been made. Energy
  * and suppression both move while one is open, and the gate's whole purpose is
@@ -559,6 +592,60 @@ void test('break nudges recur but never land on or after the session end', () =>
 
   // Breaks at 25 and 50; the would-be 75 nudge is past the end. End fires once.
   assert.deepEqual(events, ['start', 'break', 'break', 'end'])
+})
+
+void test('host sleep collapses missed break intervals into one nudge and never nudges past expiry', () => {
+  // Simulate host sleep: wall clock jumps forward while a single overdue break
+  // timer callback fires first.
+  let nowMs = 0
+  let nextId = 1
+  const scheduled = new Map<number, { delay: number; callback: () => void }>()
+  const scheduler = {
+    setTimeout(callback: () => void, ms: number): unknown {
+      const id = nextId
+      nextId += 1
+      scheduled.set(id, { delay: ms, callback })
+      return id
+    },
+    clearTimeout(handle: unknown): void {
+      scheduled.delete(handle as number)
+    },
+  }
+
+  const events: FocusSessionEvent[] = []
+  const controller = createFocusSessionController({
+    clock: () => nowMs,
+    scheduler,
+  })
+  controller.subscribe((event) => events.push(event))
+
+  // 60min session with 15min breaks -> endTimer (id 1) + breakTimer (id 2).
+  controller.start({ durationMinutes: 60, breakEveryMinutes: 15 })
+  const firstBreakId = 2
+  const firstBreak = scheduled.get(firstBreakId)
+  assert.ok(firstBreak)
+
+  // Host sleeps 40 minutes (missing both 15m and 30m breaks), then wakes.
+  nowMs = 40 * 60_000
+  scheduled.delete(firstBreakId)
+  firstBreak.callback()
+
+  // Exactly one break emitted, and the next break is scheduled for 45m (5m away),
+  // not 30m (negative delay / burst).
+  assert.deepEqual(events, ['start', 'break'])
+  const nextBreak = [...scheduled.values()].find((entry) => entry.delay < 60 * 60_000)
+  assert.equal(nextBreak?.delay, 5 * 60_000)
+
+  // Now host sleeps past session expiry (65m) and the break timer fires before endTimer.
+  nowMs = 65 * 60_000
+  const overdueBreak = nextBreak
+  assert.ok(overdueBreak)
+  overdueBreak.callback()
+
+  // Must expire the session instead of emitting a break after endsAt.
+  assert.deepEqual(events, ['start', 'break', 'end'])
+  assert.equal(controller.getSession(), null)
+  controller.dispose()
 })
 
 void test('sessions default their shape from the engine energy level', () => {

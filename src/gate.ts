@@ -36,9 +36,9 @@ export function isNotificationPriority(value: unknown): value is NotificationPri
 }
 
 /** A single notification intent held or delivered by the gate */
-export interface EnergyNotification {
+export interface EnergyNotification<TPayload = unknown> {
   readonly priority: NotificationPriority
-  readonly payload: unknown
+  readonly payload: TPayload
   /** When the intent was published (epoch ms, gate clock) */
   readonly createdAt: number
 }
@@ -54,8 +54,8 @@ export interface NotificationChannels {
 }
 
 /** One call to `onDeliver`: one or more notifications plus delivery context */
-export interface NotificationDelivery {
-  readonly notifications: readonly EnergyNotification[]
+export interface NotificationDelivery<TPayload = unknown> {
+  readonly notifications: ReadonlyArray<EnergyNotification<TPayload>>
   readonly reason: NotificationDeliveryReason
   readonly channels: NotificationChannels
   readonly level: EnergyLevel
@@ -98,9 +98,9 @@ export interface GateScheduler {
   clearTimeout(handle: unknown): void
 }
 
-export interface NotificationGateOptions {
+export interface NotificationGateOptions<TPayload = unknown> {
   /** Delivery sink. Called with everything the gate decides to surface. */
-  onDeliver(delivery: NotificationDelivery): void
+  onDeliver(delivery: NotificationDelivery<TPayload>): void
   /** Strategy resolving level -> NotificationConfig. Default: `notificationStrategy`. */
   strategy?: AdaptationStrategy<NotificationConfig>
   /** Deterministic time source for tests/simulations */
@@ -109,9 +109,9 @@ export interface NotificationGateOptions {
   scheduler?: GateScheduler
 }
 
-export interface NotificationGate {
+export interface NotificationGate<TPayload = unknown> {
   /** Publish a notification intent. Returns what the gate did with it. */
-  publish(input: { priority?: NotificationPriority; payload?: unknown }): PublishOutcome
+  publish(input: { priority?: NotificationPriority; payload?: TPayload }): PublishOutcome
   /**
    * Hard-suppress delivery (e.g. during a focus session). While suppressed,
    * every publish defers; lifting suppression releases the deferred queue.
@@ -134,10 +134,10 @@ export interface NotificationGate {
  * config on every energy change and releases deferred notifications the
  * moment the new level's config (or lifted suppression) admits them.
  */
-export function createNotificationGate(
+export function createNotificationGate<TPayload = unknown>(
   engine: EnergyEngine,
-  options: NotificationGateOptions,
-): NotificationGate {
+  options: NotificationGateOptions<TPayload>,
+): NotificationGate<TPayload> {
   const {
     onDeliver,
     strategy = notificationStrategy,
@@ -153,10 +153,12 @@ export function createNotificationGate(
 
   let disposed = false
   let suppressed = false
-  let batch: EnergyNotification[] = []
-  let deferred: EnergyNotification[] = []
+  let batch: Array<EnergyNotification<TPayload>> = []
+  let deferred: Array<EnergyNotification<TPayload>> = []
   let batchTimer: unknown
   let batchTimerIntervalMs: number | undefined
+  let publishSequence = 0
+  const publishOrder = new WeakMap<EnergyNotification<TPayload>, number>()
   /*
    * When the currently open batch window started. The window is anchored here
    * rather than to the timer, so a config change that lengthens `batchInterval`
@@ -179,13 +181,13 @@ export function createNotificationGate(
   }
 
   function deliver(
-    notifications: readonly EnergyNotification[],
+    notifications: ReadonlyArray<EnergyNotification<TPayload>>,
     reason: NotificationDeliveryReason,
   ): void {
     if (notifications.length === 0) return
 
     const config = currentConfig()
-    const delivery: NotificationDelivery = Object.freeze({
+    const delivery: NotificationDelivery<TPayload> = Object.freeze({
       notifications: Object.freeze([...notifications]),
       reason,
       channels: channelsFrom(config),
@@ -231,25 +233,32 @@ export function createNotificationGate(
    *
    * Classification happens when an intent is published, but both energy and
    * suppression move while a batch window is open. Without this pass a
-   * notification batched at Focus is delivered after a focus session starts,
-   * and one batched at Focus is surfaced at Rest with every channel disabled -
+   * notification batched at Steady is delivered after a focus session starts,
+   * and one batched at Steady is surfaced at Rest with every channel disabled -
    * the gate's own policy, applied to the wrong moment.
    *
    * Batched intents the current policy no longer admits are demoted to
-   * deferred; deferred intents it now admits are released immediately (not
-   * re-batched: they already waited once, and a second window would compound
-   * the delay). Nothing is dropped in either direction.
+   * deferred; batched intents the current policy delivers immediately (because
+   * `batchInterval` dropped to 0) are released alongside any newly admitted
+   * deferred intents in publish order; deferred intents it now admits are
+   * released immediately (not re-batched: they already waited once, and a
+   * second window would compound the delay). Nothing is dropped in either
+   * direction.
    */
   function reconcilePending(): void {
     if (disposed) return
 
     const config = currentConfig()
+    const released: Array<EnergyNotification<TPayload>> = []
 
     if (batch.length > 0) {
-      const stillBatched: EnergyNotification[] = []
+      const stillBatched: Array<EnergyNotification<TPayload>> = []
       for (const notification of batch) {
-        if (resolveNotificationOutcome(config, notification.priority, suppressed) === 'deferred') {
+        const outcome = resolveNotificationOutcome(config, notification.priority, suppressed)
+        if (outcome === 'deferred') {
           deferred.push(notification)
+        } else if (outcome === 'delivered') {
+          released.push(notification)
         } else {
           stillBatched.push(notification)
         }
@@ -257,9 +266,8 @@ export function createNotificationGate(
       batch = stillBatched
     }
 
-    const released: EnergyNotification[] = []
     if (deferred.length > 0) {
-      const stillDeferred: EnergyNotification[] = []
+      const stillDeferred: Array<EnergyNotification<TPayload>> = []
       for (const notification of deferred) {
         if (resolveNotificationOutcome(config, notification.priority, suppressed) === 'deferred') {
           stillDeferred.push(notification)
@@ -268,6 +276,10 @@ export function createNotificationGate(
         }
       }
       deferred = stillDeferred
+    }
+
+    if (released.length > 1) {
+      released.sort((a, b) => (publishOrder.get(a) ?? 0) - (publishOrder.get(b) ?? 0))
     }
 
     if (batch.length === 0) {
@@ -309,11 +321,13 @@ export function createNotificationGate(
         throw new Error(`Invalid notification priority: ${String(priority)}`)
       }
 
-      const notification: EnergyNotification = Object.freeze({
+      const notification: EnergyNotification<TPayload> = Object.freeze({
         priority,
-        payload: input.payload,
+        payload: input.payload as TPayload,
         createdAt: now(),
       })
+      publishSequence += 1
+      publishOrder.set(notification, publishSequence)
 
       const config = currentConfig()
       const outcome = resolveNotificationOutcome(config, priority, suppressed)

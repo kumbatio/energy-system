@@ -86,9 +86,12 @@ export const uiVisibilityStrategy: AdaptationStrategy<UIVisibilityConfig> = {
     ].filter(Boolean)
 
     if (hidden.length === 0) {
-      return `${def.label}: All UI elements visible${config.chromeOpacity < 1 ? `, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity` : ''}`
+      return `${def.label}: full workspace visible${config.chromeOpacity < 1 ? `, chrome softened to ${Math.round(config.chromeOpacity * 100)}%` : ''}`
     }
-    return `${def.label}: ${hidden.join(', ')} hidden, chrome at ${Math.round(config.chromeOpacity * 100)}% opacity`
+    if (def.value === 0) {
+      return `${def.label}: workspace chrome tucked away for quiet reading`
+    }
+    return `${def.label}: ${hidden.join(', ')} tucked away, chrome softened to ${Math.round(config.chromeOpacity * 100)}%`
   },
   resolve(level) {
     return UI_CONFIGS[getEnergyLevel(level).value]
@@ -153,13 +156,16 @@ export const notificationStrategy: AdaptationStrategy<NotificationConfig> = {
   describe(level) {
     const def = getEnergyLevel(level)
     const config = NOTIFICATION_CONFIGS[def.value]
-    if (config.priorityThreshold === 'none') return 'Rest: All notifications silenced'
+    if (config.priorityThreshold === 'none') {
+      return `${def.label}: all alerts held quietly until you're ready`
+    }
     if (config.priorityThreshold === 'all') {
       return config.allowVibration
-        ? `${def.label}: All notification channels enabled`
-        : `${def.label}: Visual and sound notifications enabled, haptics disabled`
+        ? `${def.label}: visual, sound, and haptic alerts arrive right away`
+        : `${def.label}: visual and sound alerts arrive right away, no haptics`
     }
-    return `${def.label}: Only ${config.priorityThreshold} priority, batched every ${config.batchInterval / 60_000}min`
+    const label = config.priorityThreshold === 'critical' ? 'urgent' : 'important'
+    return `${def.label}: ${label} alerts only, grouped every ${config.batchInterval / 60_000} minutes`
   },
   resolve(level) {
     return NOTIFICATION_CONFIGS[getEnergyLevel(level).value]
@@ -212,9 +218,17 @@ export const taskComplexityStrategy: AdaptationStrategy<TaskComplexityConfig> = 
   describe(level) {
     const def = getEnergyLevel(level)
     const config = TASK_CONFIGS[def.value]
-    const parts = [`${def.label}: Max complexity: ${config.maxComplexity}`]
-    if (config.suggestBreaks) parts.push(`breaks every ${config.breakIntervalMinutes}min`)
-    return parts.join(', ')
+    const guidance: Record<TaskComplexity, string> = {
+      complex: 'open to complex work',
+      moderate: 'good for focused, moderate work',
+      routine: 'best for familiar, routine work',
+      simple: 'stick to light, simple steps',
+      consumption: 'reading and recovery only, no work prompts',
+    }
+    const base = `${def.label}: ${guidance[config.maxComplexity]}`
+    return config.suggestBreaks
+      ? `${base}, with breaks every ${config.breakIntervalMinutes}min`
+      : base
   },
   resolve(level) {
     return TASK_CONFIGS[getEnergyLevel(level).value]
@@ -272,8 +286,8 @@ export const interactionForgivenessStrategy: AdaptationStrategy<InteractionForgi
     const def = getEnergyLevel(level)
     const config = FORGIVENESS_CONFIGS[def.value]
     const confirm = config.confirmDestructive
-      ? 'destructive actions confirm first'
-      : 'no confirmation friction'
+      ? 'asks before destructive actions'
+      : 'direct destructive actions'
     return `${def.label}: ${config.undoWindowMs / 1000}s undo window, ${confirm}`
   },
   resolve(level) {
@@ -345,10 +359,239 @@ export const autonomyStrategy: AdaptationStrategy<AutonomyConfig> = {
   describe(level) {
     const def = getEnergyLevel(level)
     const config = AUTONOMY_CONFIGS[def.value]
-    const content = config.allowGeneratedContent ? 'generated content allowed' : 'templates only'
-    return `${def.label}: acts unattended at ${Math.round(config.confidenceThreshold * 100)}% confidence, ${content}, up to ${config.maxUnattendedSteps} chained step${config.maxUnattendedSteps === 1 ? '' : 's'}`
+    const content = config.allowGeneratedContent ? 'drafts allowed' : 'fixed templates only'
+    const steps =
+      config.maxUnattendedSteps === 1
+        ? '1 step at a time'
+        : `up to ${config.maxUnattendedSteps} chained steps`
+    const certainty =
+      config.confidenceThreshold === 1
+        ? 'certainty only'
+        : `${Math.round(config.confidenceThreshold * 100)}% confidence`
+    return `${def.label}: automation acts on ${certainty}, ${content}, ${steps}`
   },
   resolve(level) {
     return AUTONOMY_CONFIGS[getEnergyLevel(level).value]
+  },
+}
+
+// ── Sensory Strategy ──
+
+/**
+ * Sensory pacing across energy levels: motion, ambient sound, visual intensity,
+ * and whether unsolicited calls-to-action should appear.
+ *
+ * Lower energy means a calmer, quieter room — never harsh animations, never
+ * surprise popups, and no asks at Rest.
+ */
+export interface SensoryConfig {
+  /** Multiplier for animation/transition durations (1 = normal, 0 = instant/still) */
+  readonly motionScale: number
+  /** Whether purely decorative animations (parallax, ambient glows) may run */
+  readonly allowDecorativeMotion: boolean
+  /** Whether optional ambient audio / soundscapes may play by default */
+  readonly allowAmbientAudio: boolean
+  /** Relative font-weight softening step (0 = normal, negative = gentler display weight) */
+  readonly displayWeightScale: number
+  /** Whether non-essential calls-to-action or prompts may surface (false at Rest) */
+  readonly allowCallsToAction: boolean
+}
+
+const SENSORY_CONFIGS = Object.freeze({
+  100: Object.freeze({
+    motionScale: 1,
+    allowDecorativeMotion: true,
+    allowAmbientAudio: true,
+    displayWeightScale: 1,
+    allowCallsToAction: true,
+  }),
+  75: Object.freeze({
+    motionScale: 0.75,
+    allowDecorativeMotion: true,
+    allowAmbientAudio: true,
+    displayWeightScale: 0.85,
+    allowCallsToAction: true,
+  }),
+  50: Object.freeze({
+    motionScale: 0.5,
+    allowDecorativeMotion: false,
+    allowAmbientAudio: true,
+    displayWeightScale: 0.7,
+    allowCallsToAction: true,
+  }),
+  25: Object.freeze({
+    motionScale: 0.25,
+    allowDecorativeMotion: false,
+    allowAmbientAudio: false,
+    displayWeightScale: 0.55,
+    allowCallsToAction: false,
+  }),
+  0: Object.freeze({
+    motionScale: 0,
+    allowDecorativeMotion: false,
+    allowAmbientAudio: false,
+    displayWeightScale: 0.45,
+    allowCallsToAction: false,
+  }),
+}) satisfies Readonly<Record<EnergyLevel, Readonly<SensoryConfig>>>
+
+export const sensoryStrategy: AdaptationStrategy<SensoryConfig> = {
+  name: 'sensory',
+  describe(level) {
+    const def = getEnergyLevel(level)
+    const config = SENSORY_CONFIGS[def.value]
+    if (config.motionScale === 0) {
+      return `${def.label}: still, quiet, and free of prompts`
+    }
+    const motion = config.allowDecorativeMotion
+      ? `full motion (${Math.round(config.motionScale * 100)}%)`
+      : `gentle transitions only (${Math.round(config.motionScale * 100)}%)`
+    const asks = config.allowCallsToAction ? 'prompts allowed' : 'no extra prompts'
+    return `${def.label}: ${motion}, ${asks}`
+  },
+  resolve(level) {
+    return SENSORY_CONFIGS[getEnergyLevel(level).value]
+  },
+}
+
+// ── Choice Budget Strategy ──
+
+export type ResponseDensity = 'detailed' | 'balanced' | 'concise' | 'single-step' | 'quiet'
+
+/**
+ * How many simultaneous choices and how much text an interface or AI assistant
+ * should present at once. Grounded in Hick's Law and executive-function
+ * support: at low energy, presenting seven options creates paralysis; one clear
+ * next step creates relief.
+ *
+ * Applies to passive / unsolicited surfaces and default assistant output —
+ * never locks out explicitly invoked tools.
+ */
+export interface ChoiceBudgetConfig {
+  /** Maximum simultaneous options to present (`null` = unbounded) */
+  readonly maxChoices: number | null
+  /** Default depth/length for assistant or interface copy */
+  readonly responseDensity: ResponseDensity
+  /** Whether unsolicited proactive suggestions or sidebars may appear */
+  readonly allowProactiveSuggestions: boolean
+}
+
+const CHOICE_BUDGET_CONFIGS = Object.freeze({
+  100: Object.freeze({
+    maxChoices: null,
+    responseDensity: 'detailed',
+    allowProactiveSuggestions: true,
+  }),
+  75: Object.freeze({
+    maxChoices: 5,
+    responseDensity: 'balanced',
+    allowProactiveSuggestions: true,
+  }),
+  50: Object.freeze({
+    maxChoices: 3,
+    responseDensity: 'concise',
+    allowProactiveSuggestions: false,
+  }),
+  25: Object.freeze({
+    maxChoices: 1,
+    responseDensity: 'single-step',
+    allowProactiveSuggestions: false,
+  }),
+  0: Object.freeze({
+    maxChoices: 0,
+    responseDensity: 'quiet',
+    allowProactiveSuggestions: false,
+  }),
+}) satisfies Readonly<Record<EnergyLevel, Readonly<ChoiceBudgetConfig>>>
+
+export const choiceBudgetStrategy: AdaptationStrategy<ChoiceBudgetConfig> = {
+  name: 'choice-budget',
+  describe(level) {
+    const def = getEnergyLevel(level)
+    const config = CHOICE_BUDGET_CONFIGS[def.value]
+    if (config.maxChoices === null) {
+      return `${def.label}: full options and detailed responses`
+    }
+    if (config.maxChoices === 0) {
+      return `${def.label}: no decisions asked, quiet reading only`
+    }
+    const choices =
+      config.maxChoices === 1 ? 'one clear next step' : `up to ${config.maxChoices} options`
+    return `${def.label}: ${choices}, ${config.responseDensity} responses`
+  },
+  resolve(level) {
+    return CHOICE_BUDGET_CONFIGS[getEnergyLevel(level).value]
+  },
+}
+
+// ── Form Pacing Strategy ──
+
+export type ValidationTiming = 'inline' | 'on-blur' | 'on-submit'
+
+/**
+ * How forms, checkouts, and onboarding flows pace themselves as capacity falls:
+ * fewer fields per step, optional fields tucked away, gentler validation timing,
+ * and automatic draft saving.
+ */
+export interface FormPacingConfig {
+  /** Maximum fields shown in a single step or screen */
+  readonly maxFieldsPerStep: number
+  /** Whether optional fields are shown inline or collapsed */
+  readonly showOptionalFields: boolean
+  /** When validation feedback appears (gentler at lower energy) */
+  readonly validationTiming: ValidationTiming
+  /** Whether draft progress saves automatically on change */
+  readonly autosaveDraft: boolean
+}
+
+const FORM_PACING_CONFIGS = Object.freeze({
+  100: Object.freeze({
+    maxFieldsPerStep: 12,
+    showOptionalFields: true,
+    validationTiming: 'inline',
+    autosaveDraft: false,
+  }),
+  75: Object.freeze({
+    maxFieldsPerStep: 8,
+    showOptionalFields: true,
+    validationTiming: 'inline',
+    autosaveDraft: true,
+  }),
+  50: Object.freeze({
+    maxFieldsPerStep: 5,
+    showOptionalFields: false,
+    validationTiming: 'on-blur',
+    autosaveDraft: true,
+  }),
+  25: Object.freeze({
+    maxFieldsPerStep: 3,
+    showOptionalFields: false,
+    validationTiming: 'on-blur',
+    autosaveDraft: true,
+  }),
+  0: Object.freeze({
+    maxFieldsPerStep: 1,
+    showOptionalFields: false,
+    validationTiming: 'on-submit',
+    autosaveDraft: true,
+  }),
+}) satisfies Readonly<Record<EnergyLevel, Readonly<FormPacingConfig>>>
+
+export const formPacingStrategy: AdaptationStrategy<FormPacingConfig> = {
+  name: 'form-pacing',
+  describe(level) {
+    const def = getEnergyLevel(level)
+    const config = FORM_PACING_CONFIGS[def.value]
+    const fields =
+      config.maxFieldsPerStep === 1
+        ? '1 field at a time'
+        : `up to ${config.maxFieldsPerStep} fields per step`
+    const optional = config.showOptionalFields
+      ? 'optional fields shown'
+      : 'optional fields tucked away'
+    return `${def.label}: ${fields}, ${optional}`
+  },
+  resolve(level) {
+    return FORM_PACING_CONFIGS[getEnergyLevel(level).value]
   },
 }

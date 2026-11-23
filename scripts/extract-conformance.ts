@@ -34,11 +34,13 @@ import { Ajv2020 } from 'ajv/dist/2020.js'
 import {
   DEFERRAL_PRESET_IDS,
   autonomyStrategy,
+  choiceBudgetStrategy,
   createDeferralPresets,
   createEnergyState,
   cycleEnergyLevel,
   deferralStrategy,
   demandAdmissionStrategy,
+  formPacingStrategy,
   getEnergyLevels,
   getEnergyMetrics,
   interactionForgivenessStrategy,
@@ -50,6 +52,7 @@ import {
   resolveDeferral,
   resolveDemandOutcome,
   resolveNotificationOutcome,
+  sensoryStrategy,
   taskComplexityStrategy,
   uiVisibilityStrategy,
 } from '../src/index.ts'
@@ -313,6 +316,9 @@ const conformance = {
     deferral: tableFor(deferralStrategy),
     autonomy: tableFor(autonomyStrategy),
     'demand-admission': tableFor(demandAdmissionStrategy),
+    sensory: tableFor(sensoryStrategy),
+    'choice-budget': tableFor(choiceBudgetStrategy),
+    'form-pacing': tableFor(formPacingStrategy),
   },
 
   /** Presence helpers, which are pure maps over the level set. */

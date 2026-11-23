@@ -160,13 +160,15 @@ export const demandAdmissionStrategy: AdaptationStrategy<DemandAdmissionConfig> 
 
     const admitted =
       config.originatorThreshold === 'all'
-        ? 'all originators reach the inbox'
+        ? 'everything reaches you directly'
         : config.originatorThreshold === 'none'
-          ? 'no originator reaches the inbox'
-          : `only ${config.originatorThreshold} originators reach the inbox`
+          ? 'nothing interrupts you directly'
+          : config.originatorThreshold === 'exempt'
+            ? 'your inner circle reaches you directly'
+            : 'known people reach you directly'
 
     if (!config.acknowledge) return `${def.label}: ${admitted}`
-    return `${def.label}: ${admitted}, the rest get a ${config.acknowledgmentDetail} acknowledgment and are queued`
+    return `${def.label}: ${admitted}; everyone else gets a ${config.acknowledgmentDetail} reply and waits in your queue`
   },
   resolve(level) {
     return ADMISSION_CONFIGS[getEnergyLevel(level).value]

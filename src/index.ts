@@ -55,18 +55,40 @@ export { createEnergyEngine } from './engine.ts'
 // Built-in strategies
 export type {
   AutonomyConfig,
+  ChoiceBudgetConfig,
+  FormPacingConfig,
   InteractionForgivenessConfig,
   NotificationConfig,
+  ResponseDensity,
+  SensoryConfig,
   TaskComplexityConfig,
   UIVisibilityConfig,
+  ValidationTiming,
 } from './strategies.ts'
 export {
   autonomyStrategy,
+  choiceBudgetStrategy,
+  formPacingStrategy,
   interactionForgivenessStrategy,
   notificationStrategy,
+  sensoryStrategy,
   taskComplexityStrategy,
   uiVisibilityStrategy,
 } from './strategies.ts'
+
+// Strategy authoring and composition
+export type { StrategyTable } from './compose.ts'
+export { composeStrategies, defineStrategy, extendStrategy } from './compose.ts'
+
+// Personal calibration overlay
+export type { EnergyCalibration } from './calibration.ts'
+export {
+  calibrateDeferralOptions,
+  calibrateNotifications,
+  calibrateSensory,
+  calibrateUIVisibility,
+  createCalibratedStrategy,
+} from './calibration.ts'
 
 // Presence annotation (which energy states an element belongs to)
 export type { EnergyPresenceSpec } from './presence.ts'
@@ -98,10 +120,11 @@ export {
   DEFERRAL_PRESET_IDS,
   createDeferralPresets,
   deferralStrategy,
+  describeDeferralHorizon,
   resolveDeferral,
 } from './defer.ts'
 
-// Inbound demand admission (energy-resolved policy for obligation-bearing arrivals)
+// Inbound demand admission and coordinator
 export type {
   AcknowledgmentDetail,
   DemandAcknowledgment,
@@ -113,6 +136,15 @@ export type {
   OriginatorTier,
 } from './demand.ts'
 export { demandAdmissionStrategy, isOriginatorTier, resolveDemandOutcome } from './demand.ts'
+export type {
+  DemandAcknowledgeContext,
+  DemandCoordinationResult,
+  DemandCoordinator,
+  DemandCoordinatorItem,
+  DemandCoordinatorOptions,
+  DemandHorizon,
+} from './demand-coordinator.ts'
+export { createDemandCoordinator } from './demand-coordinator.ts'
 
 // Notification gate (runtime enforcement of NotificationConfig)
 export type {
@@ -131,3 +163,25 @@ export {
   isNotificationPriority,
   resolveNotificationOutcome,
 } from './gate.ts'
+
+// Staleness monitor (Paper 3 Pattern 10)
+export type {
+  StalenessListener,
+  StalenessMonitor,
+  StalenessMonitorOptions,
+  StalenessPrompt,
+} from './staleness.ts'
+export { createStalenessMonitor } from './staleness.ts'
+
+// Local reflection ledger & privacy-preserving shared team windows
+export type {
+  CapacitySummary,
+  ComputeSharedWindowsOptions,
+  EnergyLedger,
+  EnergyLedgerEntry,
+  EnergyLedgerOptions,
+  EnergyRhythmSuggestion,
+  MemberCollaborationPreference,
+  SharedEnergyWindow,
+} from './ledger.ts'
+export { computeSharedWindows, createEnergyLedger } from './ledger.ts'

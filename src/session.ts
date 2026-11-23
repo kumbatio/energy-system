@@ -31,12 +31,15 @@ export interface FocusSession {
 
 /**
  * Session lifecycle events:
- * - `start`: a session began
+ * - `start`: a session began (or was restored)
+ * - `pause`: the active session was paused (timers halted, suppression lifted)
+ * - `resume`: a paused session resumed
+ * - `extend`: extra minutes were added to the active session
  * - `break`: a break nudge is due (recurring while the session runs)
  * - `end`: the session reached `endsAt` and auto-expired
  * - `stop`: the session was ended manually before `endsAt`
  */
-export type FocusSessionEvent = 'start' | 'break' | 'end' | 'stop'
+export type FocusSessionEvent = 'start' | 'pause' | 'resume' | 'extend' | 'break' | 'end' | 'stop'
 
 export type FocusSessionListener = (event: FocusSessionEvent, session: FocusSession) => void
 
@@ -68,6 +71,12 @@ export interface FocusSessionControllerOptions {
    * session's lifetime, so it can never be left stuck on.
    */
   gate?: FocusSuppressible
+  /**
+   * What to do if the person drops their energy to Rest (`0`) during an active
+   * focus session. Default `'continue'` preserves existing behavior; pass
+   * `'stop'` to gently end the focus session when entering Rest.
+   */
+  onEnergyDropToRest?: 'continue' | 'stop'
   /** Deterministic time source for tests/simulations */
   clock?: EnergyEngineOptions['clock']
   /** Deterministic timer source for tests/simulations */
@@ -84,6 +93,19 @@ export interface StartFocusSessionOptions {
 export interface FocusSessionController {
   /** Start a session (replacing any active one, which is stopped first). */
   start(options?: StartFocusSessionOptions): FocusSession
+  /**
+   * Restore a persisted `FocusSession` snapshot (e.g. after a page reload).
+   * Returns the live session, or `null` if the snapshot is already expired.
+   */
+  restore(snapshot: FocusSession): FocusSession | null
+  /** Pause an active running session (halts timers and lifts suppression). */
+  pause(): void
+  /** Resume a paused session, pushing `endsAt` forward by the paused span. */
+  resume(): FocusSession | null
+  /** True when a session is currently paused. */
+  isPaused(): boolean
+  /** Add minutes to the active session (running or paused). */
+  extend(additionalMinutes: number): FocusSession | null
   /** End the active session early. No-op when idle. */
   stop(): void
   getSession(): FocusSession | null
@@ -100,11 +122,18 @@ const DEFAULT_SESSION_MINUTES = 25
 export function createFocusSessionController(
   options: FocusSessionControllerOptions = {},
 ): FocusSessionController {
-  const { engine, gate, clock, scheduler = defaultScheduler } = options
+  const {
+    engine,
+    gate,
+    onEnergyDropToRest = 'continue',
+    clock,
+    scheduler = defaultScheduler,
+  } = options
   const now = resolveNow(clock)
   const listeners = new Set<FocusSessionListener>()
 
   let session: FocusSession | null = null
+  let pausedRemainingMs: number | null = null
   let endTimer: unknown
   let breakTimer: unknown
   let disposed = false
@@ -149,12 +178,33 @@ export function createFocusSessionController(
     // the end event already tells the user to step away.
     if (nextBreakAt >= active.endsAt) return
 
+    const delayMs = Math.max(0, nextBreakAt - now())
     breakTimer = scheduler.setTimeout(() => {
       breakTimer = undefined
       if (session !== active) return
+
+      const currentMs = now()
+      // If the host slept past session expiry and the break timer woke before
+      // the end timer, expire the session instead of nudging for one that has
+      // already ended.
+      if (currentMs >= active.endsAt) {
+        endSession('end')
+        return
+      }
+
       emit('break', active)
-      scheduleNextBreak(active, nextBreakAt)
-    }, nextBreakAt - now())
+      // A listener may have stopped or replaced the session during 'break'.
+      if (session !== active) return
+
+      // Collapse intervals missed while the host slept so wake-up produces at
+      // most one break nudge instead of a burst of stale ones.
+      let nextAnchor = nextBreakAt
+      if (currentMs >= nextAnchor + active.breakIntervalMs) {
+        const skipped = Math.floor((currentMs - nextAnchor) / active.breakIntervalMs)
+        nextAnchor += skipped * active.breakIntervalMs
+      }
+      scheduleNextBreak(active, nextAnchor)
+    }, delayMs)
   }
 
   function endSession(event: 'end' | 'stop'): void {
@@ -163,11 +213,33 @@ export function createFocusSessionController(
 
     clearTimers()
     session = null
+    pausedRemainingMs = null
     // Invariant: suppression lifts before the event fires, so end/stop
     // handlers can notify the user without being swallowed.
     releaseSuppression()
     emit(event, ended)
   }
+
+  function armSessionTimers(active: FocusSession, anchorMs: number): void {
+    clearTimers()
+    const delayMs = Math.max(0, active.endsAt - now())
+    endTimer = scheduler.setTimeout(() => {
+      endTimer = undefined
+      if (session === active) {
+        endSession('end')
+      }
+    }, delayMs)
+    scheduleNextBreak(active, anchorMs)
+  }
+
+  const unsubscribeEngine =
+    engine && onEnergyDropToRest === 'stop'
+      ? engine.subscribe((state) => {
+          if (state.level === 0 && session) {
+            endSession('stop')
+          }
+        })
+      : () => {}
 
   function defaultDurationMinutes(): number {
     if (!engine) return DEFAULT_SESSION_MINUTES
@@ -211,22 +283,134 @@ export function createFocusSessionController(
       })
 
       session = next
+      pausedRemainingMs = null
       try {
         gate?.setSuppressed(true)
       } catch (err: unknown) {
         logContainedError('Failed to apply suppression', err)
       }
 
-      endTimer = scheduler.setTimeout(() => {
-        endTimer = undefined
-        if (session === next) {
-          endSession('end')
-        }
-      }, next.endsAt - startedAt)
-
-      scheduleNextBreak(next, startedAt)
+      armSessionTimers(next, startedAt)
       emit('start', next)
       return next
+    },
+
+    restore(snapshot) {
+      if (disposed) {
+        throw new Error('Cannot restore a session on a disposed controller')
+      }
+      if (
+        !Number.isFinite(snapshot.startedAt) ||
+        !Number.isFinite(snapshot.endsAt) ||
+        !Number.isFinite(snapshot.breakIntervalMs) ||
+        snapshot.endsAt <= snapshot.startedAt ||
+        snapshot.breakIntervalMs < 0
+      ) {
+        throw new Error('Invalid focus session snapshot')
+      }
+
+      const currentMs = now()
+      if (isSessionExpired(snapshot, currentMs)) {
+        return null
+      }
+
+      if (session) {
+        endSession('stop')
+      }
+
+      const restored: FocusSession = Object.freeze({
+        startedAt: snapshot.startedAt,
+        endsAt: snapshot.endsAt,
+        breakIntervalMs: snapshot.breakIntervalMs,
+      })
+
+      session = restored
+      pausedRemainingMs = null
+      try {
+        gate?.setSuppressed(true)
+      } catch (err: unknown) {
+        logContainedError('Failed to apply suppression', err)
+      }
+
+      let breakAnchor = restored.startedAt
+      if (restored.breakIntervalMs > 0 && currentMs > breakAnchor) {
+        const elapsedIntervals = Math.floor((currentMs - breakAnchor) / restored.breakIntervalMs)
+        breakAnchor += elapsedIntervals * restored.breakIntervalMs
+      }
+      armSessionTimers(restored, breakAnchor)
+      emit('start', restored)
+      return restored
+    },
+
+    pause() {
+      if (disposed || !session || pausedRemainingMs !== null) return
+      const remaining = sessionRemainingMs(session, now())
+      if (remaining === 0) {
+        endSession('end')
+        return
+      }
+      pausedRemainingMs = remaining
+      clearTimers()
+      releaseSuppression()
+      emit('pause', session)
+    },
+
+    resume() {
+      if (disposed || !session || pausedRemainingMs === null) return session
+      const currentMs = now()
+      const resumed: FocusSession = Object.freeze({
+        startedAt: session.startedAt,
+        endsAt: currentMs + pausedRemainingMs,
+        breakIntervalMs: session.breakIntervalMs,
+      })
+      session = resumed
+      pausedRemainingMs = null
+      try {
+        gate?.setSuppressed(true)
+      } catch (err: unknown) {
+        logContainedError('Failed to apply suppression', err)
+      }
+      armSessionTimers(resumed, currentMs)
+      emit('resume', resumed)
+      return resumed
+    },
+
+    isPaused() {
+      return session !== null && pausedRemainingMs !== null
+    },
+
+    extend(additionalMinutes) {
+      if (disposed) {
+        throw new Error('Cannot extend a session on a disposed controller')
+      }
+      if (!Number.isFinite(additionalMinutes) || additionalMinutes <= 0) {
+        throw new Error(`Invalid extension duration: ${String(additionalMinutes)}`)
+      }
+      if (!session) return null
+
+      const deltaMs = additionalMinutes * 60_000
+      if (pausedRemainingMs !== null) {
+        pausedRemainingMs += deltaMs
+        const updated: FocusSession = Object.freeze({
+          startedAt: session.startedAt,
+          endsAt: session.endsAt + deltaMs,
+          breakIntervalMs: session.breakIntervalMs,
+        })
+        session = updated
+        emit('extend', updated)
+        return updated
+      }
+
+      const currentMs = now()
+      const updated: FocusSession = Object.freeze({
+        startedAt: session.startedAt,
+        endsAt: Math.max(session.endsAt, currentMs) + deltaMs,
+        breakIntervalMs: session.breakIntervalMs,
+      })
+      session = updated
+      armSessionTimers(updated, currentMs)
+      emit('extend', updated)
+      return updated
     },
 
     stop() {
@@ -239,7 +423,9 @@ export function createFocusSessionController(
     },
 
     remainingMs() {
-      return session ? sessionRemainingMs(session, now()) : 0
+      if (!session) return 0
+      if (pausedRemainingMs !== null) return pausedRemainingMs
+      return sessionRemainingMs(session, now())
     },
 
     subscribe(listener) {
@@ -259,6 +445,7 @@ export function createFocusSessionController(
       // re-enters `start()` is refused rather than leaving a live session -
       // and a suppressed gate - on a controller whose `stop()` no longer acts.
       disposed = true
+      unsubscribeEngine()
       // Ending still precedes teardown, so suppression is released and
       // observers hear about the interruption before listeners are cleared.
       endSession('stop')

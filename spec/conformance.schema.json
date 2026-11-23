@@ -26,9 +26,9 @@
       "enum": [0, 25, 50, 75, 100]
     },
     "presence": {
-      "description": "What a projected element does at a level. `unmounted` is a host/adapter choice rather than a table value, so it does not appear in these vectors.",
+      "description": "What a projected element does at a level.",
       "type": "string",
-      "enum": ["visible", "muted", "hidden", "unmounted"]
+      "enum": ["visible", "muted", "hidden"]
     },
     "strategyTable": {
       "description": "One strategy's resolved config at every level. Keys are strings because JSON object keys are strings, and all five must be present: a gap in a port's table falls through silently at exactly the level it mishandles.",
@@ -161,7 +161,10 @@
         "interaction-forgiveness",
         "deferral",
         "autonomy",
-        "demand-admission"
+        "demand-admission",
+        "sensory",
+        "choice-budget",
+        "form-pacing"
       ],
       "properties": {
         "ui-visibility": { "$ref": "#/$defs/strategyTable" },
@@ -170,7 +173,10 @@
         "interaction-forgiveness": { "$ref": "#/$defs/strategyTable" },
         "deferral": { "$ref": "#/$defs/strategyTable" },
         "autonomy": { "$ref": "#/$defs/strategyTable" },
-        "demand-admission": { "$ref": "#/$defs/strategyTable" }
+        "demand-admission": { "$ref": "#/$defs/strategyTable" },
+        "sensory": { "$ref": "#/$defs/strategyTable" },
+        "choice-budget": { "$ref": "#/$defs/strategyTable" },
+        "form-pacing": { "$ref": "#/$defs/strategyTable" }
       }
     },
 
@@ -240,9 +246,10 @@
                     "enum": [
                       "exempt-originator",
                       "tier-admitted",
-                      "acknowledged",
                       "no-obligation",
-                      "below-confidence"
+                      "acknowledgment-disabled",
+                      "below-confidence",
+                      "acknowledged"
                     ]
                   }
                 }
